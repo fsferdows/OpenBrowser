@@ -1,0 +1,13 @@
+{
+  "name": "@agentic-browser/skill-engine",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.js",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "@agentic-browser/shared": "0.1.0",
+    "@agentic-browser/control": "0.1.0"
+  }
+}
