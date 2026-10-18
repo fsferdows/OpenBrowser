@@ -1,6 +1,12 @@
 {
-  "name": "agentic-browser-workspace",
-  "version": "0.1.0",
+  "name": "openbrowser",
+  "version": "1.0.0",
+  "description": "OpenBrowser - The Production Autonomous AI Agentic Browser for Hackers & Power Users",
+  "author": "FS Ferdows <fsferdows@icloud.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fsferdows/OpenBrowser.git"
+  },
   "private": true,
   "type": "module",
   "workspaces": [
