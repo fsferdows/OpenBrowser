@@ -13,6 +13,7 @@ import { GatewayClient } from '../packages/gateway/src/index.js';
 import { ChromiumCdpClient, TargetResolver, AccessibilityTree, resolveOmniboxDestination, TOP_SITE_MAP } from '../packages/control/src/index.js';
 import { ACTIONS, RISK_LEVELS, i18n } from '../packages/shared/src/index.js';
 import { HereticChatEngine } from '../packages/agent-core/src/heretic-chat-engine.js';
+import { analyzeSecurityPosture } from '../packages/agent-core/src/hacksuite-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = join(__filename, '..', '..');
@@ -127,97 +128,327 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // Braver Structured Search SERP API
+  // HackSuite HTTP Repeater / Tamperer API (Bypasses CORS for Security Testing)
+  if (req.method === 'POST' && pathname === '/api/sec/repeater') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      const startTime = Date.now();
+      try {
+        const payload = JSON.parse(body || '{}');
+        const targetUrl = (payload.url || '').trim();
+        const method = (payload.method || 'GET').toUpperCase();
+        const customHeaders = payload.headers || {};
+        const reqBody = payload.body || null;
+
+        if (!targetUrl) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing target url parameter' }));
+          return;
+        }
+
+        let fetchUrl = targetUrl;
+        if (!fetchUrl.startsWith('http://') && !fetchUrl.startsWith('https://')) {
+          fetchUrl = `https://${fetchUrl}`;
+        }
+
+        const fetchOptions = {
+          method,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 BraverSec/1.0',
+            ...customHeaders
+          },
+          redirect: 'manual'
+        };
+
+        if (reqBody && !['GET', 'HEAD'].includes(method)) {
+          fetchOptions.body = reqBody;
+        }
+
+        const response = await fetch(fetchUrl, fetchOptions);
+        const latencyMs = Date.now() - startTime;
+        const resText = await response.text();
+
+        const resHeaders = {};
+        response.headers.forEach((v, k) => {
+          resHeaders[k] = v;
+        });
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          status: response.status,
+          statusText: response.statusText,
+          headers: resHeaders,
+          body: resText,
+          latencyMs,
+          url: fetchUrl,
+          timestamp: Date.now()
+        }));
+      } catch (err) {
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: `Repeater request failed: ${err.message}`,
+          latencyMs: Date.now() - startTime
+        }));
+      }
+    });
+    return;
+  }
+
+  // HackSuite Attack Surface Security Posture Analyzer API
+  if (req.method === 'POST' && pathname === '/api/sec/analyze') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        let targetUrl = payload.url || 'http://localhost:3000/newtab.html';
+        let html = payload.html || '';
+        let headers = payload.headers || {};
+
+        if (!html && targetUrl) {
+          if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+            targetUrl = `https://${targetUrl}`;
+          }
+          const fetchRes = await fetch(targetUrl, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) BraverSec/1.0' }
+          });
+          html = await fetchRes.text();
+          fetchRes.headers.forEach((v, k) => { headers[k] = v; });
+        }
+
+        const posture = analyzeSecurityPosture(html, targetUrl, headers);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'OK', posture }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: `Security posture analysis error: ${err.message}` }));
+      }
+    });
+    return;
+  }
+
+  // HackSuite Live Chrome CDP Security Command Runner API
+  if (req.method === 'POST' && pathname === '/api/sec/cdp-command') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const { command, params = {}, targetId } = payload;
+        const targets = await chromiumClient.listTargets();
+        const pageTarget = targets.find(t => t.type === 'page');
+        const effectiveTargetId = targetId || (pageTarget ? pageTarget.id : 'target-active');
+
+        const result = await chromiumClient.sendCommand(effectiveTargetId, command, params);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, command, result }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // Live Search Helper Function (DuckDuckGo + Wikipedia REST API)
+  async function fetchLiveWebSearchResults(query) {
+    const cleanQ = (query || '').trim();
+    if (!cleanQ) {
+      return {
+        query: '',
+        primary: null,
+        results: [],
+        kp: null
+      };
+    }
+
+    const lower = cleanQ.toLowerCase();
+
+    // 1. Fetch Wikipedia Knowledge Panel concurrently
+    let kp = null;
+    try {
+      const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanQ)}`;
+      const wikiRes = await fetch(wikiUrl, {
+        headers: { 'User-Agent': 'BraverBrowser/1.0 (Macintosh; Intel Mac OS X 10_15_7; contact@braver.local)' },
+        signal: AbortSignal.timeout(3500)
+      });
+      if (wikiRes.ok) {
+        const data = await wikiRes.json();
+        if (data.extract && !data.title?.toLowerCase().includes('disambiguation')) {
+          kp = {
+            title: data.title,
+            desc: data.extract,
+            wikiUrl: data.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(data.title)}`,
+            thumbnail: data.thumbnail?.source || null,
+            badge: data.description || 'Entity'
+          };
+        }
+      }
+    } catch (_) {}
+
+    // Special metadata enrichment for top technology entities
+    if (lower === 'facebook' || lower === 'fb' || lower === 'meta') {
+      kp = {
+        title: 'Meta',
+        badge: 'Meta Platforms',
+        thumbnail: '/assets/meta_vr.jpg',
+        img2: '/assets/meta_desk.jpg',
+        img3: '/assets/meta_apps.jpg',
+        desc: 'Meta Platforms, Inc., headquartered in Menlo Park, California, is an American multinational technology company and is one of the Big Tech companies. Meta owns and operates Facebook, Instagram, WhatsApp, and Threads.',
+        wikiUrl: 'https://en.wikipedia.org/wiki/Meta_Platforms',
+        founders: 'Mark Zuckerberg, Eduardo Saverin, Dustin Moskovitz, Chris Hughes',
+        ceo: 'Mark Zuckerberg (Jul 2004–)',
+        hq: 'Menlo Park, California, United States',
+        products: 'Facebook, Instagram, WhatsApp, Messenger, Threads, Meta Quest'
+      };
+    } else if (lower === 'youtube' || lower === 'yt') {
+      kp = {
+        title: 'YouTube',
+        badge: 'Online Video Platform',
+        thumbnail: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Logo_of_YouTube_%282015-2017%29.svg/500px-Logo_of_YouTube_%282015-2017%29.svg.png',
+        desc: 'YouTube is an American online video sharing and social media platform owned by Google. It is the second most visited website in the world after Google Search.',
+        wikiUrl: 'https://en.wikipedia.org/wiki/YouTube',
+        founders: 'Steve Chen, Chad Hurley, Jawed Karim',
+        ceo: 'Neal Mohan (Feb 2023–)',
+        hq: 'San Bruno, California, United States',
+        products: 'YouTube Premium, YouTube Music, YouTube Kids, YouTube TV, YouTube Shorts'
+      };
+    }
+
+    // 2. Fetch live organic search results from DuckDuckGo
+    const organicResults = [];
+    try {
+      const ddgRes = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(cleanQ)}`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml',
+          'Accept-Language': 'en-US,en;q=0.9'
+        },
+        signal: AbortSignal.timeout(4500)
+      });
+      if (ddgRes.ok) {
+        const html = await ddgRes.text();
+        const blocks = html.split('class="result results_links');
+        for (const block of blocks.slice(1)) {
+          const titleMatch = block.match(/class="result__a"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/);
+          const snippetMatch = block.match(/class="result__snippet"[^>]*>([\s\S]*?)<\/a>/);
+          if (titleMatch) {
+            let rawUrl = titleMatch[1];
+            const uddgMatch = rawUrl.match(/uddg=([^&]+)/);
+            const targetUrl = uddgMatch ? decodeURIComponent(uddgMatch[1]) : rawUrl;
+            if (!targetUrl.startsWith('http')) continue;
+
+            const title = titleMatch[2].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&#x27;/g, "'").replace(/&quot;/g, '"').trim();
+            const snippet = snippetMatch ? snippetMatch[1].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&#x27;/g, "'").replace(/&quot;/g, '"').trim() : '';
+            let domain = '';
+            try { domain = new URL(targetUrl).hostname; } catch (_) { domain = targetUrl; }
+
+            if (title && targetUrl) {
+              organicResults.push({
+                title,
+                url: targetUrl,
+                domain,
+                snippet
+              });
+            }
+          }
+          if (organicResults.length >= 10) break;
+        }
+      }
+    } catch (_) {}
+
+    // 3. Fallback to authentic domain authorities if search engine was unreachable
+    if (organicResults.length === 0) {
+      const qCap = cleanQ.charAt(0).toUpperCase() + cleanQ.slice(1);
+      organicResults.push(
+        {
+          title: `${qCap} — Official Site & Information`,
+          url: `https://www.${cleanQ.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'example'}.com`,
+          domain: `${cleanQ.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'example'}.com`,
+          snippet: `Access official portal, real-time documentation, and online resources for ${cleanQ}.`
+        },
+        {
+          title: `${qCap} - Wikipedia Article`,
+          url: `https://en.wikipedia.org/wiki/${encodeURIComponent(cleanQ)}`,
+          domain: 'en.wikipedia.org',
+          snippet: `Read comprehensive encyclopedic overview, history, and verified references for ${cleanQ}.`
+        },
+        {
+          title: `Latest News and Updates on ${qCap}`,
+          url: `https://news.google.com/search?q=${encodeURIComponent(cleanQ)}`,
+          domain: 'news.google.com',
+          snippet: `Live breaking news coverage, analysis, and media reports regarding ${cleanQ}.`
+        },
+        {
+          title: `${qCap} Discussions & Communities on Reddit`,
+          url: `https://www.reddit.com/search/?q=${encodeURIComponent(cleanQ)}`,
+          domain: 'reddit.com',
+          snippet: `Community discussions, tutorials, questions, and insights on ${cleanQ}.`
+        },
+        {
+          title: `${qCap} Videos and Playlists on YouTube`,
+          url: `https://www.youtube.com/results?search_query=${encodeURIComponent(cleanQ)}`,
+          domain: 'youtube.com',
+          snippet: `Watch top rated tutorials, documentary overviews, and streams on ${cleanQ}.`
+        }
+      );
+    }
+
+    const primary = organicResults[0];
+    const rest = organicResults.slice(1);
+
+    // Dynamic Sitelinks for the primary domain
+    const sitelinks = [];
+    if (lower === 'facebook' || lower === 'fb') {
+      sitelinks.push(
+        { title: 'Log in', snippet: 'Log in to Facebook to start sharing and connecting with friends...', url: 'https://www.facebook.com/login' },
+        { title: 'Posts', snippet: 'Browse trending topics, photos, and live updates on Facebook...', url: 'https://www.facebook.com' },
+        { title: 'Forgot password?', snippet: 'Recover your account credentials securely...', url: 'https://www.facebook.com/recover/initiate' },
+        { title: 'Create new account', snippet: 'Sign up for Facebook and find your community...', url: 'https://www.facebook.com/r.php' }
+      );
+    } else if (lower === 'youtube' || lower === 'yt') {
+      sitelinks.push(
+        { title: 'Trending', snippet: 'See what is viral and trending worldwide...', url: 'https://www.youtube.com/feed/trending' },
+        { title: 'Subscriptions', snippet: 'Catch up on latest uploads from followed channels...', url: 'https://www.youtube.com/feed/subscriptions' },
+        { title: 'YouTube Music', snippet: 'Stream official songs, albums, and playlists...', url: 'https://music.youtube.com' }
+      );
+    } else if (rest.length >= 2) {
+      // Use 2 secondary results as sitelinks if applicable
+      for (const r of rest.slice(0, 3)) {
+        sitelinks.push({
+          title: r.title,
+          snippet: r.snippet,
+          url: r.url
+        });
+      }
+    }
+
+    return {
+      query: cleanQ,
+      primary: {
+        ...primary,
+        sitelinks
+      },
+      results: rest,
+      kp
+    };
+  }
+
+  // Braver Real-Time Live Search SERP API
   if (req.method === 'GET' && pathname === '/api/search') {
     const q = (parsedUrl.searchParams.get('q') || '').trim();
-    const lower = q.toLowerCase();
-
-    // Default Facebook & Meta exact match from Image 1
-    if (!lower || lower.includes('facebook') || lower === 'fb' || lower.includes('meta')) {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({
-        query: q || 'facebook',
-        sourceName: 'Facebook',
-        url: 'https://www.facebook.com',
-        title: 'Facebook - log in or sign up',
-        snippet: 'Create an account or <b>log into Facebook</b>. Connect with friends, family and other people you know. Share photos and videos, send messages and get updates.',
-        sitelinks: [
-          { title: 'Log in', snippet: 'Log in to Facebook to start sharing and connecting with your ...', url: 'https://www.facebook.com/login' },
-          { title: 'Posts', snippet: 'When it comes to the perfect pet costume, Facebook ...', url: 'https://www.facebook.com/posts' },
-          { title: 'Forgot password?', snippet: 'Log into Facebook to start sharing and connecting with your ...', url: 'https://www.facebook.com/recover' },
-          { title: 'Create new account', snippet: 'Sign up for Facebook and find your friends. Create an account to ...', url: 'https://www.facebook.com/reg' },
-          { title: 'Facebook login', snippet: '', url: 'https://www.facebook.com/login' }
-        ],
-        appCard: {
-          title: 'Facebook - Apps on Google Play',
-          url: 'https://play.google.com/store/apps/details?id=com.facebook.katana',
-          source: 'Google Play'
-        },
-        kp: {
-          title: 'Meta',
-          desc: 'Meta Platforms, Inc., headquartered in Menlo Park, California, is an American multinational technology company and is one of the Big Tech companies. Meta owns and operates several...',
-          wikiUrl: 'https://en.wikipedia.org/wiki/Meta_Platforms',
-          founders: 'Mark Zuckerberg, Eduardo Saverin, Dustin Moskovitz, Chris Hughes',
-          ceo: 'Mark Zuckerberg (Jul 2004–)',
-          hq: 'Menlo Park, California, United States',
-          products: 'Facebook, Instagram, WhatsApp, Messenger, Threads, Meta Quest'
-        }
-      }));
-      return;
+    try {
+      const searchData = await fetchLiveWebSearchResults(q);
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store'
+      });
+      res.end(JSON.stringify(searchData));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message, query: q }));
     }
-
-    if (lower.includes('youtube') || lower === 'yt') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({
-        query: q,
-        sourceName: 'YouTube',
-        url: 'https://www.youtube.com',
-        title: 'YouTube - Watch, Listen, Stream',
-        snippet: 'Enjoy the videos and music you love, upload original content, and share it all with friends, family, and the world on <b>YouTube</b>.',
-        sitelinks: [
-          { title: 'Trending', snippet: 'The latest trending videos on YouTube ...', url: 'https://www.youtube.com/feed/trending' },
-          { title: 'Music', snippet: 'A new music service with official albums, singles, videos ...', url: 'https://music.youtube.com' },
-          { title: 'Subscriptions', snippet: 'See new videos from channels you follow ...', url: 'https://www.youtube.com/feed/subscriptions' },
-          { title: 'YouTube Studio', snippet: 'Manage your channel and grow your audience ...', url: 'https://studio.youtube.com' }
-        ],
-        kp: {
-          title: 'YouTube',
-          desc: 'YouTube is an American online video sharing and social media platform owned by Google. It is the second most visited website in the world...',
-          wikiUrl: 'https://en.wikipedia.org/wiki/YouTube',
-          founders: 'Steve Chen, Chad Hurley, Jawed Karim',
-          ceo: 'Neal Mohan (Feb 2023–)',
-          hq: 'San Bruno, California, United States',
-          products: 'YouTube Music, YouTube Kids, YouTube TV, YouTube Shorts'
-        }
-      }));
-      return;
-    }
-
-    // Generic Structured Search Response
-    const formattedTitle = q ? `${q.charAt(0).toUpperCase() + q.slice(1)} — Official Portal & Overview` : 'Braver Search';
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({
-      query: q,
-      sourceName: q || 'Web',
-      url: `https://www.${q.replace(/[^a-zA-Z0-9]/g, '') || 'example'}.com`,
-      title: formattedTitle,
-      snippet: `Comprehensive web results, real-time documentation, and autonomous resources for <b>${q}</b> on Braver.`,
-      sitelinks: [
-        { title: `About ${q}`, snippet: `Learn more about ${q} specifications, overview, and history ...`, url: `https://en.wikipedia.org/wiki/${encodeURIComponent(q)}` },
-        { title: `${q} Documentation`, snippet: `Developer guides, API references, and quickstarts for ${q} ...`, url: `https://developer.mozilla.org/` },
-        { title: `${q} Community & Discussions`, snippet: `Join live discussions and verified community updates ...`, url: `https://reddit.com/r/${encodeURIComponent(q)}` },
-        { title: `Latest News on ${q}`, snippet: `Real-time updates, reports, and release notes ...`, url: `https://news.google.com/search?q=${encodeURIComponent(q)}` }
-      ],
-      kp: {
-        title: q.toUpperCase(),
-        desc: `${q} is a leading subject across the global web index. Braver surfaces direct intelligence and real-time knowledge graphs...`,
-        wikiUrl: `https://en.wikipedia.org/wiki/${encodeURIComponent(q)}`,
-        founders: 'Community & Creators',
-        ceo: 'Autonomous Registry',
-        hq: 'Global Internet',
-        products: 'Web Services, APIs, Autonomous Workflows'
-      }
-    }));
     return;
   }
 

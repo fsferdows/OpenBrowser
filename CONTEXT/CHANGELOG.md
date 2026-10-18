@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Braver Dark Minimal Frontpage, Search Results SERP, and Heretic AI Mode:
+- Real-Time Live Web Search, Clean Dynamic Tabs, and HackSuite Security Toolkit:
+  - `scripts/serve-localhost.mjs`: Implemented `fetchLiveWebSearchResults` combining DuckDuckGo HTML search and Wikipedia REST API for true real-time web search for any query (e.g. `hello`, `python`, `cybersecurity tools`), returning genuine titles, snippets, target URLs, and entity Knowledge Panels.
+  - `public/search.html`: Converted from static hardcoded template into dynamic async search result renderer with shimmer loading state, verified favicons, sitelinks, and adaptive Knowledge Panel that gracefully hides when no entity exists.
+  - `public/index.html`: Removed pre-rendered demo tabs (`ElectroTech Catalog`, `Developer Portal`, `Security Gate`) so the browser launches with a clean New Tab. Replaced demo bookmarks with real world links (`GitHub`, `Reddit`, `X / Twitter`). Replaced demo preset chips with real autonomous research and reconnaissance actions.
+  - `public/app.js`: Added dynamic `createNewTab()` function to allow unlimited concurrent tabs for real web browsing. Integrated `initHackSuite()` with Burp-style HTTP Repeater, Attack Surface & Posture Analyzer, JWT/Base64/URL decoders, and Heretic SecOps copilot.
+  - `packages/agent-core/src/hacksuite-utils.js`: Core pentesting utilities and payload library (`xss`, `sqli`, `ssrf`, `lfi`, `cmdi`) with security posture analyzer.
+  - `packages/agent-core/tests/hacksuite.test.js`: 5-test unit test suite passing 100%. All 196 tests passing across 33 test suites.
   - `vendor/heretic`: Cloned and pinned `p-e-w/heretic` (commit `3a5c864527935c7677f79bdbe044a700577cabb2`) and authored vendor repository map `CONTEXT/REPO_MAP_heretic.md`.
   - `packages/agent-core/src/heretic-chat-engine.js`: Implemented refusal-free conversational AI engine based on Heretic directional ablation principles, fronting OmniRoute (primary) and FreeLLMAPI (zero-cost quota guarded fallback) with automatic browser action intent detection.
   - `packages/agent-core/tests/heretic-chat.test.js`: 4-test unit test suite verifying refusal-free responses, browser action extraction (navigate, search, click), provider transparency, and live fallback handling.

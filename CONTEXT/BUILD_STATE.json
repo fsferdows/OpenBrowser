@@ -98,12 +98,17 @@
       "id": "phase8-task6",
       "description": "Integrate p-e-w/heretic refusal-free chat engine with OmniRoute and FreeLLMAPI gateways, build Braver frontpage with Google dark minimal pill search bar, and construct Google-style search results page with Meta Knowledge Graph collage card and structured sitelinks.",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task7",
+      "description": "Dynamic live web search via DuckDuckGo and Wikipedia REST API, remove static demo tabs/shortcuts, and implement HackSuite pentesting workstation (ADR-0010) with HTTP repeater, attack surface analyzer, decoders, and refusal-free Heretic SecOps copilot.",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
     "OQ-001: Host filesystem capacity is 200MB free; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Braver frontpage, Google-style SERP search results page with Meta Knowledge Graph, and Heretic refusal-free AI Mode chat verified across Chrome CDP and unit test suite. Ready for user exploration and ongoing feature expansion.",
-  "last_commit": "705c24b"
+  "next_action": "Dynamic live web search, clean tab workflow, and HackSuite penetration testing suite active and verified on http://localhost:3000.",
+  "last_commit": "HEAD"
 }

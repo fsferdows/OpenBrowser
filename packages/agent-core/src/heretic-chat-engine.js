@@ -103,7 +103,9 @@ When executing browser actions, include an "action" field in your response:
   _detectBrowserAction(text, context = {}) {
     const lower = text.toLowerCase();
     if (lower.startsWith('go to ') || lower.startsWith('open ') || lower.startsWith('navigate to ')) {
-      const url = text.replace(/^(go to|open|navigate to)\s+/i, '').trim();
+      const rest = text.replace(/^(go to|open|navigate to)\s+/i, '').trim();
+      const urlMatch = rest.match(/https?:\/\/[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?/i);
+      const url = urlMatch ? urlMatch[0] : rest;
       return { type: 'navigate', target: url };
     }
     if (lower.startsWith('search for ') || lower.startsWith('search ') || lower.startsWith('find ')) {

@@ -239,6 +239,35 @@
       flex-shrink: 0;
     }
 
+    .knowledge-column.hidden {
+      display: none !important;
+    }
+
+    .serp-container.no-kp .results-column {
+      max-width: 820px;
+    }
+
+    /* Shimmer loading */
+    .results-loading-state {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .shimmer-card {
+      height: 90px;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #25262a 25%, #32353b 50%, #25262a 75%);
+      background-size: 200% 100%;
+      animation: shimmerAnim 1.4s infinite;
+    }
+
+    @keyframes shimmerAnim {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
     /* Search Result Card */
     .result-card {
       margin-bottom: 32px;
@@ -748,153 +777,44 @@
   </header>
 
   <!-- SERP Main Content Area -->
-  <main class="serp-container">
+  <main class="serp-container" id="serp-main-container">
     <!-- Left Column: Organic Results -->
     <section class="results-column" id="results-column">
-      <!-- Main Organic Card: Facebook -->
-      <article class="result-card" id="main-result-card">
-        <div class="result-source-row" onclick="navigateToUrl('https://www.facebook.com')">
-          <div class="source-favicon">
-            <svg viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-          </div>
-          <div class="source-meta">
-            <span class="source-name" id="res-source-name">Facebook</span>
-            <span class="source-url" id="res-source-url">https://www.facebook.com</span>
-          </div>
-          <div class="source-more-btn">⋮</div>
-        </div>
+      <!-- Loading Shimmer State -->
+      <div id="results-loading" class="results-loading-state">
+        <div class="shimmer-card"></div>
+        <div class="shimmer-card"></div>
+        <div class="shimmer-card"></div>
+      </div>
 
-        <a href="https://www.facebook.com" class="result-title" id="res-title" onclick="event.preventDefault(); navigateToUrl('https://www.facebook.com');">
-          Facebook - log in or sign up
-        </a>
-
-        <p class="result-snippet" id="res-snippet">
-          Create an account or <b>log into Facebook</b>. Connect with friends, family and other people you know. Share photos and videos, send messages and get updates.
-        </p>
-
-        <!-- Sitelinks -->
-        <div class="sitelinks-list" id="res-sitelinks">
-          <div class="sitelink-item">
-            <a href="https://www.facebook.com/login" class="sitelink-header" onclick="event.preventDefault(); navigateToUrl('https://www.facebook.com/login');">
-              <span class="sitelink-title">Log in</span>
-              <span class="sitelink-arrow">›</span>
-            </a>
-            <p class="sitelink-snippet">Log in to Facebook to start sharing and connecting with your ...</p>
-          </div>
-
-          <div class="sitelink-item">
-            <a href="https://www.facebook.com" class="sitelink-header" onclick="event.preventDefault(); navigateToUrl('https://www.facebook.com');">
-              <span class="sitelink-title">Posts</span>
-              <span class="sitelink-arrow">›</span>
-            </a>
-            <p class="sitelink-snippet">When it comes to the perfect pet costume, Facebook ...</p>
-          </div>
-
-          <div class="sitelink-item">
-            <a href="https://www.facebook.com/recover/initiate" class="sitelink-header" onclick="event.preventDefault(); navigateToUrl('https://www.facebook.com/recover/initiate');">
-              <span class="sitelink-title">Forgot password?</span>
-              <span class="sitelink-arrow">›</span>
-            </a>
-            <p class="sitelink-snippet">Log into Facebook to start sharing and connecting with your ...</p>
-          </div>
-
-          <div class="sitelink-item">
-            <a href="https://www.facebook.com/r.php" class="sitelink-header" onclick="event.preventDefault(); navigateToUrl('https://www.facebook.com/r.php');">
-              <span class="sitelink-title">Create new account</span>
-              <span class="sitelink-arrow">›</span>
-            </a>
-            <p class="sitelink-snippet">Sign up for Facebook and find your friends. Create an account to ...</p>
-          </div>
-
-          <div class="sitelink-item">
-            <a href="https://www.facebook.com/login" class="sitelink-header" onclick="event.preventDefault(); navigateToUrl('https://www.facebook.com/login');">
-              <span class="sitelink-title">Facebook login</span>
-              <span class="sitelink-arrow">›</span>
-            </a>
-          </div>
-
-          <a href="https://www.facebook.com" class="sitelinks-more-link" onclick="event.preventDefault(); navigateToUrl('https://www.facebook.com');">
-            More results from facebook.com »
-          </a>
-        </div>
-      </article>
-
-      <!-- Secondary Result: Google Play -->
-      <article class="result-card secondary-result" id="secondary-result-card">
-        <div class="result-source-row" onclick="navigateToUrl('https://play.google.com/store/apps/details?id=com.facebook.katana')">
-          <div class="source-favicon" style="background:#fff;">
-            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="#4285F4" d="M3 20.5v-17c0-.83.67-1.5 1.5-1.5.31 0 .61.1.86.29l10.9 7.56-4.5 4.5L3 20.5z"/><path fill="#34A853" d="M16.26 9.85l4.38 3.04c.82.57.82 1.5 0 2.07l-4.38 3.04-3.5-3.5 3.5-4.65z"/><path fill="#EA4335" d="M5.36 2.29L16.26 9.85l-4.5 4.5-8.76-8.76c.25-.19.55-.29.86-.29z"/><path fill="#FBBC05" d="M3 20.5l8.76-8.76 4.5 4.5-10.9 7.56c-.25.19-.55.29-.86.29-.83 0-1.5-.67-1.5-1.5v-2.09z"/></svg>
-          </div>
-          <div class="source-meta">
-            <span class="source-name">Google Play</span>
-            <span class="source-url">https://play.google.com › store › apps › details › id=com...</span>
-          </div>
-          <div class="source-more-btn">⋮</div>
-        </div>
-
-        <a href="https://play.google.com/store/apps/details?id=com.facebook.katana" class="result-title" onclick="event.preventDefault(); navigateToUrl('https://play.google.com/store/apps/details?id=com.facebook.katana');">
-          Facebook - Apps on Google Play
-        </a>
-      </article>
+      <!-- Container for dynamically injected organic results -->
+      <div id="dynamic-results-list" class="dynamic-results-list"></div>
     </section>
 
-    <!-- Right Column: Knowledge Graph Panel (Meta) -->
-    <aside class="knowledge-column" id="knowledge-column">
+    <!-- Right Column: Knowledge Graph Panel -->
+    <aside class="knowledge-column hidden" id="knowledge-column">
       <div class="knowledge-panel" id="knowledge-panel">
         <div class="kp-header">
           <div class="kp-brand-badge" id="kp-brand-badge">
-            <span style="color:#0081fb;">♾️</span>
-            <span>Meta</span>
+            <span id="kp-brand-icon">🌐</span>
+            <span id="kp-brand-name">Topic</span>
           </div>
-          <h2 class="kp-title" id="kp-title">Meta</h2>
+          <h2 class="kp-title" id="kp-title">Entity</h2>
           <div class="kp-menu-btn">⋮</div>
         </div>
 
-        <!-- 3-Image Collage Grid Matching Image 1 -->
+        <!-- Dynamic Image / Collage -->
         <div class="kp-collage-grid" id="kp-collage-grid">
-          <div class="kp-collage-item featured">
-            <img src="/assets/meta_vr.jpg" alt="Meta Quest VR" id="kp-img-1" />
-          </div>
-          <div class="kp-collage-item">
-            <img src="/assets/meta_desk.jpg" alt="Meta Hardware" id="kp-img-2" />
-          </div>
-          <div class="kp-collage-item">
-            <img src="/assets/meta_apps.jpg" alt="Meta Social Ecosystem" id="kp-img-3" />
+          <div class="kp-collage-item featured" id="kp-img-container">
+            <img src="" alt="Entity" id="kp-img-1" style="display:none;" />
           </div>
         </div>
 
         <div class="kp-body">
-          <p class="kp-description" id="kp-description">
-            Meta Platforms, Inc., headquartered in Menlo Park, California, is an American multinational technology company and is one of the Big Tech companies. Meta owns and operates several...
-            <a href="https://en.wikipedia.org/wiki/Meta_Platforms" target="_blank" id="kp-wiki-link">Wikipedia</a>
-          </p>
+          <p class="kp-description" id="kp-description"></p>
 
-          <table class="kp-attrs-table">
-            <tbody>
-              <tr>
-                <td class="kp-attr-label">Founders</td>
-                <td class="kp-attr-value" id="kp-founders">
-                  <a href="#">Mark Zuckerberg</a>, <a href="#">Eduardo Saverin</a>, <a href="#">Dustin Moskovitz</a>, <a href="#">Chris Hughes</a>
-                </td>
-              </tr>
-              <tr>
-                <td class="kp-attr-label">CEO</td>
-                <td class="kp-attr-value" id="kp-ceo">
-                  <a href="#">Mark Zuckerberg</a> (Jul 2004–)
-                </td>
-              </tr>
-              <tr>
-                <td class="kp-attr-label">Headquarters</td>
-                <td class="kp-attr-value" id="kp-hq">
-                  Menlo Park, California, United States
-                </td>
-              </tr>
-              <tr>
-                <td class="kp-attr-label">Products</td>
-                <td class="kp-attr-value" id="kp-products">
-                  Facebook, Instagram, WhatsApp, Messenger, Threads, Meta Quest
-                </td>
-              </tr>
+          <table class="kp-attrs-table" id="kp-attrs-table">
+            <tbody id="kp-attrs-tbody">
             </tbody>
           </table>
         </div>
@@ -922,9 +842,9 @@
 
     <div class="drawer-footer">
       <div class="quick-chips-row">
-        <button class="chat-chip" data-task="Search and buy high-end laptop on ElectroTech">🛒 Buy laptop</button>
+        <button class="chat-chip" data-task="Search and summarize the latest tech news">📰 Tech news</button>
         <button class="chat-chip" data-task="Navigate to Facebook and inspect login form">🔵 Open Facebook</button>
-        <button class="chat-chip" data-task="Summarize latest technology and AI research">🔬 Tech news</button>
+        <button class="chat-chip" data-task="Search YouTube for cybersecurity tutorials">🎥 Security videos</button>
       </div>
 
       <div class="drawer-input-row">
@@ -950,118 +870,151 @@
       }
     }
 
-    // Dynamic SERP data generator
-    const ENTITY_DATA = {
-      facebook: {
-        title: 'Facebook - log in or sign up',
-        url: 'https://www.facebook.com',
-        sourceName: 'Facebook',
-        snippet: 'Create an account or <b>log into Facebook</b>. Connect with friends, family and other people you know. Share photos and videos, send messages and get updates.',
-        sitelinks: [
-          { title: 'Log in', url: 'https://www.facebook.com/login', snippet: 'Log in to Facebook to start sharing and connecting with your ...' },
-          { title: 'Posts', url: 'https://www.facebook.com', snippet: 'When it comes to the perfect pet costume, Facebook ...' },
-          { title: 'Forgot password?', url: 'https://www.facebook.com/recover/initiate', snippet: 'Log into Facebook to start sharing and connecting with your ...' },
-          { title: 'Create new account', url: 'https://www.facebook.com/r.php', snippet: 'Sign up for Facebook and find your friends. Create an account to ...' },
-          { title: 'Facebook login', url: 'https://www.facebook.com/login', snippet: '' }
-        ],
-        kp: {
-          title: 'Meta',
-          badge: 'Meta',
-          img1: '/assets/meta_vr.jpg',
-          img2: '/assets/meta_desk.jpg',
-          img3: '/assets/meta_apps.jpg',
-          desc: 'Meta Platforms, Inc., headquartered in Menlo Park, California, is an American multinational technology company and is one of the Big Tech companies. Meta owns and operates several...',
-          wikiUrl: 'https://en.wikipedia.org/wiki/Meta_Platforms',
-          founders: 'Mark Zuckerberg, Eduardo Saverin, Dustin Moskovitz, Chris Hughes',
-          ceo: 'Mark Zuckerberg (Jul 2004–)',
-          hq: 'Menlo Park, California, United States',
-          products: 'Facebook, Instagram, WhatsApp, Messenger, Threads, Meta Quest'
-        }
-      },
-      youtube: {
-        title: 'YouTube: Watch, Listen, Stream',
-        url: 'https://www.youtube.com',
-        sourceName: 'YouTube',
-        snippet: 'Enjoy the videos and music you love, upload original content, and share it all with friends, family, and the world on <b>YouTube</b>.',
-        sitelinks: [
-          { title: 'Trending', url: 'https://www.youtube.com/feed/trending', snippet: 'See what the world is watching in real time.' },
-          { title: 'Subscriptions', url: 'https://www.youtube.com/feed/subscriptions', snippet: 'Catch up with your favorite channels and creators.' },
-          { title: 'YouTube Music', url: 'https://music.youtube.com', snippet: 'Stream official songs, albums, playlists, and music videos.' }
-        ],
-        kp: {
-          title: 'YouTube',
-          badge: 'YouTube',
-          img1: '/assets/meta_apps.jpg',
-          img2: '/assets/meta_vr.jpg',
-          img3: '/assets/meta_desk.jpg',
-          desc: 'YouTube is an American online video sharing and social media platform owned by Google. Accessible worldwide, it was launched on February 14, 2005...',
-          wikiUrl: 'https://en.wikipedia.org/wiki/YouTube',
-          founders: 'Steve Chen, Chad Hurley, Jawed Karim',
-          ceo: 'Neal Mohan (Feb 2023–)',
-          hq: 'San Bruno, California, United States',
-          products: 'YouTube Premium, YouTube Music, YouTube Kids, YouTube TV'
-        }
-      },
-      fsferdows: {
-        title: 'FS FERDOWS | Senior Design Engineer & Spatial UI Architect',
-        url: 'https://fsferdows.com',
-        sourceName: 'FS Ferdows',
-        snippet: 'Remote Senior Design Engineer & AI Architect delivering high-performance spatial UI design systems, fullstack React / Next.js web architectures, and autonomous AI agent systems.',
-        sitelinks: [
-          { title: 'Spatial UI & Architecture', url: 'https://fsferdows.com', snippet: 'Empirical research and design systems across 47 production software products.' },
-          { title: 'Published Scientific Papers', url: 'https://fsferdows.com', snippet: 'Zenodo Record 21801334 | DOI: 10.5281/zenodo.21801334' },
-          { title: 'Resume & Contact', url: 'https://fsferdows.com', snippet: 'Hire Remote for US, UK, EU, and global engineering challenges.' }
-        ],
-        kp: {
-          title: 'FS FERDOWS',
-          badge: 'Architect',
-          img1: '/assets/meta_vr.jpg',
-          img2: '/assets/meta_desk.jpg',
-          img3: '/assets/meta_apps.jpg',
-          desc: 'F. S. Ferdows is a Senior Design Engineer, Spatial UI Architect, and empirical researcher specializing in token-enforced design systems, autonomous AI agents, and high-performance spatial computing.',
-          wikiUrl: 'https://fsferdows.com',
-          founders: 'F. S. Ferdows',
-          ceo: 'Lead Principal Architect',
-          hq: 'Dhaka, Bangladesh & Remote Global',
-          products: 'Spatial UI Design Systems, Autonomous Agent Architecture, Braver Browser'
-        }
+    // Dynamic Live SERP Loader
+    async function loadSearchData() {
+      const params = new URLSearchParams(window.location.search);
+      const query = (params.get('q') || '').trim();
+      document.getElementById('serp-input').value = query;
+      document.title = `${query || 'Search'} - Braver Search`;
+
+      const resultsColumn = document.getElementById('dynamic-results-list');
+      const loadingIndicator = document.getElementById('results-loading');
+      const kpColumn = document.getElementById('knowledge-column');
+      const serpContainer = document.getElementById('serp-main-container');
+
+      if (!query) {
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        resultsColumn.innerHTML = `<div style="padding: 40px; color: #9aa0a6; font-size: 15px;">Please enter a search term above to explore real web results.</div>`;
+        return;
       }
-    };
 
-    // Parse URL parameter
-    const params = new URLSearchParams(window.location.search);
-    const query = (params.get('q') || 'facebook').trim();
-    document.getElementById('serp-input').value = query;
-    document.title = `${query} - Braver Search`;
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
 
-    // Apply entity data if matching
-    const key = query.toLowerCase().replace(/[^a-z]/g, '');
-    const data = ENTITY_DATA[key] || {
-      title: `${query} - Official Site & Information`,
-      url: `https://${key || 'example'}.com`,
-      sourceName: query.charAt(0).toUpperCase() + query.slice(1),
-      snippet: `Explore all top ranked results, documentation, and live community discussions for <b>${query}</b> across the open web with Braver's high-speed index.`,
-      sitelinks: [
-        { title: 'Overview & Features', url: `https://${key || 'example'}.com`, snippet: `Detailed guide and features for ${query}.` },
-        { title: 'Community & Docs', url: `https://${key || 'example'}.com`, snippet: `Explore guides and tutorials.` }
-      ],
-      kp: ENTITY_DATA.facebook.kp
-    };
+        let html = '';
 
-    document.getElementById('res-source-name').textContent = data.sourceName;
-    document.getElementById('res-source-url').textContent = data.url;
-    document.getElementById('res-title').textContent = data.title;
-    document.getElementById('res-title').href = data.url;
-    document.getElementById('res-snippet').innerHTML = data.snippet;
+        // 1. Primary Top Result
+        if (data.primary) {
+          const p = data.primary;
+          const domain = p.domain || (new URL(p.url).hostname);
+          const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`;
 
-    if (data.kp) {
-      document.getElementById('kp-title').textContent = data.kp.title;
-      document.getElementById('kp-description').innerHTML = `${data.kp.desc} <a href="${data.kp.wikiUrl}" target="_blank">Wikipedia</a>`;
-      document.getElementById('kp-founders').textContent = data.kp.founders;
-      document.getElementById('kp-ceo').textContent = data.kp.ceo;
-      document.getElementById('kp-hq').textContent = data.kp.hq;
-      document.getElementById('kp-products').textContent = data.kp.products;
+          html += `
+            <article class="result-card" id="main-result-card">
+              <div class="result-source-row" onclick="navigateToUrl('${p.url}')">
+                <div class="source-favicon">
+                  <img src="${faviconUrl}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><text y=%2218%22 font-size=%2218%22>🌐</text></svg>'" width="16" height="16" alt="favicon" />
+                </div>
+                <div class="source-meta">
+                  <span class="source-name">${p.domain || domain}</span>
+                  <span class="source-url">${p.url}</span>
+                </div>
+                <div class="source-more-btn">⋮</div>
+              </div>
+
+              <a href="${p.url}" class="result-title" onclick="event.preventDefault(); navigateToUrl('${p.url}');">
+                ${p.title}
+              </a>
+
+              <p class="result-snippet">${p.snippet}</p>
+
+              ${p.sitelinks && p.sitelinks.length > 0 ? `
+                <div class="sitelinks-list">
+                  ${p.sitelinks.map(s => `
+                    <div class="sitelink-item">
+                      <a href="${s.url}" class="sitelink-header" onclick="event.preventDefault(); navigateToUrl('${s.url}');">
+                        <span class="sitelink-title">${s.title}</span>
+                        <span class="sitelink-arrow">›</span>
+                      </a>
+                      ${s.snippet ? `<p class="sitelink-snippet">${s.snippet}</p>` : ''}
+                    </div>
+                  `).join('')}
+                  <a href="${p.url}" class="sitelinks-more-link" onclick="event.preventDefault(); navigateToUrl('${p.url}');">
+                    More results from ${domain} »
+                  </a>
+                </div>
+              ` : ''}
+            </article>
+          `;
+        }
+
+        // 2. Secondary Organic Results
+        if (data.results && data.results.length > 0) {
+          for (const item of data.results) {
+            const domain = item.domain || (new URL(item.url).hostname);
+            const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`;
+            html += `
+              <article class="result-card secondary-result">
+                <div class="result-source-row" onclick="navigateToUrl('${item.url}')">
+                  <div class="source-favicon">
+                    <img src="${faviconUrl}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><text y=%2218%22 font-size=%2218%22>🌐</text></svg>'" width="16" height="16" alt="favicon" />
+                  </div>
+                  <div class="source-meta">
+                    <span class="source-name">${domain}</span>
+                    <span class="source-url">${item.url}</span>
+                  </div>
+                  <div class="source-more-btn">⋮</div>
+                </div>
+
+                <a href="${item.url}" class="result-title" onclick="event.preventDefault(); navigateToUrl('${item.url}');">
+                  ${item.title}
+                </a>
+
+                <p class="result-snippet">${item.snippet}</p>
+              </article>
+            `;
+          }
+        }
+
+        resultsColumn.innerHTML = html;
+
+        // 3. Knowledge Panel (Only display if real KP data exists)
+        if (data.kp && (data.kp.desc || data.kp.title)) {
+          kpColumn.classList.remove('hidden');
+          serpContainer.classList.remove('no-kp');
+          document.getElementById('kp-title').textContent = data.kp.title || query;
+          document.getElementById('kp-brand-name').textContent = data.kp.badge || 'Topic';
+
+          const img1 = document.getElementById('kp-img-1');
+          if (data.kp.thumbnail) {
+            img1.src = data.kp.thumbnail;
+            img1.style.display = 'block';
+          } else {
+            img1.style.display = 'none';
+          }
+
+          const wikiLink = data.kp.wikiUrl ? ` <a href="${data.kp.wikiUrl}" target="_blank" rel="noopener">Wikipedia</a>` : '';
+          document.getElementById('kp-description').innerHTML = `${data.kp.desc || ''}${wikiLink}`;
+
+          const tbody = document.getElementById('kp-attrs-tbody');
+          tbody.innerHTML = '';
+          if (data.kp.founders) {
+            tbody.innerHTML += `<tr><td class="kp-attr-label">Founders</td><td class="kp-attr-value">${data.kp.founders}</td></tr>`;
+          }
+          if (data.kp.ceo) {
+            tbody.innerHTML += `<tr><td class="kp-attr-label">CEO</td><td class="kp-attr-value">${data.kp.ceo}</td></tr>`;
+          }
+          if (data.kp.hq) {
+            tbody.innerHTML += `<tr><td class="kp-attr-label">Headquarters</td><td class="kp-attr-value">${data.kp.hq}</td></tr>`;
+          }
+          if (data.kp.products) {
+            tbody.innerHTML += `<tr><td class="kp-attr-label">Products</td><td class="kp-attr-value">${data.kp.products}</td></tr>`;
+          }
+        } else {
+          kpColumn.classList.add('hidden');
+          serpContainer.classList.add('no-kp');
+        }
+
+      } catch (err) {
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        resultsColumn.innerHTML = `<div style="color: #ef4444; padding: 20px;">Error fetching search results: ${err.message}</div>`;
+      }
     }
+
+    // Initialize search data
+    loadSearchData();
 
     // Form submit handler
     document.getElementById('serp-search-form').addEventListener('submit', (e) => {
