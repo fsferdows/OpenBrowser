@@ -645,22 +645,23 @@
     }).catch(() => {});
   }, { passive: false });
 
-  // Native Login Window button
+  // In-Browser Embedded Sign In Handler (Keeps 100% inside Braver)
   dom.btnLoginWindow?.addEventListener('click', () => {
     let loginUrl = 'https://accounts.google.com/signin';
     if (state.activeUrl && (state.activeUrl.includes('youtube.com') || state.activeUrl.includes('facebook.com') || state.activeUrl.includes('github.com') || state.activeUrl.includes('x.com'))) {
       loginUrl = state.activeUrl;
     }
-    appendLog('system', `🔓 Opening Native Login Window for: ${loginUrl}`);
+    appendLog('system', `🔑 Loading in-browser sign-in screen: ${loginUrl}`);
+    setViewportMode('cdp');
     fetch(`/api/chrome/login-window?url=${encodeURIComponent(loginUrl)}`)
       .then(res => res.json())
       .then(data => {
-        setViewportMode('cdp');
-        appendLog('agent', `🦁 ${data.message || 'Login window opened!'}`);
-        alert(data.message || 'Login Window opened. Complete login in Google Chrome, then return to Braver. All cookies and credentials sync automatically!');
+        appendLog('agent', `🦁 ${data.message || 'Ready for sign-in directly in Braver viewport.'}`);
+        dom.cdpLiveStreamContainer?.focus();
+        setTimeout(refreshCdpStream, 300);
       })
       .catch(err => {
-        appendLog('error', `Login window error: ${err.message}`);
+        appendLog('error', `Sign-in load error: ${err.message}`);
       });
   });
 
