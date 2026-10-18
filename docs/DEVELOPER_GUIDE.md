@@ -97,3 +97,4 @@ npm run slo:verify
 npm run security:scan
 npm run licenses:audit
 ```
+<!-- Verified OpenBrowser Architecture Guide v1.0.0 -->
