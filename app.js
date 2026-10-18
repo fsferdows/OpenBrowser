@@ -11,7 +11,7 @@
   const state = {
     activeTabId: 'newtab',
     activeUrl: 'brave://newtab',
-    activeScenario: 'catalog',
+    activeScenario: 'newtab',
     currentLanguage: 'en',
     shieldsActive: true,
     agentRunning: false,
@@ -96,30 +96,6 @@
       scenario: 'newtab',
       hostname: 'brave.internal',
       trackersCount: 0
-    },
-    catalog: {
-      title: 'ElectroTech Catalog',
-      url: 'https://shop.example.com/catalog.html',
-      iframeSrc: '/catalog.html',
-      scenario: 'catalog',
-      hostname: 'shop.example.com',
-      trackersCount: 3
-    },
-    form: {
-      title: 'Developer Portal',
-      url: 'https://portal.example.com/form.html',
-      iframeSrc: '/form.html',
-      scenario: 'form',
-      hostname: 'portal.example.com',
-      trackersCount: 2
-    },
-    handoff: {
-      title: 'Security Gate',
-      url: 'https://auth.example.com/auth-hand-off.html',
-      iframeSrc: '/auth-hand-off.html',
-      scenario: 'handoff',
-      hostname: 'auth.example.com',
-      trackersCount: 2
     }
   };
 
@@ -258,7 +234,10 @@
     reaToolsCount: document.getElementById('rea-tools-count'),
     reaTrackersCount: document.getElementById('rea-trackers-count'),
     reaMcpTools: document.getElementById('rea-mcp-tools'),
-    reaAxTree: document.getElementById('rea-ax-tree')
+    reaAxTree: document.getElementById('rea-ax-tree'),
+
+    // HackSuite
+    btnToggleHacksuite: document.getElementById('btn-toggle-hacksuite')
   };
 
   // Close all open popovers
@@ -327,8 +306,39 @@
     }
   });
 
+  let tabIdCounter = 1;
+  function createNewTab(title = 'Brave | New Tab', url = 'brave://newtab', iframeSrc = '/newtab.html') {
+    tabIdCounter++;
+    const tabId = `tab-${tabIdCounter}`;
+    TAB_DATA[tabId] = {
+      title,
+      url,
+      iframeSrc,
+      scenario: 'newtab',
+      hostname: 'brave.internal',
+      trackersCount: 0
+    };
+
+    const newBtn = document.createElement('button');
+    newBtn.className = 'tab-item';
+    newBtn.setAttribute('role', 'tab');
+    newBtn.setAttribute('aria-selected', 'false');
+    newBtn.setAttribute('data-tab-id', tabId);
+    newBtn.setAttribute('data-url', iframeSrc);
+    newBtn.innerHTML = `
+      <span class="tab-icon">🦁</span>
+      <span class="tab-title">${title}</span>
+      <span class="tab-audio-icon hidden" title="Playing Audio">🔊</span>
+      <span class="tab-close" title="Close Tab">×</span>
+    `;
+
+    dom.btnAddTab.before(newBtn);
+    switchTab(tabId);
+    return tabId;
+  }
+
   dom.btnAddTab.addEventListener('click', () => {
-    switchTab('newtab');
+    createNewTab();
   });
 
   // Omnibox Navigation & Real-Time Dynamic Autocomplete
@@ -813,6 +823,10 @@
 
   dom.btnToggleRea.addEventListener('click', () => {
     switchDockPanel('rea');
+  });
+
+  dom.btnToggleHacksuite?.addEventListener('click', () => {
+    switchDockPanel('hacksuite');
   });
 
   // Emergency Stop Kill Switch
@@ -1334,8 +1348,253 @@
     } catch (_) {}
   }
 
+  // ==========================================================================
+  // 11. HackSuite: Pentesting & Security Recon Workstation Controller
+  // ==========================================================================
+  function initHackSuite() {
+    // 1. Subnavigation tabs
+    const subnavBtns = document.querySelectorAll('.hacksuite-subnav-btn');
+    const subpanels = document.querySelectorAll('.hacksuite-subpanel');
+
+    subnavBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetPanel = btn.getAttribute('data-subpanel');
+        subnavBtns.forEach(b => b.classList.remove('active'));
+        subpanels.forEach(p => p.classList.remove('active'));
+
+        btn.classList.add('active');
+        const activeSubpanel = document.getElementById(`subpanel-${targetPanel}`);
+        if (activeSubpanel) activeSubpanel.classList.add('active');
+      });
+    });
+
+    // 2. Repeater Panel Logic
+    const btnSendReq = document.getElementById('btn-sec-send-req');
+    const methodSelect = document.getElementById('sec-req-method');
+    const urlInput = document.getElementById('sec-req-url');
+    const headersText = document.getElementById('sec-req-headers');
+    const bodyText = document.getElementById('sec-req-body');
+
+    const resStatus = document.getElementById('sec-res-status');
+    const resTime = document.getElementById('sec-res-time');
+    const resHeaders = document.getElementById('sec-res-headers');
+    const resBody = document.getElementById('sec-res-body');
+
+    btnSendReq?.addEventListener('click', async () => {
+      const method = methodSelect?.value || 'GET';
+      const targetUrl = urlInput?.value?.trim();
+      if (!targetUrl) return;
+
+      let headers = {};
+      try {
+        const rawH = headersText?.value || '';
+        const lines = rawH.split('\n');
+        for (const line of lines) {
+          const colonIdx = line.indexOf(':');
+          if (colonIdx > 0) {
+            const k = line.slice(0, colonIdx).trim();
+            const v = line.slice(colonIdx + 1).trim();
+            if (k) headers[k] = v;
+          }
+        }
+      } catch (_) {}
+
+      const body = bodyText?.value || undefined;
+
+      if (resStatus) resStatus.textContent = 'Executing...';
+      if (resTime) resTime.textContent = '...';
+      if (resHeaders) resHeaders.textContent = 'Waiting for response...';
+      if (resBody) resBody.textContent = 'Sending raw HTTP request via Node.js backend...';
+
+      try {
+        const startTime = Date.now();
+        const res = await fetch('/api/sec/repeater', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ method, url: targetUrl, headers, body })
+        });
+        const data = await res.json();
+        const elapsed = data.latencyMs || (Date.now() - startTime);
+
+        if (resStatus) {
+          resStatus.textContent = `Status: ${data.status} ${data.statusText || ''}`;
+          resStatus.style.background = (data.status >= 200 && data.status < 400) ? 'rgba(74, 222, 128, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+          resStatus.style.color = (data.status >= 200 && data.status < 400) ? '#4ade80' : '#f87171';
+        }
+        if (resTime) resTime.textContent = `${elapsed}ms`;
+
+        if (resHeaders) {
+          resHeaders.textContent = Object.entries(data.headers || {})
+            .map(([k, v]) => `${k}: ${v}`).join('\n') || '(No headers returned)';
+        }
+
+        if (resBody) {
+          resBody.textContent = typeof data.data === 'string' ? data.data : JSON.stringify(data.data, null, 2);
+        }
+      } catch (err) {
+        if (resStatus) resStatus.textContent = 'Error';
+        if (resBody) resBody.textContent = `Failed: ${err.message}`;
+      }
+    });
+
+    // 3. Attack Surface Analyzer
+    const btnRunAnalysis = document.getElementById('btn-sec-run-analysis');
+    const targetAnalysisUrl = document.getElementById('sec-target-url');
+    const analysisResults = document.getElementById('sec-analysis-results');
+
+    btnRunAnalysis?.addEventListener('click', async () => {
+      const url = targetAnalysisUrl?.value?.trim() || state.activeUrl || 'http://localhost:3000';
+      if (analysisResults) {
+        analysisResults.innerHTML = '<div style="color: #94a3b8; padding: 20px;">Analyzing attack surface and extracting forms/inputs/headers...</div>';
+      }
+
+      try {
+        const res = await fetch('/api/sec/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetUrl: url })
+        });
+        const report = await res.json();
+
+        let formsHtml = '';
+        if (report.forms && report.forms.length > 0) {
+          formsHtml = `
+            <div style="margin-top: 12px;">
+              <strong style="color: #38bdf8;">Extracted Forms (${report.forms.length}):</strong>
+              ${report.forms.map((f, i) => `
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 8px; margin-top: 6px; font-family: monospace; font-size: 11px;">
+                  <div>Method: <span style="color:#4ade80;">${f.method}</span> | Action: <code>${f.action}</code></div>
+                  <div style="margin-top: 4px; color: #94a3b8;">Inputs: ${f.inputs.map(inp => `${inp.name || inp.type} (${inp.type})`).join(', ') || 'None'}</div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        } else {
+          formsHtml = '<div style="color: #94a3b8; margin-top: 8px;">No HTML forms detected on this page.</div>';
+        }
+
+        let headersHtml = '';
+        if (report.missingSecurityHeaders && report.missingSecurityHeaders.length > 0) {
+          headersHtml = `
+            <div style="margin-top: 12px;">
+              <strong style="color: #f87171;">Missing Security Headers (${report.missingSecurityHeaders.length}):</strong>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
+                ${report.missingSecurityHeaders.map(h => `<span style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #f87171; padding: 2px 8px; border-radius: 4px; font-size: 11px;">${h}</span>`).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        if (analysisResults) {
+          analysisResults.innerHTML = `
+            <div style="padding: 12px; font-size: 13px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 600; color: #fff;">Target: ${report.targetUrl}</span>
+                <span style="background: rgba(56,189,248,0.15); color: #38bdf8; padding: 2px 8px; border-radius: 12px; font-size: 11px;">Elements: ${report.stats?.elements || 0}</span>
+              </div>
+              ${headersHtml}
+              ${formsHtml}
+            </div>
+          `;
+        }
+      } catch (err) {
+        if (analysisResults) {
+          analysisResults.innerHTML = `<div style="color: #ef4444; padding: 12px;">Analysis failed: ${err.message}</div>`;
+        }
+      }
+    });
+
+    // 4. Payloads & Decoders Logic
+    document.querySelectorAll('.payload-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const payload = chip.getAttribute('data-payload') || chip.textContent.trim();
+        navigator.clipboard?.writeText(payload);
+        const origText = chip.textContent;
+        chip.textContent = 'Copied!';
+        setTimeout(() => { chip.textContent = origText; }, 1200);
+      });
+    });
+
+    const secEncoderInput = document.getElementById('sec-encoder-input');
+    const secEncoderOutput = document.getElementById('sec-decoded-output');
+
+    document.querySelectorAll('.btn-sec-encode').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.getAttribute('data-action');
+        const inputVal = secEncoderInput?.value || '';
+        if (!inputVal) return;
+
+        let res = '';
+        try {
+          if (action === 'b64-enc') res = btoa(unescape(encodeURIComponent(inputVal)));
+          else if (action === 'b64-dec') res = decodeURIComponent(escape(atob(inputVal.trim())));
+          else if (action === 'url-enc') res = encodeURIComponent(inputVal);
+          else if (action === 'url-dec') res = decodeURIComponent(inputVal);
+          else if (action === 'jwt-dec') {
+            const parts = inputVal.trim().split('.');
+            if (parts.length >= 2) {
+              const h = JSON.parse(decodeURIComponent(escape(atob(parts[0]))));
+              const p = JSON.parse(decodeURIComponent(escape(atob(parts[1]))));
+              res = JSON.stringify({ header: h, payload: p }, null, 2);
+            } else {
+              res = 'Invalid JWT structure (must have 3 dot-separated parts)';
+            }
+          }
+        } catch (err) {
+          res = `Decode Error: ${err.message}`;
+        }
+        if (secEncoderOutput) secEncoderOutput.textContent = res;
+      });
+    });
+
+    // 5. Heretic SecOps Chat Copilot
+    const btnSecChat = document.getElementById('btn-sec-send-chat');
+    const secChatInput = document.getElementById('sec-chat-input');
+    const secChatLogs = document.getElementById('sec-copilot-logs');
+
+    async function sendSecOpsChat() {
+      const msg = secChatInput?.value?.trim();
+      if (!msg) return;
+      secChatInput.value = '';
+
+      const userBubble = document.createElement('div');
+      userBubble.className = 'chat-bubble user';
+      userBubble.style.alignSelf = 'flex-end';
+      userBubble.textContent = msg;
+      secChatLogs?.appendChild(userBubble);
+      if (secChatLogs) secChatLogs.scrollTop = secChatLogs.scrollHeight;
+
+      const aiBubble = document.createElement('div');
+      aiBubble.className = 'chat-bubble assistant';
+      aiBubble.innerHTML = '<em>Consulting Heretic Refusal-Free SecOps Engine...</em>';
+      secChatLogs?.appendChild(aiBubble);
+      if (secChatLogs) secChatLogs.scrollTop = secChatLogs.scrollHeight;
+
+      try {
+        const res = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: msg, context: { mode: 'hacksuite', url: state.activeUrl } })
+        });
+        const data = await res.json();
+        aiBubble.innerHTML = `
+          <strong>⚡ Heretic SecOps</strong>
+          <p style="margin-top: 4px; white-space: pre-wrap;">${data.reply || 'No analysis available.'}</p>
+        `;
+      } catch (err) {
+        aiBubble.innerHTML = `<span style="color:#ef4444;">SecOps Gateway error: ${err.message}</span>`;
+      }
+      if (secChatLogs) secChatLogs.scrollTop = secChatLogs.scrollHeight;
+    }
+
+    btnSecChat?.addEventListener('click', sendSecOpsChat);
+    secChatInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendSecOpsChat();
+    });
+  }
+
   // Initial Boot
   switchTab('newtab');
-  runReaInspection('catalog');
+  initHackSuite();
   initRealtimeStream();
 })();

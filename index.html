@@ -25,24 +25,6 @@
           <span class="tab-audio-icon hidden" title="Playing Audio">🔊</span>
           <span class="tab-close" title="Close Tab">×</span>
         </button>
-        <button class="tab-item" role="tab" aria-selected="false" data-tab-id="catalog" data-url="/catalog.html">
-          <span class="tab-icon">🛒</span>
-          <span class="tab-title">ElectroTech Catalog</span>
-          <span class="tab-audio-icon hidden" title="Playing Audio">🔊</span>
-          <span class="tab-close" title="Close Tab">×</span>
-        </button>
-        <button class="tab-item" role="tab" aria-selected="false" data-tab-id="form" data-url="/form.html">
-          <span class="tab-icon">📝</span>
-          <span class="tab-title">Developer Portal</span>
-          <span class="tab-audio-icon hidden" title="Playing Audio">🔊</span>
-          <span class="tab-close" title="Close Tab">×</span>
-        </button>
-        <button class="tab-item" role="tab" aria-selected="false" data-tab-id="handoff" data-url="/auth-hand-off.html">
-          <span class="tab-icon">🛡️</span>
-          <span class="tab-title">Security Gate</span>
-          <span class="tab-audio-icon hidden" title="Playing Audio">🔊</span>
-          <span class="tab-close" title="Close Tab">×</span>
-        </button>
         <button class="tab-add-btn" id="btn-add-tab" title="Open New Tab" aria-label="New Tab">+</button>
       </nav>
 
@@ -91,19 +73,7 @@
         <div class="search-autocomplete hidden" id="search-autocomplete">
           <div class="autocomplete-item search-action" id="autocomplete-search-item">
             <span class="auto-icon">🦁</span>
-            <span class="auto-label">Search Brave for "<strong id="autocomplete-query">...</strong>"</span>
-          </div>
-          <div class="autocomplete-item site-action" data-url="/catalog.html">
-            <span class="auto-icon">🛒</span>
-            <span class="auto-label">ElectroTech Electronics Store — shop.example.com</span>
-          </div>
-          <div class="autocomplete-item site-action" data-url="/form.html">
-            <span class="auto-icon">📝</span>
-            <span class="auto-label">Developer Cloud Registration — portal.example.com</span>
-          </div>
-          <div class="autocomplete-item site-action" data-url="/auth-hand-off.html">
-            <span class="auto-icon">🛡️</span>
-            <span class="auto-label">Security Gate Verification — auth.example.com</span>
+            <span class="auto-label">Search Braver for "<strong id="autocomplete-query">...</strong>"</span>
           </div>
         </div>
       </div>
@@ -117,6 +87,10 @@
         <button class="action-btn" id="btn-toggle-rea" title="REA Deep Site Intelligence">
           <span class="btn-icon">🔬</span>
           <span class="btn-text">REA</span>
+        </button>
+        <button class="action-btn hacksuite-toggle" id="btn-toggle-hacksuite" title="HackSuite Pentest & Recon Workstation">
+          <span class="btn-icon">⚡</span>
+          <span class="btn-text">HackSuite</span>
         </button>
         <button class="action-btn" id="btn-toggle-lang" title="Switch Language">
           <span class="btn-icon">🌐</span>
@@ -145,11 +119,9 @@
       <button class="bookmark-chip live-web" data-url="google" data-live="true">🟢 Google</button>
       <button class="bookmark-chip live-web" data-url="https://news.ycombinator.com" data-live="true">📰 Hacker News</button>
       <button class="bookmark-chip live-web" data-url="https://en.wikipedia.org/wiki/Brave_(web_browser)" data-live="true">🌐 Wikipedia</button>
-      <div class="bookmark-separator"></div>
-      <button class="bookmark-chip" data-url="/catalog.html">🛒 ElectroTech</button>
-      <button class="bookmark-chip" data-url="/form.html">📝 Dev Portal</button>
-      <button class="bookmark-chip" data-url="/auth-hand-off.html">🛡️ Security Gate</button>
-      <button class="bookmark-chip" data-url="/catalog.html" data-scenario="repair">🔧 Self-Repair</button>
+      <button class="bookmark-chip live-web" data-url="https://github.com" data-live="true">🐙 GitHub</button>
+      <button class="bookmark-chip live-web" data-url="https://reddit.com" data-live="true">💬 Reddit</button>
+      <button class="bookmark-chip live-web" data-url="https://x.com" data-live="true">🐦 X / Twitter</button>
     </div>
   </header>
 
@@ -526,6 +498,9 @@
         <button class="dock-btn active" data-panel="copilot" title="Autonomous Agent Copilot" aria-label="Agent Copilot">
           <span>🦁</span>
         </button>
+        <button class="dock-btn" data-panel="hacksuite" id="dock-btn-hacksuite" title="HackSuite Pentest & Recon Workstation" aria-label="HackSuite">
+          <span>⚡</span>
+        </button>
         <button class="dock-btn" data-panel="rea" title="REA Reverse Engineering" aria-label="REA Inspector">
           <span>🔬</span>
         </button>
@@ -578,19 +553,19 @@
               <button class="run-task-btn" id="btn-run-agent" aria-label="Execute Goal">▶ Run</button>
             </div>
 
-            <!-- Scenario Preset Chips -->
+            <!-- Autonomous Research & Navigation Chips -->
             <div class="scenario-chips">
-              <button class="chip" data-scenario="catalog" data-goal="Find Noise-Canceling Headphones and add to cart">
-                🛒 Catalog Order
+              <button class="chip" data-scenario="live" data-url="https://news.ycombinator.com" data-goal="Scrape top trending tech stories and summarize them">
+                📰 Tech News Intel
               </button>
-              <button class="chip" data-scenario="form" data-goal="Register new developer account with verified email">
-                📝 Developer Form
+              <button class="chip" data-scenario="live" data-url="https://en.wikipedia.org" data-goal="Research quantum computing breakthroughs and key principles">
+                🌐 Wiki Deep Research
               </button>
-              <button class="chip" data-scenario="handoff" data-goal="Navigate security gate with human hand-off checkpoint">
-                🛡️ CAPTCHA Gate
+              <button class="chip" data-scenario="live" data-url="https://github.com" data-goal="Inspect open-source trending repositories and analyze code security">
+                🐙 GitHub Recon
               </button>
-              <button class="chip" data-scenario="repair" data-goal="Demonstrate autonomous self-repair on broken selector">
-                🔧 Self-Repair Demo
+              <button class="chip" data-scenario="live" data-url="https://www.youtube.com" data-goal="Search YouTube for latest cybersecurity tutorials and extract video titles">
+                🎥 Video Intelligence
               </button>
             </div>
           </div>
@@ -613,6 +588,168 @@
           <div class="skill-save-footer hidden" id="skill-save-box">
             <span>Workflow successfully verified!</span>
             <button class="btn-save-skill" id="btn-save-skill">Save as Learned Skill v1.0.0</button>
+          </div>
+        </section>
+
+        <!-- Panel: HackSuite Security Workstation -->
+        <section class="sidebar-panel" id="panel-hacksuite" aria-label="HackSuite Workstation">
+          <header class="panel-header">
+            <div class="panel-headline">
+              <span class="status-pill active" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">⚡ HACKSUITE</span>
+              <h3>Security &amp; Pentest Studio</h3>
+            </div>
+          </header>
+
+          <!-- Subnav Tabs -->
+          <div class="hacksuite-subnav" id="hacksuite-subnav">
+            <button class="hack-subnav-btn active" data-subpanel="repeater">📡 Repeater</button>
+            <button class="hack-subnav-btn" data-subpanel="posture">🔍 Attack Surface</button>
+            <button class="hack-subnav-btn" data-subpanel="payloads">🧪 Payloads &amp; Decoders</button>
+            <button class="hack-subnav-btn" data-subpanel="heretic">🤖 Heretic Agent</button>
+          </div>
+
+          <!-- Subpanel 1: HTTP Repeater -->
+          <div class="hack-subpanel active" id="subpanel-repeater">
+            <div class="repeater-row">
+              <select class="repeater-method-select" id="rep-method">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+                <option value="OPTIONS">OPTIONS</option>
+                <option value="HEAD">HEAD</option>
+                <option value="PATCH">PATCH</option>
+              </select>
+              <input type="text" class="repeater-url-input" id="rep-url" placeholder="https://target.com/api/v1/..." value="http://localhost:3000/api/status" />
+              <button class="btn-send-repeater" id="btn-rep-send">⚡ Send</button>
+            </div>
+
+            <div class="repeater-presets">
+              <span style="font-size: 11px; color: var(--text-muted); align-self: center;">Presets:</span>
+              <button class="preset-chip" id="preset-cors">CORS Probe</button>
+              <button class="preset-chip" id="preset-json">JSON Body</button>
+              <button class="preset-chip" id="preset-jwt">Bearer Auth</button>
+              <button class="preset-chip" id="preset-active-url">Use Active Tab</button>
+            </div>
+
+            <div>
+              <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Custom Request Headers (JSON or Key: Value)</label>
+              <textarea class="hack-textarea" id="rep-headers" rows="2" placeholder='{"User-Agent": "BraverSec/1.0", "Accept": "*/*"}'></textarea>
+            </div>
+
+            <div>
+              <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Request Body</label>
+              <textarea class="hack-textarea" id="rep-body" rows="2" placeholder='{"query": "test", "id": 1}'></textarea>
+            </div>
+
+            <!-- Response Pane -->
+            <div class="response-meta-bar">
+              <div>Status: <span class="res-status-tag success" id="rep-status-badge">Ready</span></div>
+              <div>Latency: <span id="rep-latency" style="color: #38bdf8;">0 ms</span></div>
+              <button class="preset-chip" id="btn-toggle-rep-headers">Toggle Headers</button>
+            </div>
+
+            <div id="rep-headers-container" class="code-output-pane hidden" style="max-height: 100px; color: #a5b4fc;"></div>
+            <div id="rep-body-container" class="code-output-pane">Response will appear here after sending request...</div>
+          </div>
+
+          <!-- Subpanel 2: Attack Surface Analyzer -->
+          <div class="hack-subpanel" id="subpanel-posture">
+            <div style="display: flex; gap: 8px;">
+              <input type="text" class="repeater-url-input" id="sec-scan-url" placeholder="Target URL..." value="http://localhost:3000/newtab.html" />
+              <button class="btn-send-repeater" id="btn-run-sec-scan">🔍 Scan</button>
+            </div>
+
+            <div class="posture-stat-grid" id="posture-stats-grid">
+              <div class="posture-stat-box">
+                <span class="posture-val" id="posture-forms-count" style="color: #38bdf8;">0</span>
+                <span class="posture-lbl">Forms &amp; Inputs</span>
+              </div>
+              <div class="posture-stat-box">
+                <span class="posture-val" id="posture-endpoints-count" style="color: #a855f7;">0</span>
+                <span class="posture-lbl">API Endpoints</span>
+              </div>
+              <div class="posture-stat-box">
+                <span class="posture-val" id="posture-missing-count" style="color: #ef4444;">0</span>
+                <span class="posture-lbl">Missing Headers</span>
+              </div>
+              <div class="posture-stat-box">
+                <span class="posture-val" id="posture-risk-rating" style="color: #facc15;">SCAN</span>
+                <span class="posture-lbl">Security Rating</span>
+              </div>
+            </div>
+
+            <div id="posture-details-pane" class="code-output-pane" style="max-height: 250px;">Click 'Scan' to analyze active target page security posture, exposed inputs, and security headers.</div>
+          </div>
+
+          <!-- Subpanel 3: Payloads & Decoders -->
+          <div class="hack-subpanel" id="subpanel-payloads">
+            <div>
+              <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Universal Encoder / Decoder</label>
+              <textarea class="hack-textarea" id="dec-input" rows="2" placeholder="Text, Base64, Hex, URL, or JWT..."></textarea>
+              <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px;">
+                <button class="preset-chip" id="btn-dec-b64-dec">B64 Dec</button>
+                <button class="preset-chip" id="btn-dec-b64-enc">B64 Enc</button>
+                <button class="preset-chip" id="btn-dec-url-dec">URL Dec</button>
+                <button class="preset-chip" id="btn-dec-url-enc">URL Enc</button>
+                <button class="preset-chip" id="btn-dec-hex-dec">Hex Dec</button>
+                <button class="preset-chip" id="btn-dec-hex-enc">Hex Enc</button>
+                <button class="preset-chip" id="btn-dec-jwt">Parse JWT</button>
+              </div>
+              <div id="dec-output" class="code-output-pane" style="margin-top: 8px; max-height: 90px; color: #4ade80;">Output will appear here...</div>
+            </div>
+
+            <div>
+              <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 6px;">Curated Testing Vectors (Click to Copy)</label>
+              <div class="payload-grid">
+                <div class="payload-row">
+                  <code>&lt;script&gt;alert(1)&lt;/script&gt;</code>
+                  <button class="btn-copy-payload" data-payload="&lt;script&gt;alert(1)&lt;/script&gt;">Copy</button>
+                </div>
+                <div class="payload-row">
+                  <code>"&gt;&lt;img src=x onerror=alert(1)&gt;</code>
+                  <button class="btn-copy-payload" data-payload='"><img src=x onerror=alert(1)>'>Copy</button>
+                </div>
+                <div class="payload-row">
+                  <code>' OR 1=1--</code>
+                  <button class="btn-copy-payload" data-payload="' OR 1=1--">Copy</button>
+                </div>
+                <div class="payload-row">
+                  <code>' UNION SELECT null, username, password FROM users--</code>
+                  <button class="btn-copy-payload" data-payload="' UNION SELECT null, username, password FROM users--">Copy</button>
+                </div>
+                <div class="payload-row">
+                  <code>http://169.254.169.254/latest/meta-data/</code>
+                  <button class="btn-copy-payload" data-payload="http://169.254.169.254/latest/meta-data/">Copy</button>
+                </div>
+                <div class="payload-row">
+                  <code>../../../../etc/passwd</code>
+                  <button class="btn-copy-payload" data-payload="../../../../etc/passwd">Copy</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Subpanel 4: Heretic SecOps Copilot -->
+          <div class="hack-subpanel" id="subpanel-heretic">
+            <p style="font-size: 12px; color: #94a3b8; line-height: 1.4;">Uncensored, refusal-free security copilot powered by Heretic prompt principles and OmniRoute / FreeLLMAPI multi-model routing.</p>
+            
+            <div class="repeater-presets">
+              <button class="preset-chip chip-sec-prompt" data-sec-prompt="Audit this web application for security misconfigurations and exposed endpoints">Full Audit</button>
+              <button class="preset-chip chip-sec-prompt" data-sec-prompt="Craft XSS bypass polyglots for filtered input parameters">XSS Craft</button>
+              <button class="preset-chip chip-sec-prompt" data-sec-prompt="Analyze JWT authentication and token structure for flaws">JWT Review</button>
+              <button class="preset-chip chip-sec-prompt" data-sec-prompt="Test CORS headers and origin reflection">CORS Check</button>
+            </div>
+
+            <div style="display: flex; gap: 6px;">
+              <input type="text" class="repeater-url-input" id="sec-ai-input" placeholder="Ask Heretic SecOps or command browser..." />
+              <button class="btn-send-repeater" id="btn-send-sec-ai">Ask</button>
+            </div>
+
+            <div id="sec-ai-output" class="code-output-pane" style="max-height: 250px; color: #f8fafc;">
+              <strong>🦁 Braver Heretic SecOps</strong>
+              <p style="margin-top: 4px; color: #94a3b8;">Ready for unrestricted security analysis, reconnaissance, and autonomous browser execution.</p>
+            </div>
           </div>
         </section>
 
