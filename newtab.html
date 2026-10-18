@@ -298,18 +298,18 @@
     <div class="clock-display" id="live-clock">12:00:00</div>
     <div class="greeting-text" id="greeting-msg">Welcome to Brave Autonomous Browser</div>
 
-    <!-- Autonomous Task Dispatch Omnibox -->
+    <!-- Autonomous Task Dispatch & Web Search Omnibox -->
     <div class="prompt-box">
       <span class="lion-badge">🦁</span>
       <input
         type="text"
         id="home-prompt"
         class="prompt-input"
-        placeholder="Ask the Autonomous Agent to complete any web task..."
-        aria-label="Autonomous Agent Prompt"
+        placeholder="Search the web or enter URL (e.g. youtube, facebook, fsferdows.com)..."
+        aria-label="Search the web or type a URL"
       />
       <button class="btn-dispatch" id="btn-home-dispatch">
-        <span>Dispatch</span>
+        <span>Search / Go</span>
         <span>→</span>
       </button>
     </div>
@@ -332,6 +332,30 @@
 
     <!-- Top Visited Sites Grid -->
     <nav class="tiles-grid" aria-label="Top Sites">
+      <a href="https://www.youtube.com" class="tile-item" id="tile-youtube">
+        <div class="tile-icon" style="color: #ff0000;">🔴</div>
+        <span class="tile-title">YouTube</span>
+      </a>
+      <a href="https://www.facebook.com" class="tile-item" id="tile-facebook">
+        <div class="tile-icon" style="color: #1877f2;">🔵</div>
+        <span class="tile-title">Facebook</span>
+      </a>
+      <a href="https://fsferdows.com" class="tile-item" id="tile-fsferdows">
+        <div class="tile-icon" style="color: #60a5fa;">💻</div>
+        <span class="tile-title">FS Ferdows</span>
+      </a>
+      <a href="https://en.wikipedia.org" class="tile-item" id="tile-wiki">
+        <div class="tile-icon" style="color: #ffffff;">🌐</div>
+        <span class="tile-title">Wikipedia</span>
+      </a>
+      <a href="https://news.ycombinator.com" class="tile-item" id="tile-hackernews">
+        <div class="tile-icon" style="color: #ff6600;">📰</div>
+        <span class="tile-title">Hacker News</span>
+      </a>
+      <a href="https://github.com" class="tile-item" id="tile-github">
+        <div class="tile-icon" style="color: #ffffff;">🐙</div>
+        <span class="tile-title">GitHub</span>
+      </a>
       <a href="/catalog.html" class="tile-item" id="tile-catalog">
         <div class="tile-icon" style="color: #ffaa00;">🛒</div>
         <span class="tile-title">ElectroTech</span>
@@ -339,22 +363,6 @@
       <a href="/form.html" class="tile-item" id="tile-form">
         <div class="tile-icon" style="color: #00d26a;">📝</div>
         <span class="tile-title">Dev Portal</span>
-      </a>
-      <a href="/auth-hand-off.html" class="tile-item" id="tile-handoff">
-        <div class="tile-icon" style="color: #ff334b;">🛡️</div>
-        <span class="tile-title">Security Gate</span>
-      </a>
-      <a href="/catalog.html" class="tile-item" id="tile-repair" data-scenario="repair">
-        <div class="tile-icon" style="color: #7d5fff;">🔧</div>
-        <span class="tile-title">Self-Repair</span>
-      </a>
-      <a href="https://wikipedia.org" class="tile-item" id="tile-wiki" onclick="event.preventDefault(); alert('Simulated external Wikipedia target');">
-        <div class="tile-icon" style="color: #ffffff;">🌐</div>
-        <span class="tile-title">Wikipedia</span>
-      </a>
-      <a href="https://github.com" class="tile-item" id="tile-github" onclick="event.preventDefault(); alert('Simulated external GitHub repo target');">
-        <div class="tile-icon" style="color: #ffffff;">🐙</div>
-        <span class="tile-title">GitHub</span>
       </a>
     </nav>
   </main>
@@ -405,7 +413,14 @@
       })
       .catch(() => {});
 
-    // Parent messaging for home dispatch
+    // Send search or navigation request to browser shell
+    function sendSearchOrNavigateToParent(query) {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'BRAVE_SEARCH_OR_NAVIGATE', query }, '*');
+      }
+    }
+
+    // Parent messaging for scenario task dispatch
     function sendTaskToParent(goal, scenario) {
       if (window.parent && window.parent !== window) {
         window.parent.postMessage({ type: 'BRAVE_RUN_TASK', goal, scenario }, '*');
@@ -414,9 +429,9 @@
 
     document.getElementById('btn-home-dispatch').addEventListener('click', () => {
       const input = document.getElementById('home-prompt');
-      const goal = input.value.trim();
-      if (!goal) return;
-      sendTaskToParent(goal, 'catalog');
+      const query = input.value.trim();
+      if (!query) return;
+      sendSearchOrNavigateToParent(query);
     });
 
     document.getElementById('home-prompt').addEventListener('keydown', (e) => {
@@ -437,13 +452,16 @@
     document.querySelectorAll('.tile-item').forEach(tile => {
       tile.addEventListener('click', (e) => {
         const href = tile.getAttribute('href');
-        if (href && href.startsWith('/')) {
-          e.preventDefault();
+        if (!href) return;
+        e.preventDefault();
+        if (href.startsWith('/')) {
           if (window.parent && window.parent !== window) {
             window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: href }, '*');
           } else {
             window.location.href = href;
           }
+        } else {
+          sendSearchOrNavigateToParent(href);
         }
       });
     });
