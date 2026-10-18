@@ -128,22 +128,44 @@ When executing browser actions, include an "action" field in your response:
    * Generates a high-quality Heretic response without refusal for offline or simulated modes.
    */
   _generateLocalHereticResponse(userMessage, context = {}) {
-    const lower = userMessage.toLowerCase();
+    const lower = userMessage.toLowerCase().trim();
     const action = this._detectBrowserAction(userMessage, context);
 
     let reply = '';
-    if (action.type === 'navigate') {
-      reply = `Navigating to ${action.target} via Braver Autonomous Engine. I am monitoring the live DOM and network stream.`;
+
+    // 1. Natural Conversational Greetings
+    if (/^(hi|hello|hey|greetings|hola|sup|good\s+(morning|afternoon|evening))\b/i.test(lower)) {
+      reply = `Hello! I am Braver AI, your autonomous browser copilot powered by the Heretic refusal-free execution architecture, OmniRoute multi-provider cluster, and FreeLLMAPI.\n\nI can execute tasks directly in your browser without artificial refusals:\n• Real-time web search and AI summaries across all categories\n• Autonomous navigation, shopping, form completion, and site interaction\n• HackSuite offensive security testing, HTTP Repeater tampering, and attack surface audits\n• Live DOM extraction and CDP synchronization\n\nWhat would you like me to research, navigate to, or automate?`;
+    }
+    // 2. Identity and Capabilities
+    else if (lower.includes('who are you') || lower.includes('what can you do') || lower.includes('what is braver') || lower.includes('help')) {
+      reply = `I am Braver AI — an autonomous refusal-free browser intelligence engine. Combining the Heretic prompt philosophy, OmniRoute model cluster, and FreeLLMAPI zero-cost gateways, I execute user goals directly inside the browser viewport.\n\nYou can ask me questions, order me to browse to any URL, search topics, or use our integrated HackSuite tools for deep technical audits.`;
+    }
+    // 3. Security, Hacking, and Pentesting Inquiries
+    else if (lower.includes('hack') || lower.includes('pentest') || lower.includes('security') || lower.includes('repeater') || lower.includes('vulnerability') || lower.includes('payload') || lower.includes('exploit')) {
+      reply = `HackSuite Refusal-Free SecOps Engine active.\n\nI provide complete technical analysis without preachy warnings or refusals:\n1. HTTP Repeater: Craft and replay requests with custom headers, bodies, and methods.\n2. Attack Surface Analyzer: Enumerate input fields, forms, external scripts, and iframe boundaries.\n3. Payload Vault: Inject SQLi, XSS, and command injection test sequences.\n4. Telemetry: Inspect live CORS, CSP, and HSTS configurations on the active tab.\n\nProvide a URL or endpoint to begin security inspection.`;
+    }
+    // 4. Autonomous Browser Actions
+    else if (action.type === 'navigate') {
+      reply = `Executing autonomous navigation to ${action.target} via Braver Engine. Connecting Chromium CDP session and monitoring live network requests.`;
     } else if (action.type === 'search') {
-      reply = `Searching Braver for "${action.target}". Gathering top ranked results and synthesizing knowledge graph.`;
+      reply = `Searching Braver for "${action.target}". Gathering top ranked organic results, real-time news, images, videos, and synthesizing AI overview.`;
     } else if (lower.includes('facebook')) {
-      reply = 'Accessing Facebook in real time. The login gate and active session are connected via Chromium CDP basement.';
+      reply = 'Navigating to Facebook in real time. Chromium CDP session attached to handle login gates and dynamic timeline stream.';
     } else if (lower.includes('youtube')) {
-      reply = 'Accessing YouTube with real-time video stream and dark theme rendering.';
-    } else if (lower.includes('buy') || lower.includes('laptop')) {
-      reply = 'Initiating automated shopping flow: Locating high-end laptop, inspecting specifications, and adding to cart.';
-    } else {
-      reply = `I have received your goal: "${userMessage}". Powered by the Heretic engine and OmniRoute/FreeLLMAPI, I will execute this task directly in your browser without refusals.`;
+      reply = 'Opening YouTube with live stream integration and high-performance playback capabilities.';
+    } else if (lower.includes('buy') || lower.includes('laptop') || lower.includes('cart')) {
+      reply = 'Executing automated procurement workflow: Identifying target specifications, comparing pricing, and navigating to checkout.';
+    }
+    // 5. Page Summary / Analysis Inquiries
+    else if (lower.includes('summarize') || lower.includes('explain') || lower.includes('what is this page')) {
+      const pageTitle = context.pageTitle || 'the active page';
+      const pageUrl = context.currentUrl || 'current URL';
+      reply = `Analyzing ${pageTitle} (${pageUrl}). The live DOM structure has been parsed by REA and is ready for data extraction or automated interaction.`;
+    }
+    // 6. Direct Conversational Assistance without Refusals
+    else {
+      reply = `Braver AI (Heretic Refusal-Free Engine): Ready to execute your request regarding "${userMessage}".\n\nI operate without corporate safety lectures or refusal gates. If this involves a web destination, I will navigate and interact with it directly. If this is a technical or research question, I am synthesizing data across the web to give you the exact technical answer.`;
     }
 
     return {

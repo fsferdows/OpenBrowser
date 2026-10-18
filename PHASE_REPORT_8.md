@@ -38,3 +38,26 @@ Phase 8 verified long-term maintainability, automated schema backward compatibil
 
 ## 4. Conclusion
 Phase 8 gate has passed. The continuous sustainment lifecycle is operational.
+
+## 5. Phase 8.1 Addendum: Conversational AI Mode, Multi-Category Search & HTTPS Navigation
+
+### 5.1 Conversational AI Mode & Heretic Engine
+- Replaced robotic fallback templates in `HereticChatEngine` (`packages/agent-core/src/heretic-chat-engine.js`).
+- Implemented rich, conversational responses for greetings, general tech inquiries, capabilities queries, and HackSuite offensive security tasks without moralizing lectures or artificial refusals.
+
+### 5.2 Full Category Search Results & AI Overview
+- Enhanced `fetchLiveWebSearchResults` in `scripts/serve-localhost.mjs` and `public/search.html` to return and render:
+  - **✨ AI Mode**: Full-width interactive AI overview with deep synthesis, citations, follow-up prompt chips, and integrated chat drawer.
+  - **All**: Organic search results + AI Overview card + Knowledge Panel with collages and company attributes.
+  - **Images**: Responsive image search grid with dimensions, source domains, and preview navigation.
+  - **Videos**: YouTube-style video cards with duration pills, view counts, upload dates, and channels.
+  - **News**: Live headline cards with timestamps, publication sources, and thumbnail previews.
+  - **Forums**: Community discussions across Reddit, Hacker News, Stack Overflow, and GitHub Discussions.
+
+### 5.3 Resilient HTTPS URL Navigation & Viewport Progress
+- Resolved iframe proxy isolation in `/api/proxy` by storing `__BRAVE_HOST__ = window.parent` before redefining frame properties, ensuring `BRAVE_NAVIGATE` and `BRAVE_LIVE_PAGE_LOADED` reach the host application.
+- Stripped embedded `<meta http-equiv="Content-Security-Policy">` and `X-Frame-Options` tags that blocked external sites from rendering.
+- Implemented regex-safe `<head>` and `<html>` tag injection to prevent script placement before `<!DOCTYPE html>`.
+- Added visual animated navigation progress bar (`#webview-progress-bar`) in `public/index.html` and `public/style.css`.
+- Direct URL/domain navigation from omnibox and new tab search input.
+

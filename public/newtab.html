@@ -809,6 +809,25 @@
         return;
       }
 
+      // Direct URL navigation for HTTPS / HTTP URLs and valid web domains
+      if (q.startsWith('http://') || q.startsWith('https://')) {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: q }, '*');
+        } else {
+          window.location.href = q;
+        }
+        return;
+      }
+      if (/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?$/.test(q) && !q.includes(' ')) {
+        const dest = `https://${q}`;
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: dest }, '*');
+        } else {
+          window.location.href = dest;
+        }
+        return;
+      }
+
       const targetUrl = `/search.html?q=${encodeURIComponent(q)}`;
       if (window.parent && window.parent !== window) {
         window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: targetUrl }, '*');
