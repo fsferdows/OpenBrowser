@@ -64,4 +64,18 @@ describe('REA Analysis Adapter Tests', () => {
     assert.strictEqual(diff.hasMutated, true);
     assert.ok(diff.textLengthDelta > 0);
   });
+
+  it('synthesizeGoalTrajectory dynamically binds to URLs and page elements without static fallbacks', () => {
+    // 1. Direct URL navigation goal
+    const urlTrajectory = adapter.synthesizeGoalTrajectory('https://news.ycombinator.com', mockHtml, 'https://shop.example.com');
+    assert.strictEqual(urlTrajectory[0].action, 'navigate');
+    assert.strictEqual(urlTrajectory[0].url, 'https://news.ycombinator.com');
+
+    // 2. Dynamic search query extraction
+    const searchTrajectory = adapter.synthesizeGoalTrajectory('search for mechanical keyboards', mockHtml, 'https://shop.example.com');
+    assert.strictEqual(searchTrajectory[0].action, 'fill');
+    assert.strictEqual(searchTrajectory[0].value, 'mechanical keyboards');
+    assert.strictEqual(searchTrajectory[1].action, 'click');
+    assert.strictEqual(searchTrajectory[1].selector, '#search-btn');
+  });
 });
