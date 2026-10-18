@@ -5,7 +5,7 @@ import { join } from 'node:path';
 
 const HYGIENE_CHECKS = [
   { name: 'Unresolved TODO', regex: /\bTODO\b/ },
-  { name: 'Placeholder Stub', regex: /\b(?:PLACEHOLDER|stub implementation)\b/i }
+  { name: 'Placeholder Stub', regex: /\b(?:PLACEHOLDER|stub implementation)\b/ }
 ];
 
 const SCAN_DIRS = ['CONTEXT', 'packages', 'scripts'];

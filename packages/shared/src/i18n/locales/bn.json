@@ -1,0 +1,27 @@
+{
+  "locale": "bn",
+  "direction": "ltr",
+  "strings": {
+    "app_title": "এজেন্টিক ব্রাউজার",
+    "status_idle": "প্রস্তুত",
+    "status_running": "টাস্ক চলছে...",
+    "status_paused": "স্থগিত",
+    "status_completed": "সম্পন্ন",
+    "status_handoff": "ম্যানুয়াল পদক্ষেপ প্রয়োজন",
+    "btn_run": "টাস্ক শুরু করুন",
+    "btn_pause": "বিরতি",
+    "btn_resume": "পুনরায় চালু করুন",
+    "btn_stop": "জরুরি থামুন",
+    "handoff_heading": "মানব নিরাপত্তা যাচাইকরণ",
+    "handoff_description": "অনুগ্রহ করে স্ক্রিনে ক্যাপচা বা দ্বি-স্তরীয় যাচাইকরণ সম্পন্ন করুন। এজেন্ট স্বয়ংক্রিয়ভাবে পুনরায় শুরু করবে।",
+    "handoff_resume_btn": "আমি এটি সম্পন্ন করেছি",
+    "token_count": "টোকেন: {count}",
+    "latency_count": "লেটেন্সি: {ms} মিলি সেকেন্ড",
+    "risk_low": "কম",
+    "risk_medium": "মাঝারি",
+    "risk_high": "বেশি",
+    "risk_critical": "সংবেদনশীল",
+    "voice_input_label": "ভয়েস ইনপুট",
+    "prompt_placeholder": "আপনি এজেন্টকে কী করাতে চান তা বর্ণনা করুন..."
+  }
+}

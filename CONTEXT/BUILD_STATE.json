@@ -1,8 +1,8 @@
 {
-  "phase": 1,
-  "phase_name": "Browser Shell and Control Layer",
+  "phase": 7,
+  "phase_name": "Hardening and Release Engineering",
   "status": "in_progress",
-  "updated_at": "2026-10-18T20:23:40Z",
+  "updated_at": "2026-10-18T20:48:30Z",
   "completed_phases": [
     {
       "phase": 0,
@@ -10,22 +10,64 @@
       "completed_at": "2026-10-18T20:23:35Z",
       "gate_passed": true,
       "report": "PHASE_REPORT_0.md"
+    },
+    {
+      "phase": 1,
+      "name": "Browser Shell and Control Layer",
+      "completed_at": "2026-10-18T20:27:53Z",
+      "gate_passed": true,
+      "report": "PHASE_REPORT_1.md"
+    },
+    {
+      "phase": 2,
+      "name": "Model Gateway",
+      "completed_at": "2026-10-18T20:30:00Z",
+      "gate_passed": true,
+      "report": "PHASE_REPORT_2.md"
+    },
+    {
+      "phase": 3,
+      "name": "Agent Core",
+      "completed_at": "2026-10-18T20:33:00Z",
+      "gate_passed": true,
+      "report": "PHASE_REPORT_3.md"
+    },
+    {
+      "phase": 4,
+      "name": "Skill Engine and Learning",
+      "completed_at": "2026-10-18T20:36:00Z",
+      "gate_passed": true,
+      "report": "PHASE_REPORT_4.md"
+    },
+    {
+      "phase": 5,
+      "name": "Safety, Privacy, and Policy",
+      "completed_at": "2026-10-18T20:41:15Z",
+      "gate_passed": true,
+      "report": "PHASE_REPORT_5.md"
+    },
+    {
+      "phase": 6,
+      "name": "Automation, Scheduling, and UX",
+      "completed_at": "2026-10-18T20:48:00Z",
+      "gate_passed": true,
+      "report": "PHASE_REPORT_6.md"
     }
   ],
   "tasks": [
     {
-      "id": "phase1-task1",
-      "description": "Branded Chromium-based shell with side panel and command bar.",
-      "status": "pending"
-    },
-    {
-      "id": "phase1-task2",
-      "description": "CDP control layer with accessibility-tree-first observation and robust multi-strategy targeting.",
+      "id": "phase7-task1",
+      "description": "Chaos and fuzz testing; performance profiling against budgets.",
       "status": "in_progress"
     },
     {
-      "id": "phase1-task3",
-      "description": "Deterministic local test sites for e2e.",
+      "id": "phase7-task2",
+      "description": "Signed installers for Windows, macOS, Linux; update framework with staged rollout and rollback.",
+      "status": "pending"
+    },
+    {
+      "id": "phase7-task3",
+      "description": "Runbooks, full documentation set, SECURITY.md, deprecation policy, LTS channel definition.",
       "status": "pending"
     }
   ],
@@ -33,6 +75,6 @@
   "open_issues": [
     "OQ-001: Host filesystem capacity is 200MB free; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Create ADR-0003 for side panel and extension architecture, implement packages/extension with Manifest V3 and sidepanel UI, and build deterministic local test sites for e2e.",
-  "last_commit": "41f637d"
+  "next_action": "Author ADR-0008 (Hardening, Chaos, Fuzzing, and Release Packaging); build fuzz test suite for skill loader and schema parsers; author production documentation set (README, USER_GUIDE, DEVELOPER_GUIDE, SKILL_AUTHORING_GUIDE, SUPPORT, CONTRIBUTING, CODE_OF_CONDUCT, RUNBOOKS); verify SLO budgets.",
+  "last_commit": "a34cc04"
 }

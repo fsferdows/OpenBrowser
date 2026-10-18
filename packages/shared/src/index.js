@@ -1,7 +1,8 @@
 import skillSchema from './schemas/skill.schema.json' with { type: 'json' };
 import gatewaySchema from './schemas/gateway.schema.json' with { type: 'json' };
+import { i18n, I18nManager } from './i18n/index.js';
 
-export { skillSchema, gatewaySchema };
+export { skillSchema, gatewaySchema, i18n, I18nManager };
 
 export const RISK_LEVELS = {
   LOW: 'low',

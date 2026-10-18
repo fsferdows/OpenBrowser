@@ -8,6 +8,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Phase 6 (Automation, Scheduling, and UX):
+  - `packages/scheduler`: Concurrency-bounded job scheduler supporting interval and cron execution, exponential backoff retries, and simulated 24-hour unattended test verification.
+  - `packages/shared/src/i18n`: Externalized localization engine shipping English (`en`) and Bangla (`bn`) first with parameter interpolation and RTL text readiness.
+  - `packages/extension/tests/a11y.test.js`: Automated WCAG 2.2 AA accessibility audit suite certifying semantic landmarks, accessible names, live regions, focus rings, and mathematical color contrast (>= 4.5:1).
+  - Architecture Decision Record `CONTEXT/DECISIONS/ADR-0007-scheduler-i18n-and-accessibility.md`.
+  - Phase report: `PHASE_REPORT_6.md`.
+- Phase 5 (Safety, Privacy, and Policy):
+  - `packages/safety`: 4-tier risk classification policy engine, indirect prompt-injection firewall, encrypted credential vault (AES-256-GCM), and append-only audit logger.
+  - Mandatory confirmation policies for destructive actions, financial transactions, and credential alterations.
+  - Dynamic canary tokens and delimiter escaping neutralizing untrusted webpage injection payloads.
+  - 50-test adversarial security regression suite covering direct injection, DOM injection, delimiter breakout, exfiltration, and high-risk policy enforcement.
+  - Automated secret scrubber stripping passwords and API keys from logs and traces.
+  - Architecture Decision Record `CONTEXT/DECISIONS/ADR-0006-safety-policy-and-vault-architecture.md`.
+  - Phase report: `PHASE_REPORT_5.md`.
+- Phase 4 (Skill Engine and Learning):
+  - `packages/skill-engine`: Skill library, parameterized skill runner, demonstration recorder with secret masking, and autonomous self-repair engine.
+  - Zero-replanning execution for learned skills on stable steps.
+  - Self-repair subsystem automatically detecting broken selectors via the accessibility tree, testing repairs, and saving updated semver versions.
+  - Architecture Decision Record `CONTEXT/DECISIONS/ADR-0005-skill-engine-and-self-repair.md`.
+  - Phase report: `PHASE_REPORT_4.md`.
+- Phase 3 (Agent Core):
+  - `packages/agent-core`: Plan-Act-Verify-Critic state machine with checkpointing and recovery.
+  - Interactive operator controls: pause, resume, emergency stop kill switch, and checkpoint recovery.
+  - CheckpointManager and deterministic replay engine reproducing recorded traces without live model inference.
+  - Golden evaluation harness with 32 canonical tasks achieving 100% pass rate (exceeding 85% SLO threshold).
+  - Architecture Decision Record `CONTEXT/DECISIONS/ADR-0004-agent-core-state-machine-and-replay.md`.
+  - Phase report: `PHASE_REPORT_3.md`.
+- Phase 2 (Model Gateway):
+  - `packages/gateway`: Resilient model gateway client fronting OmniRoute and FreeLLMAPI with automatic multi-provider failover.
+  - Request timeout enforcement and circuit breaker failure tracking.
+  - Structured output validation against `gateway.schema.json`.
+  - Latency, token, and estimated cost tracking per request.
+  - Phase report: `PHASE_REPORT_2.md`.
+- Phase 1 (Browser Shell and Control Layer):
+  - `packages/extension`: Manifest V3 extension with persistent `chrome.sidePanel`, WCAG 2.2 AA accessible side panel UI, dark/light theme, emergency kill switch, and Web Speech API voice input integration.
+  - `packages/control`: Multi-strategy target resolver prioritizing accessibility role/name, falling back to CSS selectors.
+  - Deterministic zero-dependency local test server serving mock catalog, form, and security challenge pages.
+  - End-to-end integration test suite (`packages/control/tests/e2e.test.js`).
+  - Architecture Decision Record `CONTEXT/DECISIONS/ADR-0003-browser-shell-and-sidepanel-architecture.md`.
+  - Phase report: `PHASE_REPORT_1.md`.
 - Phase 0 foundation: repository context protocol and architecture baseline.
 - `CONTEXT/PROJECT_BRIEF.md`: System mission, users, scope, non-goals, and target SLOs.
 - `CONTEXT/ARCHITECTURE.md`: High-level multi-layer system architecture and Mermaid sequence diagrams.

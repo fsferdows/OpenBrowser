@@ -1,0 +1,27 @@
+{
+  "locale": "en",
+  "direction": "ltr",
+  "strings": {
+    "app_title": "Agentic Browser",
+    "status_idle": "Ready",
+    "status_running": "Executing Task...",
+    "status_paused": "Paused",
+    "status_completed": "Completed",
+    "status_handoff": "Manual Action Required",
+    "btn_run": "Run Task",
+    "btn_pause": "Pause",
+    "btn_resume": "Resume",
+    "btn_stop": "Emergency Stop",
+    "handoff_heading": "Human Security Verification",
+    "handoff_description": "Please complete the CAPTCHA or 2FA challenge on screen. The agent will resume automatically.",
+    "handoff_resume_btn": "I Have Completed It",
+    "token_count": "Tokens: {count}",
+    "latency_count": "Latency: {ms}ms",
+    "risk_low": "Low",
+    "risk_medium": "Medium",
+    "risk_high": "High",
+    "risk_critical": "Critical",
+    "voice_input_label": "Voice Input",
+    "prompt_placeholder": "Describe what you want the agent to do..."
+  }
+}
