@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agentic Browser Studio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Top App Navigation & Window Bar -->
+  <header class="top-nav" role="banner">
+    <div class="window-controls">
+      <span class="mac-dot close" title="Close"></span>
+      <span class="mac-dot minimize" title="Minimize"></span>
+      <span class="mac-dot maximize" title="Maximize"></span>
+      <div class="app-title-badge">
+        <span>Agentic Browser</span>
+        <span class="channel-tag">v0.1.0 LTS</span>
+      </div>
+    </div>
+
+    <!-- Address & Scenario Switcher Bar -->
+    <div class="address-bar-wrapper">
+      <div class="nav-buttons">
+        <button class="btn-nav" id="btn-back" title="Back">‹</button>
+        <button class="btn-nav" id="btn-forward" title="Forward">›</button>
+        <button class="btn-nav" id="btn-reload" title="Reload">↻</button>
+      </div>
+      <input type="text" id="url-input" class="url-input" value="https://shop.example.com/catalog.html" readonly>
+      <select id="scenario-selector" class="scenario-select" aria-label="Select Interactive Scenario">
+        <option value="catalog">🛒 E-Commerce Catalog</option>
+        <option value="form">📝 Developer Registration Form</option>
+        <option value="handoff">🛡️ Security Challenge (2FA / CAPTCHA)</option>
+        <option value="repair">🔧 Selector Break & Self-Repair</option>
+      </select>
+    </div>
+
+    <div class="top-actions">
+      <button id="lang-btn" class="lang-toggle" aria-label="Toggle Language">
+        🌐 <span id="current-lang-label">English</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Split Workspace -->
+  <main class="workspace" role="main">
+    <!-- Left Pane: Simulated Browser Tab -->
+    <section class="browser-pane" aria-label="Active Browser Tab">
+      <div class="browser-viewport-header">
+        <div class="browser-tab">
+          <span>🌐</span>
+          <span id="tab-title">Apex Store | Electronics Catalog</span>
+        </div>
+        <div id="viewport-resolution">1280 × 800 • CDP Connected</div>
+      </div>
+      <div class="iframe-container" id="iframe-wrapper">
+        <iframe id="webview-frame" src="/catalog.html" title="Target Web Page"></iframe>
+        <div id="agent-cursor" class="agent-cursor" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <!-- Right Pane: Persistent Agent Side Panel -->
+    <aside class="sidepanel-pane" aria-label="Agent Control Side Panel">
+      <header class="sidepanel-header">
+        <div class="panel-brand">
+          <span class="status-dot ready" id="status-dot" aria-hidden="true"></span>
+          <h2 class="panel-title" id="lbl-panel-title">Agentic Browser</h2>
+        </div>
+        <button id="btn-emergency-stop" class="btn-kill" aria-label="Emergency Stop Agent">STOP</button>
+      </header>
+
+      <div class="sidepanel-body">
+        <!-- Security / Human Handoff Banner -->
+        <div id="handoff-banner" class="handoff-banner hidden" role="alert" aria-live="assertive">
+          <div class="handoff-icon">⚠️</div>
+          <div class="handoff-content">
+            <h3 class="handoff-title" id="handoff-title">User Action Required</h3>
+            <p class="handoff-desc" id="handoff-desc">The agent detected a security challenge or CAPTCHA and paused. Complete it in the tab to resume.</p>
+            <button id="btn-handoff-resume" class="btn-handoff-resume">I Have Completed It</button>
+          </div>
+        </div>
+
+        <!-- Command Box -->
+        <div class="command-box">
+          <div class="input-container">
+            <input 
+              type="text" 
+              id="task-input" 
+              placeholder="Describe what to do on this page..." 
+              value="Search for headphones and extract price"
+              autocomplete="off"
+            />
+            <button type="button" id="btn-voice" class="btn-voice" title="Voice Input" aria-label="Toggle Voice Input">
+              🎤
+            </button>
+          </div>
+
+          <div class="quick-prompts" id="quick-chips">
+            <button type="button" class="chip" data-prompt="Search for headphones and extract price">Search Headphones</button>
+            <button type="button" class="chip" data-prompt="Fill registration form for Alice">Register Alice</button>
+            <button type="button" class="chip" data-prompt="Solve security checkpoint and resume">Solve Security</button>
+          </div>
+
+          <div class="action-bar">
+            <button type="button" id="btn-run-task" class="btn-primary">
+              ▶ <span id="lbl-run-task">Run Task</span>
+            </button>
+            <button type="button" id="btn-pause-task" class="btn-secondary" disabled>
+              <span id="lbl-pause">Pause</span>
+            </button>
+            <button type="button" id="btn-record-demo" class="btn-secondary" title="Record demonstration to learn new skill">
+              ⏺ <span id="lbl-record">Record</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Execution Stream Log -->
+        <div class="log-stream-section">
+          <div class="section-label">
+            <span id="lbl-execution-log">Execution Plan & Stream</span>
+            <span id="step-badge" class="channel-tag" style="display:none">Step 0</span>
+          </div>
+          <div id="action-stream" class="stream-container" role="log" aria-live="polite">
+            <div class="empty-state" id="empty-state">
+              Ready. Click "Run Task" to begin autonomous execution.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Telemetry Footer -->
+      <footer class="sidepanel-footer">
+        <div class="telemetry-item">
+          <span>Tokens:</span>
+          <span class="telemetry-value" id="val-tokens">0</span>
+        </div>
+        <div class="telemetry-item">
+          <span>Latency:</span>
+          <span class="telemetry-value" id="val-latency">0ms</span>
+        </div>
+        <div class="telemetry-item">
+          <span>Memory:</span>
+          <span class="telemetry-value" id="val-memory">24MB</span>
+        </div>
+      </footer>
+    </aside>
+  </main>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>

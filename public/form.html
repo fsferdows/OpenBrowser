@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apex Cloud | Developer Registration</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.1);
+      --success-border: #059669;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .form-container {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-top: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    p.subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+    input[type="text"], input[type="email"], select {
+      width: 100%;
+      padding: 10px 12px;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .checkbox-group input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+    .checkbox-group label { margin-bottom: 0; font-weight: 400; cursor: pointer; }
+    button.btn-submit {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: background 0.2s;
+    }
+    button.btn-submit:hover { background: var(--accent-hover); }
+    .alert-success {
+      display: none;
+      margin-top: 20px;
+      padding: 14px;
+      background: var(--success-bg);
+      border: 1px solid var(--success-border);
+      border-radius: 8px;
+      color: var(--success);
+      font-size: 14px;
+      font-weight: 500;
+      text-align: center;
+    }
+    .agent-highlight {
+      outline: 3px solid #3b82f6 !important;
+      outline-offset: 2px !important;
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.6) !important;
+      transition: all 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h1>🚀 Developer Account</h1>
+    <p class="subtitle">Join the Apex Cloud platform and deploy agentic skills.</p>
+
+    <form id="developer-reg-form" onsubmit="event.preventDefault(); submitRegistration();">
+      <div class="form-group">
+        <label for="username-field">Username</label>
+        <input type="text" id="username-field" name="username" placeholder="e.g. alice_agent" required>
+      </div>
+
+      <div class="form-group">
+        <label for="email-field">Email Address</label>
+        <input type="email" id="email-field" name="email" placeholder="alice@example.org" required>
+      </div>
+
+      <div class="form-group">
+        <label for="role-dropdown">Primary Role</label>
+        <select id="role-dropdown" name="role" required>
+          <option value="lead-engineer">Lead Systems Engineer</option>
+          <option value="security-architect">Security & Safety Architect</option>
+          <option value="automation-operator">Automation Operator</option>
+        </select>
+      </div>
+
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="terms-agree" name="terms" required>
+        <label for="terms-agree">I agree to the Agentic Browser Terms of Service</label>
+      </div>
+
+      <button type="submit" id="create-account-btn" class="btn-submit">Register Account</button>
+    </form>
+
+    <div id="registration-alert" class="alert-success" role="status" aria-live="polite">
+      ✓ Account registered successfully for <strong id="registered-name"></strong>!
+    </div>
+  </div>
+
+  <script>
+    function submitRegistration() {
+      const username = document.getElementById('username-field').value;
+      document.getElementById('registered-name').textContent = username;
+      document.getElementById('registration-alert').style.display = 'block';
+      document.getElementById('developer-reg-form').reset();
+    }
+  </script>
+</body>
+</html>

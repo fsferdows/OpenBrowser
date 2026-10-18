@@ -7,6 +7,8 @@
     "packages/*"
   ],
   "scripts": {
+    "start": "node scripts/serve-localhost.mjs",
+    "dev": "node scripts/serve-localhost.mjs",
     "test": "node --test packages/*/tests/*.test.js packages/*/tests/**/*.test.js scripts/*.test.js",
     "lint": "node scripts/lint.mjs",
     "typecheck": "node scripts/typecheck-stub.mjs",
