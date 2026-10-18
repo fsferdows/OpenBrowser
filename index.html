@@ -3,149 +3,456 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agentic Browser Studio</title>
+  <title>Brave Autonomous Browser</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <!-- Top App Navigation & Window Bar -->
-  <header class="top-nav" role="banner">
-    <div class="window-controls">
-      <span class="mac-dot close" title="Close"></span>
-      <span class="mac-dot minimize" title="Minimize"></span>
-      <span class="mac-dot maximize" title="Maximize"></span>
-      <div class="app-title-badge">
-        <span>Agentic Browser</span>
-        <span class="channel-tag">v0.1.0 LTS</span>
+<body class="brave-theme dark-mode">
+  <!-- Top App Navigation & Window Chrome -->
+  <header class="brave-chrome" role="banner">
+    <!-- Window Controls & Tab Bar -->
+    <div class="window-tab-bar">
+      <div class="traffic-lights" aria-label="Window Controls">
+        <span class="light close" title="Close"></span>
+        <span class="light minimize" title="Minimize"></span>
+        <span class="light maximize" title="Maximize"></span>
+      </div>
+
+      <!-- Horizontal Brave Tabs -->
+      <nav class="tabs-container" role="tablist" aria-label="Browser Tabs" id="brave-tabs">
+        <button class="tab-item active" role="tab" aria-selected="true" data-tab-id="newtab" data-url="/newtab.html">
+          <span class="tab-icon">🦁</span>
+          <span class="tab-title">Brave | New Tab</span>
+          <span class="tab-close" title="Close Tab">×</span>
+        </button>
+        <button class="tab-item" role="tab" aria-selected="false" data-tab-id="catalog" data-url="/catalog.html">
+          <span class="tab-icon">🛒</span>
+          <span class="tab-title">ElectroTech Catalog</span>
+          <span class="tab-close" title="Close Tab">×</span>
+        </button>
+        <button class="tab-item" role="tab" aria-selected="false" data-tab-id="form" data-url="/form.html">
+          <span class="tab-icon">📝</span>
+          <span class="tab-title">Developer Portal</span>
+          <span class="tab-close" title="Close Tab">×</span>
+        </button>
+        <button class="tab-item" role="tab" aria-selected="false" data-tab-id="handoff" data-url="/auth-hand-off.html">
+          <span class="tab-icon">🛡️</span>
+          <span class="tab-title">Security Gate</span>
+          <span class="tab-close" title="Close Tab">×</span>
+        </button>
+        <button class="tab-add-btn" id="btn-add-tab" title="Open New Tab" aria-label="New Tab">+</button>
+      </nav>
+
+      <div class="window-extra-actions">
+        <span class="version-tag">v0.1.0 LTS</span>
       </div>
     </div>
 
-    <!-- Address & Scenario Switcher Bar -->
-    <div class="address-bar-wrapper">
-      <div class="nav-buttons">
-        <button class="btn-nav" id="btn-back" title="Back">‹</button>
-        <button class="btn-nav" id="btn-forward" title="Forward">›</button>
-        <button class="btn-nav" id="btn-reload" title="Reload">↻</button>
+    <!-- Navigation & Omnibox Toolbar -->
+    <div class="navigation-toolbar">
+      <div class="nav-arrows">
+        <button class="toolbar-btn" id="nav-btn-back" title="Back" aria-label="Back">‹</button>
+        <button class="toolbar-btn" id="nav-btn-forward" title="Forward" aria-label="Forward">›</button>
+        <button class="toolbar-btn" id="nav-btn-reload" title="Reload" aria-label="Reload">↻</button>
+        <button class="toolbar-btn" id="nav-btn-home" title="Brave New Tab" aria-label="Home">🏠</button>
       </div>
-      <input type="text" id="url-input" class="url-input" value="https://shop.example.com/catalog.html" readonly>
-      <select id="scenario-selector" class="scenario-select" aria-label="Select Interactive Scenario">
-        <option value="catalog">🛒 E-Commerce Catalog</option>
-        <option value="form">📝 Developer Registration Form</option>
-        <option value="handoff">🛡️ Security Challenge (2FA / CAPTCHA)</option>
-        <option value="repair">🔧 Selector Break & Self-Repair</option>
-      </select>
-    </div>
 
-    <div class="top-actions">
-      <button id="lang-btn" class="lang-toggle" aria-label="Toggle Language">
-        🌐 <span id="current-lang-label">English</span>
-      </button>
+      <!-- Brave Smart Omnibox -->
+      <div class="omnibox-container">
+        <div class="security-badge" id="ssl-badge" title="Connection is Secure">
+          <span class="lock-icon">🔒</span>
+          <span class="cert-text">Secure</span>
+        </div>
+        <input
+          type="text"
+          id="omnibox-input"
+          class="omnibox-input"
+          value="brave://newtab"
+          spellcheck="false"
+          aria-label="Search or enter web address"
+        />
+        <div class="omnibox-right-actions">
+          <button class="omnibox-btn" id="btn-bookmark" title="Bookmark This Tab">⭐</button>
+          
+          <!-- Brave Shields Lion Button -->
+          <button class="shields-lion-btn active" id="btn-brave-shields" title="Brave Shields" aria-label="Brave Shields Controls" aria-expanded="false">
+            <span class="lion-face">🦁</span>
+            <span class="shields-counter-badge" id="shields-badge-count">3</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Toolbar Action Icons -->
+      <div class="action-icons">
+        <button class="action-btn copilot-toggle active" id="btn-toggle-copilot" title="Brave Autonomous Agent">
+          <span class="btn-icon">🦁✨</span>
+          <span class="btn-text">Agent</span>
+        </button>
+        <button class="action-btn" id="btn-toggle-rea" title="REA Deep Site Intelligence">
+          <span class="btn-icon">🔬</span>
+          <span class="btn-text">REA</span>
+        </button>
+        <button class="action-btn" id="btn-toggle-lang" title="Switch Language">
+          <span class="btn-icon">🌐</span>
+          <span class="btn-text" id="lbl-lang">EN</span>
+        </button>
+        <button class="action-btn bat-rewards" id="btn-rewards" title="Brave Autonomous Credits">
+          <span class="btn-icon">🔺</span>
+          <span class="btn-text">15.4</span>
+        </button>
+      </div>
     </div>
   </header>
 
-  <!-- Split Workspace -->
-  <main class="workspace" role="main">
-    <!-- Left Pane: Simulated Browser Tab -->
-    <section class="browser-pane" aria-label="Active Browser Tab">
-      <div class="browser-viewport-header">
-        <div class="browser-tab">
-          <span>🌐</span>
-          <span id="tab-title">Apex Store | Electronics Catalog</span>
+  <!-- Brave Shields Popover Dropdown -->
+  <aside class="shields-popover hidden" id="shields-popover" role="dialog" aria-label="Brave Shields Panel">
+    <div class="shields-popover-header">
+      <div class="shields-popover-title">
+        <span class="lion-logo">🦁</span>
+        <div>
+          <h3>Brave Shields</h3>
+          <p class="site-hostname" id="shields-hostname">shop.example.com</p>
         </div>
-        <div id="viewport-resolution">1280 × 800 • CDP Connected</div>
       </div>
-      <div class="iframe-container" id="iframe-wrapper">
-        <iframe id="webview-frame" src="/catalog.html" title="Target Web Page"></iframe>
-        <div id="agent-cursor" class="agent-cursor" aria-hidden="true"></div>
+      <label class="brave-switch">
+        <input type="checkbox" id="shields-master-switch" checked>
+        <span class="slider round"></span>
+      </label>
+    </div>
+
+    <div class="shields-status-alert">
+      <strong id="shields-status-text">Shields are UP for this site</strong>
+      <span>Protecting your browsing and autonomous workflows</span>
+    </div>
+
+    <div class="shields-stats-grid">
+      <div class="shield-stat-row">
+        <span class="shield-stat-icon">🛡️</span>
+        <span class="shield-stat-name">Trackers &amp; ads blocked</span>
+        <strong class="shield-stat-num" id="popover-trackers-count">3</strong>
+      </div>
+      <div class="shield-stat-row">
+        <span class="shield-stat-icon">🔒</span>
+        <span class="shield-stat-name">Fingerprinting blocked</span>
+        <strong class="shield-stat-num" id="popover-fp-count">1</strong>
+      </div>
+      <div class="shield-stat-row">
+        <span class="shield-stat-icon">⚡</span>
+        <span class="shield-stat-name">HTTPS upgrades</span>
+        <strong class="shield-stat-num" id="popover-https-count">1</strong>
+      </div>
+      <div class="shield-stat-row">
+        <span class="shield-stat-icon">🔬</span>
+        <span class="shield-stat-name">REA runtime observation</span>
+        <strong class="shield-stat-num" style="color: #00d26a;">Active</strong>
+      </div>
+    </div>
+
+    <div class="shields-trackers-list">
+      <h4>Blocked Trackers on Page:</h4>
+      <ul id="blocked-trackers-items">
+        <li><span class="badge-block">BLOCKED</span> google-analytics.com</li>
+        <li><span class="badge-block">BLOCKED</span> adservice.google.com</li>
+        <li><span class="badge-block">BLOCKED</span> telemetry.trackers.io</li>
+      </ul>
+    </div>
+
+    <div class="shields-popover-footer">
+      <button class="btn-shields-secondary" id="btn-shields-report">Inspect with REA</button>
+      <button class="btn-shields-secondary" id="btn-shields-close">Done</button>
+    </div>
+  </aside>
+
+  <!-- Split Workspace: Browser Webview + Autonomous Sidebar -->
+  <main class="brave-workspace" role="main">
+    <!-- Active Browser Webview Section -->
+    <section class="browser-viewport-pane" aria-label="Web Viewport">
+      <div class="viewport-status-bar">
+        <div class="active-tab-info">
+          <span class="status-indicator-dot online"></span>
+          <span id="viewport-page-title">Brave | New Tab</span>
+          <span class="viewport-url-badge" id="viewport-url-badge">brave://newtab</span>
+        </div>
+        <div class="cdp-telemetry-badge">
+          <span>CDP Protocol Connected</span>
+          <span>•</span>
+          <span>REA Observer Listening</span>
+        </div>
+      </div>
+
+      <div class="viewport-frame-wrapper" id="webview-container">
+        <iframe id="browser-webview" src="/newtab.html" title="Browser Tab Viewport"></iframe>
+        <!-- Smooth Animated Autonomous Agent Cursor -->
+        <div id="brave-agent-cursor" class="brave-agent-cursor" aria-hidden="true">
+          <div class="cursor-pointer"></div>
+          <div class="cursor-badge">🦁 AGENT</div>
+          <div class="cursor-tooltip" id="cursor-tooltip">Perceiving element...</div>
+        </div>
       </div>
     </section>
 
-    <!-- Right Pane: Persistent Agent Side Panel -->
-    <aside class="sidepanel-pane" aria-label="Agent Control Side Panel">
-      <header class="sidepanel-header">
-        <div class="panel-brand">
-          <span class="status-dot ready" id="status-dot" aria-hidden="true"></span>
-          <h2 class="panel-title" id="lbl-panel-title">Agentic Browser</h2>
-        </div>
-        <button id="btn-emergency-stop" class="btn-kill" aria-label="Emergency Stop Agent">STOP</button>
-      </header>
+    <!-- Brave Autonomous Sidebar (Dock + Multi-Tab Panel) -->
+    <aside class="brave-sidebar-pane" id="brave-sidebar" aria-label="Autonomous Copilot & Tools">
+      <!-- Vertical Sidebar Dock Bar -->
+      <nav class="sidebar-dock" aria-label="Sidebar Navigation">
+        <button class="dock-btn active" data-panel="copilot" title="Autonomous Agent Copilot" aria-label="Agent Copilot">
+          <span>🦁</span>
+        </button>
+        <button class="dock-btn" data-panel="rea" title="REA Reverse Engineering" aria-label="REA Inspector">
+          <span>🔬</span>
+        </button>
+        <button class="dock-btn" data-panel="skills" title="Learned Skills Library" aria-label="Skills Library">
+          <span>📚</span>
+        </button>
+        <button class="dock-btn" data-panel="gateway" title="Model Gateway & OmniRoute" aria-label="Model Gateway">
+          <span>⚙️</span>
+        </button>
+        <div class="dock-spacer"></div>
+        <button class="dock-btn kill-btn" id="sidebar-kill-btn" title="Emergency Stop Autonomous Agent" aria-label="Emergency Stop">
+          <span>🛑</span>
+        </button>
+      </nav>
 
-      <div class="sidepanel-body">
-        <!-- Security / Human Handoff Banner -->
-        <div id="handoff-banner" class="handoff-banner hidden" role="alert" aria-live="assertive">
-          <div class="handoff-icon">⚠️</div>
-          <div class="handoff-content">
-            <h3 class="handoff-title" id="handoff-title">User Action Required</h3>
-            <p class="handoff-desc" id="handoff-desc">The agent detected a security challenge or CAPTCHA and paused. Complete it in the tab to resume.</p>
-            <button id="btn-handoff-resume" class="btn-handoff-resume">I Have Completed It</button>
-          </div>
-        </div>
+      <!-- Sidebar Content Area -->
+      <div class="sidebar-content">
+        <!-- Panel 1: Autonomous Agent Copilot -->
+        <section class="sidebar-panel active" id="panel-copilot" aria-label="Autonomous Agent Panel">
+          <header class="panel-header">
+            <div class="panel-headline">
+              <span class="status-pill ready" id="agent-status-pill">STANDBY</span>
+              <h3>Brave Autonomous Agent</h3>
+            </div>
+            <button class="btn-panel-action" id="btn-clear-logs" title="Clear Stream">Clear</button>
+          </header>
 
-        <!-- Command Box -->
-        <div class="command-box">
-          <div class="input-container">
-            <input 
-              type="text" 
-              id="task-input" 
-              placeholder="Describe what to do on this page..." 
-              value="Search for headphones and extract price"
-              autocomplete="off"
-            />
-            <button type="button" id="btn-voice" class="btn-voice" title="Voice Input" aria-label="Toggle Voice Input">
-              🎤
-            </button>
-          </div>
-
-          <div class="quick-prompts" id="quick-chips">
-            <button type="button" class="chip" data-prompt="Search for headphones and extract price">Search Headphones</button>
-            <button type="button" class="chip" data-prompt="Fill registration form for Alice">Register Alice</button>
-            <button type="button" class="chip" data-prompt="Solve security checkpoint and resume">Solve Security</button>
-          </div>
-
-          <div class="action-bar">
-            <button type="button" id="btn-run-task" class="btn-primary">
-              ▶ <span id="lbl-run-task">Run Task</span>
-            </button>
-            <button type="button" id="btn-pause-task" class="btn-secondary" disabled>
-              <span id="lbl-pause">Pause</span>
-            </button>
-            <button type="button" id="btn-record-demo" class="btn-secondary" title="Record demonstration to learn new skill">
-              ⏺ <span id="lbl-record">Record</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Execution Stream Log -->
-        <div class="log-stream-section">
-          <div class="section-label">
-            <span id="lbl-execution-log">Execution Plan & Stream</span>
-            <span id="step-badge" class="channel-tag" style="display:none">Step 0</span>
-          </div>
-          <div id="action-stream" class="stream-container" role="log" aria-live="polite">
-            <div class="empty-state" id="empty-state">
-              Ready. Click "Run Task" to begin autonomous execution.
+          <!-- Security / Human Handoff Banner -->
+          <div id="sidebar-handoff-alert" class="sidebar-alert hidden" role="alert" aria-live="assertive">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-body">
+              <strong>Human Verification Required</strong>
+              <p>Autonomous agent halted per safety rules. Please solve the security barrier in the browser tab to resume.</p>
+              <button class="btn-resume" id="btn-manual-resume">Resume Autonomous Agent</button>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Telemetry Footer -->
-      <footer class="sidepanel-footer">
-        <div class="telemetry-item">
-          <span>Tokens:</span>
-          <span class="telemetry-value" id="val-tokens">0</span>
-        </div>
-        <div class="telemetry-item">
-          <span>Latency:</span>
-          <span class="telemetry-value" id="val-latency">0ms</span>
-        </div>
-        <div class="telemetry-item">
-          <span>Memory:</span>
-          <span class="telemetry-value" id="val-memory">24MB</span>
-        </div>
-      </footer>
+          <!-- Goal Input Box -->
+          <div class="copilot-input-group">
+            <label for="copilot-goal-input" class="visually-hidden">Task Description</label>
+            <div class="input-with-actions">
+              <input
+                type="text"
+                id="copilot-goal-input"
+                class="goal-input"
+                placeholder="Describe a goal to execute autonomously..."
+                aria-label="Describe goal"
+              />
+              <button class="mic-btn" id="btn-voice-input" title="Voice Input (Speech API)" aria-label="Voice Input">🎙️</button>
+              <button class="run-task-btn" id="btn-run-agent" aria-label="Execute Goal">▶ Run</button>
+            </div>
+
+            <!-- Scenario Preset Chips -->
+            <div class="scenario-chips">
+              <button class="chip" data-scenario="catalog" data-goal="Find Noise-Canceling Headphones and add to cart">
+                🛒 Catalog Order
+              </button>
+              <button class="chip" data-scenario="form" data-goal="Register new developer account with verified email">
+                📝 Developer Form
+              </button>
+              <button class="chip" data-scenario="handoff" data-goal="Navigate security gate with human hand-off checkpoint">
+                🛡️ CAPTCHA Gate
+              </button>
+              <button class="chip" data-scenario="repair" data-goal="Demonstrate autonomous self-repair on broken selector">
+                🔧 Self-Repair Demo
+              </button>
+            </div>
+          </div>
+
+          <!-- Telemetry & State Machine Stream -->
+          <div class="telemetry-section">
+            <div class="telemetry-header">
+              <h4>Autonomous Telemetry Stream</h4>
+              <span class="telemetry-meta" id="telemetry-meta">Plan-Act-Verify-Critic</span>
+            </div>
+            <div class="log-stream-container" id="telemetry-stream" role="log" aria-live="polite">
+              <div class="log-entry system">
+                <span class="log-time">[00:00:00]</span>
+                <span class="log-text">🦁 Brave Autonomous Agent initialized. Ready for task instructions.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Save as Learned Skill Footer -->
+          <div class="skill-save-footer hidden" id="skill-save-box">
+            <span>Workflow successfully verified!</span>
+            <button class="btn-save-skill" id="btn-save-skill">Save as Learned Skill v1.0.0</button>
+          </div>
+        </section>
+
+        <!-- Panel 2: REA Site Intelligence & Reverse Engineering -->
+        <section class="sidebar-panel" id="panel-rea" aria-label="REA Inspector Panel">
+          <header class="panel-header">
+            <div class="panel-headline">
+              <span class="status-pill active">REA v6.5.0</span>
+              <h3>Reverse Engineer Anything</h3>
+            </div>
+            <button class="btn-panel-action" id="btn-run-rea-inspect">Inspect Page</button>
+          </header>
+
+          <div class="rea-body">
+            <p class="rea-intro">Authorized site structure &amp; network analyzer assisting autonomous skills and Brave Shields.</p>
+
+            <div class="rea-stat-cards">
+              <div class="rea-card">
+                <span class="rea-val" id="rea-interactive-count">4</span>
+                <span class="rea-label">Interactive Targets</span>
+              </div>
+              <div class="rea-card">
+                <span class="rea-val" id="rea-tools-count">3</span>
+                <span class="rea-label">WebMCP Tools</span>
+              </div>
+              <div class="rea-card">
+                <span class="rea-val" id="rea-trackers-count" style="color: #ff5500;">3</span>
+                <span class="rea-label">Trackers Blocked</span>
+              </div>
+            </div>
+
+            <div class="rea-section">
+              <h4>Discovered WebMCP Tools:</h4>
+              <div class="tool-contracts-list" id="rea-mcp-tools">
+                <div class="tool-contract-item">
+                  <code>dom_fill_search_input</code>
+                  <span>Fill search text into catalog</span>
+                </div>
+                <div class="tool-contract-item">
+                  <code>dom_click_search_btn</code>
+                  <span>Click search filter button</span>
+                </div>
+                <div class="tool-contract-item">
+                  <code>dom_click_buy_headphones</code>
+                  <span>Add item to shopping cart (High Risk)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="rea-section">
+              <h4>Accessibility &amp; Semantic Tree Mapping:</h4>
+              <pre class="ax-tree-box" id="rea-ax-tree">
+AccessibilityTree:
+├── [main] "Store Content"
+│   ├── [searchbox] "Search Products" (#search-input)
+│   ├── [button] "Search Catalog" (#search-btn)
+│   └── [list] "Product Results"
+│       └── [listitem] "Noise-Canceling Headphones"
+│           └── [button] "Add to Cart" (#buy-headphones)</pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- Panel 3: Learned Skills Library -->
+        <section class="sidebar-panel" id="panel-skills" aria-label="Learned Skills Library">
+          <header class="panel-header">
+            <div class="panel-headline">
+              <span class="status-pill active">FAST-REPLAY</span>
+              <h3>Learned Skills Library</h3>
+            </div>
+          </header>
+
+          <div class="skills-body">
+            <p class="skills-intro">Skills learned through autonomous demonstrations. Execute with zero model latency and zero token cost.</p>
+
+            <div class="skills-list" id="skills-list-container">
+              <div class="skill-card">
+                <div class="skill-card-top">
+                  <span class="skill-id">catalog_order</span>
+                  <span class="skill-ver">v1.0.1</span>
+                </div>
+                <p class="skill-desc">Filter catalog for noise-canceling headphones and add to cart.</p>
+                <div class="skill-tags">
+                  <span class="skill-tag">4 steps</span>
+                  <span class="skill-tag">Self-Repaired</span>
+                  <span class="skill-tag">0 Tokens</span>
+                </div>
+                <button class="btn-replay-skill" data-skill="catalog">▶ Replay Skill</button>
+              </div>
+
+              <div class="skill-card">
+                <div class="skill-card-top">
+                  <span class="skill-id">developer_registration</span>
+                  <span class="skill-ver">v1.0.0</span>
+                </div>
+                <p class="skill-desc">Auto-populate developer profile, validate email, and submit form.</p>
+                <div class="skill-tags">
+                  <span class="skill-tag">5 steps</span>
+                  <span class="skill-tag">Vault Encrypted</span>
+                  <span class="skill-tag">0 Tokens</span>
+                </div>
+                <button class="btn-replay-skill" data-skill="form">▶ Replay Skill</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Panel 4: Model Gateway & OmniRoute/FreeLLMAPI -->
+        <section class="sidebar-panel" id="panel-gateway" aria-label="Model Gateway Settings">
+          <header class="panel-header">
+            <div class="panel-headline">
+              <span class="status-pill active">CONNECTED</span>
+              <h3>Model Gateway &amp; Routing</h3>
+            </div>
+          </header>
+
+          <div class="gateway-body">
+            <div class="gateway-status-card">
+              <div class="gateway-row">
+                <span>Active Router:</span>
+                <strong>OmniRoute Multi-Model Cluster</strong>
+              </div>
+              <div class="gateway-row">
+                <span>Circuit Breaker:</span>
+                <span class="badge-healthy">CLOSED (Healthy)</span>
+              </div>
+              <div class="gateway-row">
+                <span>Average Step Latency:</span>
+                <strong>42 ms</strong>
+              </div>
+              <div class="gateway-row">
+                <span>Cumulative Cost:</span>
+                <strong>$0.00000 (FreeLLMAPI Tier)</strong>
+              </div>
+            </div>
+
+            <h4>Configured Providers &amp; Failover Chain:</h4>
+            <div class="providers-chain">
+              <div class="provider-item active">
+                <div class="provider-rank">1</div>
+                <div class="provider-details">
+                  <strong>OmniRoute Primary</strong>
+                  <span>claude-3-5-sonnet • http://127.0.0.1:8080/v1</span>
+                </div>
+                <span class="provider-tag live">PRIMARY</span>
+              </div>
+              <div class="provider-item">
+                <div class="provider-rank">2</div>
+                <div class="provider-details">
+                  <strong>FreeLLMAPI Zero-Cost Fallback</strong>
+                  <span>gemini-1.5-flash • http://127.0.0.1:8081/v1</span>
+                </div>
+                <span class="provider-tag fallback">FALLBACK</span>
+              </div>
+              <div class="provider-item">
+                <div class="provider-rank">3</div>
+                <div class="provider-details">
+                  <strong>Local Ollama CDP</strong>
+                  <span>llama3.2 • http://127.0.0.1:11434/v1</span>
+                </div>
+                <span class="provider-tag local">LOCAL</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
     </aside>
   </main>
 
-  <script src="app.js" type="module"></script>
+  <script src="app.js"></script>
 </body>
 </html>
