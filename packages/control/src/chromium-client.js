@@ -80,7 +80,18 @@ export class ChromiumCdpClient {
       const res = await this.fetchFn(this.getEndpointUrl('/json/list'), { signal: controller.signal });
       clearTimeout(timer);
       if (res.ok) {
-        return await res.json();
+        const liveTargets = await res.json();
+        if (Array.isArray(liveTargets)) {
+          if (!liveTargets.some(t => t.type === 'page')) {
+            try {
+              const newTarget = await this.createTarget('about:blank');
+              if (newTarget) {
+                liveTargets.push(newTarget);
+              }
+            } catch (_) {}
+          }
+          return liveTargets;
+        }
       }
     } catch (_) {
       // Offline fallback: return simulated Chromium targets
@@ -132,7 +143,7 @@ export class ChromiumCdpClient {
 
     try {
       const targets = await this.listTargets();
-      const target = targets.find(t => t.id === targetId || (targetId === 'target-active' && t.type === 'page'));
+      const target = targets.find(t => t.id === targetId || (targetId === 'target-active' && t.type === 'page')) || targets.find(t => t.type === 'page');
       if (!target || !target.webSocketDebuggerUrl) return null;
 
       const ws = new this.wsConstructor(target.webSocketDebuggerUrl);
@@ -303,6 +314,71 @@ export class ChromiumCdpClient {
   }
 
   /**
+   * Dispatches a single keyboard event (key down + key up) via CDP Input.dispatchKeyEvent.
+   * Handles special keys (Enter, Backspace, Tab, Escape, arrow keys) and text characters.
+   */
+  async dispatchKey(targetId, key, code = '', keyCode = 0, text = '') {
+    try {
+      const isEnter = key === 'Enter' || code === 'Enter';
+      const isBackspace = key === 'Backspace' || code === 'Backspace';
+      const isTab = key === 'Tab' || code === 'Tab';
+      const isEscape = key === 'Escape' || code === 'Escape';
+
+      let keyText = text;
+      let vk = keyCode || 0;
+      if (isEnter) {
+        keyText = '\r';
+        vk = 13;
+      } else if (isBackspace) {
+        vk = 8;
+        keyText = '';
+      } else if (isTab) {
+        vk = 9;
+        keyText = '\t';
+      } else if (isEscape) {
+        vk = 27;
+        keyText = '';
+      } else if (!keyText && key && key.length === 1) {
+        keyText = key;
+      }
+
+      await this.sendCommand(targetId, 'Input.dispatchKeyEvent', {
+        type: 'rawKeyDown',
+        windowsVirtualKeyCode: vk,
+        nativeVirtualKeyCode: vk,
+        key: key,
+        code: code,
+        text: keyText,
+        unmodifiedText: keyText
+      });
+
+      if (keyText) {
+        await this.sendCommand(targetId, 'Input.dispatchKeyEvent', {
+          type: 'char',
+          windowsVirtualKeyCode: vk,
+          nativeVirtualKeyCode: vk,
+          key: key,
+          code: code,
+          text: keyText,
+          unmodifiedText: keyText
+        });
+      }
+
+      await this.sendCommand(targetId, 'Input.dispatchKeyEvent', {
+        type: 'keyUp',
+        windowsVirtualKeyCode: vk,
+        nativeVirtualKeyCode: vk,
+        key: key,
+        code: code
+      });
+
+      return { dispatched: true, key, code };
+    } catch (err) {
+      return { dispatched: false, error: err.message };
+    }
+  }
+
+  /**
    * Captures a visual screenshot of the target page via CDP Page.captureScreenshot.
    */
   async captureScreenshot(targetId, options = {}) {
@@ -353,8 +429,17 @@ export class ChromiumCdpClient {
         await new Promise(resolve => setTimeout(resolve, waitMs));
       }
 
-      const html = await this.captureRenderedHtml(targetId);
-      const meta = await this.captureLivePage(targetId);
+      let html = await this.captureRenderedHtml(targetId);
+      let meta = await this.captureLivePage(targetId);
+
+      if (!html || html.length < 300) {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        const retryHtml = await this.captureRenderedHtml(targetId);
+        if (retryHtml && retryHtml.length > (html?.length || 0)) {
+          html = retryHtml;
+        }
+        meta = await this.captureLivePage(targetId);
+      }
 
       return {
         success: true,

@@ -857,7 +857,10 @@ const server = createServer(async (req, res) => {
 
       const isCdp = parsedUrl.searchParams.get('mode') === 'cdp' ||
                     finalUrl.includes('facebook.com') ||
-                    finalUrl.includes('youtube.com');
+                    finalUrl.includes('youtube.com') ||
+                    finalUrl.includes('x.com') ||
+                    finalUrl.includes('twitter.com') ||
+                    finalUrl.includes('instagram.com');
 
       const isConnected = await chromiumClient.isCdpConnected();
 
@@ -867,8 +870,8 @@ const server = createServer(async (req, res) => {
       // For bot-protected SPAs like Facebook and YouTube, prefer Google Chrome CDP rendering
       if (isCdp && isConnected) {
         try {
-          const renderPromise = chromiumClient.navigateAndRender(finalUrl, 1500);
-          const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 2500));
+          const renderPromise = chromiumClient.navigateAndRender(finalUrl, 1800);
+          const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 3000));
           const renderResult = await Promise.race([renderPromise, timeoutPromise]);
           if (renderResult && renderResult.success && renderResult.html && renderResult.html.length > 500) {
             html = renderResult.html;
@@ -884,39 +887,63 @@ const server = createServer(async (req, res) => {
           chromiumClient.navigateTarget('target-active', finalUrl).catch(() => {});
         }
 
-        const fetchRes = await fetch(finalUrl, {
-          redirect: 'follow',
-          signal: AbortSignal.timeout(6000),
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Brave/124.0.0.0',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9'
-          }
-        });
-
-        effectiveUrl = fetchRes.url || finalUrl;
-        const contentType = fetchRes.headers.get('content-type') || 'text/html';
-
-        if (contentType.includes('text/html')) {
-          html = await fetchRes.text();
-
-          // Check for anti-bot blocks (e.g. Facebook "Sorry, something went wrong")
-          if (html.includes('Sorry, something went wrong') && isConnected) {
+        let fetchRes = null;
+        try {
+          fetchRes = await fetch(finalUrl, {
+            redirect: 'follow',
+            signal: AbortSignal.timeout(6000),
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Brave/124.0.0.0',
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+              'Accept-Language': 'en-US,en;q=0.9'
+            }
+          });
+        } catch (fetchErr) {
+          // If fetch threw an error (DNS, socket hangup, refusal), fallback to Chrome CDP rendering
+          if (isConnected) {
             try {
-              const retryCdp = await chromiumClient.navigateAndRender(effectiveUrl, 1800);
-              if (retryCdp && retryCdp.success && retryCdp.html && !retryCdp.html.includes('Sorry, something went wrong')) {
-                html = retryCdp.html;
+              const cdpFallback = await chromiumClient.navigateAndRender(finalUrl, 2000);
+              if (cdpFallback && cdpFallback.success && cdpFallback.html && cdpFallback.html.length > 200) {
+                html = cdpFallback.html;
+                effectiveUrl = cdpFallback.url || finalUrl;
               }
             } catch (_) {}
           }
-        } else {
-          const buffer = await fetchRes.arrayBuffer();
-          res.writeHead(200, {
-            'Content-Type': contentType,
-            'Access-Control-Allow-Origin': '*'
-          });
-          res.end(Buffer.from(buffer));
-          return;
+          if (!html) throw fetchErr;
+        }
+
+        if (fetchRes) {
+          effectiveUrl = fetchRes.url || finalUrl;
+          const contentType = fetchRes.headers.get('content-type') || 'text/html';
+
+          if (contentType.includes('text/html')) {
+            html = await fetchRes.text();
+
+            // Check for anti-bot blocks, 400/403/429 status, or Facebook/Cloudflare blocks
+            const isBlockedOrError = !fetchRes.ok ||
+                                     html.includes('Sorry, something went wrong') ||
+                                     html.includes('challenge-running') ||
+                                     (html.includes('<title>Error</title>') && html.includes('facebook'));
+
+            if (isBlockedOrError && isConnected) {
+              try {
+                const retryCdp = await chromiumClient.navigateAndRender(effectiveUrl, 2000);
+                if (retryCdp && retryCdp.success && retryCdp.html && retryCdp.html.length > 500) {
+                  html = retryCdp.html;
+                }
+              } catch (_) {}
+            }
+          } else {
+            const buffer = await fetchRes.arrayBuffer();
+            res.setHeader('X-Frame-Options', 'ALLOWALL');
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.writeHead(200, {
+              'Content-Type': contentType,
+              'Access-Control-Allow-Origin': '*'
+            });
+            res.end(Buffer.from(buffer));
+            return;
+          }
         }
       }
 
@@ -944,23 +971,42 @@ const server = createServer(async (req, res) => {
       if (__BRAVE_HOST__) {
         __BRAVE_HOST__.postMessage({ type: 'BRAVE_NAVIGATE', url: a.href }, '*');
       } else {
-        window.location.href = a.href;
+        window.location.href = '/api/proxy?url=' + encodeURIComponent(a.href);
       }
     }
   }, true);
 
+  // Intercept window.open
+  window.open = function(url) {
+    if (url && __BRAVE_HOST__) {
+      __BRAVE_HOST__.postMessage({ type: 'BRAVE_NAVIGATE', url: url }, '*');
+    } else if (url) {
+      window.location.href = '/api/proxy?url=' + encodeURIComponent(url);
+    }
+    return null;
+  };
+
   // Intercept form submissions
   document.addEventListener('submit', function(e) {
     const form = e.target;
-    if (form && form.action && (form.method || 'GET').toUpperCase() === 'GET') {
+    if (form && form.action) {
       e.preventDefault();
-      const formData = new FormData(form);
-      const params = new URLSearchParams(formData).toString();
-      const destUrl = form.action.includes('?') ? form.action + '&' + params : form.action + '?' + params;
-      if (__BRAVE_HOST__) {
-        __BRAVE_HOST__.postMessage({ type: 'BRAVE_NAVIGATE', url: destUrl }, '*');
+      const method = (form.method || 'GET').toUpperCase();
+      if (method === 'GET') {
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData).toString();
+        const destUrl = form.action.includes('?') ? form.action + '&' + params : form.action + '?' + params;
+        if (__BRAVE_HOST__) {
+          __BRAVE_HOST__.postMessage({ type: 'BRAVE_NAVIGATE', url: destUrl }, '*');
+        } else {
+          window.location.href = '/api/proxy?url=' + encodeURIComponent(destUrl);
+        }
       } else {
-        window.location.href = destUrl;
+        if (__BRAVE_HOST__) {
+          __BRAVE_HOST__.postMessage({ type: 'BRAVE_NAVIGATE', url: form.action }, '*');
+        } else {
+          form.submit();
+        }
       }
     }
   }, true);
@@ -989,13 +1035,39 @@ const server = createServer(async (req, res) => {
         html = `<head>${injectedContent}</head>${html}`;
       }
 
+      res.setHeader('X-Frame-Options', 'ALLOWALL');
+      res.setHeader('Content-Security-Policy', "frame-ancestors * 'self' http://localhost:3000 http://127.0.0.1:3000; default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;");
       res.writeHead(200, {
         'Content-Type': 'text/html; charset=utf-8',
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': '*',
+        'X-Frame-Options': 'ALLOWALL',
+        'Content-Security-Policy': "frame-ancestors * 'self' http://localhost:3000 http://127.0.0.1:3000; default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;"
       });
       res.end(html);
     } catch (err) {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      // Last-mile failover: attempt CDP render before showing connection notice
+      try {
+        const isConnected = await chromiumClient.isCdpConnected();
+        if (isConnected) {
+          const finalUrl = resolveOmniboxDestination(rawTarget).url || rawTarget;
+          const cdpEmergency = await chromiumClient.navigateAndRender(finalUrl, 2000);
+          if (cdpEmergency && cdpEmergency.success && cdpEmergency.html && cdpEmergency.html.length > 200) {
+            res.setHeader('X-Frame-Options', 'ALLOWALL');
+            res.setHeader('Content-Security-Policy', "frame-ancestors * 'self' http://localhost:3000 http://127.0.0.1:3000; default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;");
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+            res.end(cdpEmergency.html);
+            return;
+          }
+        }
+      } catch (_) {}
+
+      res.setHeader('X-Frame-Options', 'ALLOWALL');
+      res.setHeader('Content-Security-Policy', "frame-ancestors * 'self' http://localhost:3000 http://127.0.0.1:3000;");
+      res.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+        'X-Frame-Options': 'ALLOWALL'
+      });
       res.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Navigation Connection - Braver</title><style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 24px; box-sizing: border-box; }
         .card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 36px; max-width: 580px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); text-align: center; }
@@ -1097,7 +1169,7 @@ const server = createServer(async (req, res) => {
   }
 
   // Google Chrome CDP Live Screenshot API
-  if (req.method === 'GET' && pathname === '/api/chrome/screenshot') {
+  if ((req.method === 'GET' || req.method === 'HEAD') && pathname === '/api/chrome/screenshot') {
     try {
       const targets = await chromiumClient.listTargets();
       const pageTarget = targets.find(t => t.type === 'page');
@@ -1132,10 +1204,12 @@ const server = createServer(async (req, res) => {
         const targets = await chromiumClient.listTargets();
         const pageTarget = targets.find(t => t.type === 'page');
         const targetId = payload.targetId || (pageTarget ? pageTarget.id : 'target-active');
-        const { type, x, y, text, deltaX, deltaY } = payload;
+        const { type, x, y, text, key, code, keyCode, deltaX, deltaY } = payload;
 
         if (type === 'click') {
           await chromiumClient.dispatchClick(targetId, x || 100, y || 100);
+        } else if (type === 'key') {
+          await chromiumClient.dispatchKey(targetId, key, code, keyCode, text);
         } else if (type === 'type' && text) {
           await chromiumClient.dispatchType(targetId, text);
         } else if (type === 'scroll') {
@@ -1149,6 +1223,43 @@ const server = createServer(async (req, res) => {
         res.end(JSON.stringify({ error: err.message }));
       }
     });
+    return;
+  }
+
+  // Google Chrome Native Authentication Window API
+  if ((req.method === 'POST' || req.method === 'GET') && pathname === '/api/chrome/login-window') {
+    try {
+      const targetUrl = parsedUrl.searchParams.get('url') || 'https://accounts.google.com/signin';
+      const chromeBin = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+      const userDataDir = process.env.TMPDIR ? `${process.env.TMPDIR}/chrome-cdp-agent-profile` : '/tmp/chrome-cdp-agent-profile';
+
+      const isConnected = await chromiumClient.isCdpConnected();
+      if (isConnected) {
+        const targets = await chromiumClient.listTargets();
+        const pageTarget = targets.find(t => t.type === 'page');
+        if (pageTarget) {
+          await chromiumClient.navigateTarget(pageTarget.id, targetUrl);
+        }
+        spawn('open', ['-a', 'Google Chrome'], { stdio: 'ignore' }).unref();
+      } else {
+        const scriptPath = join(__dirname, 'scripts', 'launch-chrome-cdp.sh');
+        const child = spawn('bash', [scriptPath, targetUrl], {
+          detached: true,
+          stdio: 'ignore'
+        });
+        child.unref();
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({
+        success: true,
+        targetUrl,
+        message: 'Google Chrome Login Window launched! Log in with Google, YouTube, Facebook, or GitHub. Your session cookies and credentials immediately sync into Braver.'
+      }));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
     return;
   }
 

@@ -891,13 +891,20 @@
 
         let actionHtml = '';
         if (data.action && data.action.type && data.action.type !== 'none') {
+          const actType = data.action.type.toUpperCase();
+          const actTarget = data.action.target || data.action.goal || text;
+
           actionHtml = `
-            <div class="action-card">
-              <span class="act-type">⚡ BROWSER ACTION: ${data.action.type.toUpperCase()}</span>
-              <span>Target: <code>${data.action.target || 'N/A'}</code></span>
+            <div class="action-card" style="margin-top: 10px; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 8px; padding: 10px 14px; font-size: 13px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px;">
+                <span style="font-weight: 700; color: #d8b4fe; letter-spacing: 0.5px;">⚡ AUTONOMOUS AGENT: ${actType}</span>
+                <span style="background: #10b981; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">EXECUTING</span>
+              </div>
+              <div style="color: #cbd5e1; word-break: break-all;">Target: <code style="color: #38bdf8;">${actTarget}</code></div>
             </div>
           `;
 
+          // Autonomous Action Execution Pipeline
           if (data.action.type === 'navigate' && data.action.target) {
             setTimeout(() => {
               if (window.parent && window.parent !== window) {
@@ -905,18 +912,40 @@
               } else {
                 window.location.href = data.action.target;
               }
-            }, 1200);
+            }, 900);
+          } else if (data.action.type === 'search' && data.action.target) {
+            setTimeout(() => {
+              const searchUrl = `/search.html?q=${encodeURIComponent(data.action.target)}`;
+              if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: searchUrl }, '*');
+              } else {
+                window.location.href = searchUrl;
+              }
+            }, 900);
+          } else if (data.action.type === 'task' || data.action.type === 'click' || data.action.type === 'type' || data.autonomous) {
+            setTimeout(() => {
+              if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                  type: 'BRAVE_RUN_TASK',
+                  goal: data.action.goal || text,
+                  scenario: data.action.scenario || 'live',
+                  action: data.action
+                }, '*');
+              }
+            }, 600);
           }
         }
 
+        const formattedReply = (data.reply || 'Task completed.').replace(/\n/g, '<br>');
+
         assistantBubble.innerHTML = `
-          <strong>🦁 Braver AI</strong>
-          <p style="margin-top: 4px;">${data.reply || 'Task completed.'}</p>
+          <strong style="color: #c084fc;">🦁 Braver AI Copilot</strong>
+          <div style="margin-top: 6px; line-height: 1.55; color: #f1f5f9;">${formattedReply}</div>
           ${actionHtml}
-          <div style="margin-top: 6px; font-size: 11px; color: #9aa0a6;">Provider: ${data.provider || 'OmniRoute'} (${data.latencyMs || 25}ms)</div>
+          <div style="margin-top: 8px; font-size: 11px; color: #94a3b8; border-top: 1px solid #334155; padding-top: 6px;">Provider: ${data.provider || 'OmniRoute & FreeLLMAPI'} (${data.latencyMs || 18}ms) • Autonomous Ready</div>
         `;
       } catch (err) {
-        assistantBubble.innerHTML = `<span style="color:#ef4444;">Failed to communicate with AI gateway.</span>`;
+        assistantBubble.innerHTML = `<span style="color:#ef4444;">Failed to communicate with AI gateway: ${err.message}</span>`;
       }
       drawerMessages.scrollTop = drawerMessages.scrollHeight;
     }

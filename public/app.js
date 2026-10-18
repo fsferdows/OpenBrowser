@@ -206,6 +206,7 @@
     viewportUrlBadge: document.getElementById('viewport-url-badge'),
     btnModeWeb: document.getElementById('btn-mode-web'),
     btnModeCdp: document.getElementById('btn-mode-cdp'),
+    btnLoginWindow: document.getElementById('btn-open-login-window'),
     cdpLiveStreamContainer: document.getElementById('cdp-live-stream-container'),
     cdpLiveStreamImg: document.getElementById('cdp-live-stream-img'),
     agentCursor: document.getElementById('brave-agent-cursor'),
@@ -429,6 +430,10 @@
     }
 
     const dest = resolveOmniboxDestination(targetUrl);
+    if (dest.type === 'search') {
+      navigateLiveUrl(`/search.html?q=${encodeURIComponent(dest.query || targetUrl)}`);
+      return;
+    }
     targetUrl = dest.url || targetUrl;
 
     if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
@@ -465,6 +470,12 @@
     // Load via live web proxy
     dom.webview.src = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
     appendLog('system', `🌐 Navigating to live web destination: ${targetUrl}`);
+
+    const isSpaOrAuth = /youtube\.com|facebook\.com|instagram\.com|accounts\.google\.com|x\.com|twitter\.com|github\.com\/login|linkedin\.com/i.test(targetUrl);
+    if (isSpaOrAuth) {
+      setViewportMode('cdp');
+      appendLog('system', `⚡ Auto-activated Live Chrome CDP mode for high-fidelity SPA/Login: ${targetUrl}`);
+    }
 
     // Sync to live Google Chrome CDP session in real time
     fetch('/api/chrome/navigate', {
@@ -559,6 +570,7 @@
 
   // Forward clicks on CDP stream image to Chrome
   dom.cdpLiveStreamImg?.addEventListener('click', (e) => {
+    dom.cdpLiveStreamContainer?.focus();
     const rect = dom.cdpLiveStreamImg.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
@@ -574,6 +586,82 @@
     }).then(() => {
       setTimeout(refreshCdpStream, 150);
     }).catch(() => {});
+  });
+
+  // Forward keyboard keystrokes to Chrome CDP session
+  dom.cdpLiveStreamContainer?.addEventListener('keydown', (e) => {
+    if (state.viewportMode !== 'cdp') return;
+
+    if (['Tab', 'Backspace', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      e.preventDefault();
+    }
+
+    fetch('/api/chrome/input', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'key',
+        key: e.key,
+        code: e.code,
+        keyCode: e.keyCode,
+        text: e.key.length === 1 ? e.key : ''
+      })
+    }).then(() => {
+      setTimeout(refreshCdpStream, 120);
+    }).catch(() => {});
+  });
+
+  // Forward mouse wheel / scroll events to Chrome CDP session
+  let wheelTimeout = null;
+  dom.cdpLiveStreamContainer?.addEventListener('wheel', (e) => {
+    if (state.viewportMode !== 'cdp') return;
+    e.preventDefault();
+
+    const rect = dom.cdpLiveStreamImg.getBoundingClientRect();
+    const cursorX = e.clientX - rect.left;
+    const cursorY = e.clientY - rect.top;
+    const scaleX = (dom.cdpLiveStreamImg.naturalWidth || 1280) / rect.width;
+    const scaleY = (dom.cdpLiveStreamImg.naturalHeight || 800) / rect.height;
+    const realX = Math.round(cursorX * scaleX);
+    const realY = Math.round(cursorY * scaleY);
+
+    fetch('/api/chrome/input', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'scroll',
+        x: realX,
+        y: realY,
+        deltaX: Math.round(e.deltaX),
+        deltaY: Math.round(e.deltaY)
+      })
+    }).then(() => {
+      if (!wheelTimeout) {
+        wheelTimeout = setTimeout(() => {
+          refreshCdpStream();
+          wheelTimeout = null;
+        }, 120);
+      }
+    }).catch(() => {});
+  }, { passive: false });
+
+  // Native Login Window button
+  dom.btnLoginWindow?.addEventListener('click', () => {
+    let loginUrl = 'https://accounts.google.com/signin';
+    if (state.activeUrl && (state.activeUrl.includes('youtube.com') || state.activeUrl.includes('facebook.com') || state.activeUrl.includes('github.com') || state.activeUrl.includes('x.com'))) {
+      loginUrl = state.activeUrl;
+    }
+    appendLog('system', `🔓 Opening Native Login Window for: ${loginUrl}`);
+    fetch(`/api/chrome/login-window?url=${encodeURIComponent(loginUrl)}`)
+      .then(res => res.json())
+      .then(data => {
+        setViewportMode('cdp');
+        appendLog('agent', `🦁 ${data.message || 'Login window opened!'}`);
+        alert(data.message || 'Login Window opened. Complete login in Google Chrome, then return to Braver. All cookies and credentials sync automatically!');
+      })
+      .catch(err => {
+        appendLog('error', `Login window error: ${err.message}`);
+      });
   });
 
   dom.navHome.addEventListener('click', () => switchTab('newtab'));
@@ -654,7 +742,19 @@
         const activeTabTitle = document.querySelector('.tab-item.active .tab-title');
         if (activeTabTitle) activeTabTitle.textContent = doc.title;
       }
-    } catch (_) {}
+      if (doc) {
+        const bodyText = (doc.body?.innerText || '').trim();
+        const elementCount = doc.querySelectorAll('*').length;
+        if ((elementCount < 10 || bodyText.length < 5) && state.activeScenario === 'live' && state.viewportMode === 'web') {
+          appendLog('system', '⚡ Detected blank/blocked iframe target. Auto-switching to Live Chrome CDP rendering.');
+          setViewportMode('cdp');
+        }
+      }
+    } catch (_) {
+      if (state.activeScenario === 'live') {
+        refreshCdpStream();
+      }
+    }
   });
 
   dom.webview.addEventListener('error', () => {
@@ -664,7 +764,10 @@
       progressBar.classList.add('done');
       setTimeout(() => progressBar.classList.add('hidden'), 500);
     }
-    appendLog('system', `⚠️ Connection error on live viewport. Suggesting Live Chrome CDP fallback.`);
+    appendLog('system', `⚠️ Connection error on live viewport. Auto-switching to Live Chrome CDP fallback.`);
+    if (state.activeScenario === 'live') {
+      setViewportMode('cdp');
+    }
   });
 
   // ==========================================================================
