@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>facebook - Braver Search</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='20' font-size='20'>🦁</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-main: #1f2023;
+      --bg-surface: #202124;
+      --bg-card: #202124;
+      --border-color: #3c4043;
+      --text-main: #e8eaed;
+      --text-muted: #9aa0a6;
+      --link-color: #8ab4f8;
+      --link-visited: #c58af9;
+      --ai-purple: #c084fc;
+      --ai-gradient: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Roboto', Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.58;
+      overflow-x: hidden;
+    }
+
+    /* Top Search Header */
+    .serp-header {
+      position: sticky;
+      top: 0;
+      background-color: var(--bg-main);
+      border-bottom: 1px solid #303134;
+      padding: 20px 24px 0 24px;
+      z-index: 100;
+    }
+
+    .header-top-row {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      margin-bottom: 16px;
+    }
+
+    .brand-logo {
+      font-size: 26px;
+      font-weight: 700;
+      color: #ffffff;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+    }
+
+    .brand-logo .lion {
+      font-size: 22px;
+    }
+
+    .search-bar-wrapper {
+      flex: 1;
+      max-width: 692px;
+      position: relative;
+    }
+
+    .search-input-pill {
+      display: flex;
+      align-items: center;
+      background-color: #303134;
+      border: 1px solid transparent;
+      border-radius: 24px;
+      height: 44px;
+      padding: 0 16px;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
+    }
+
+    .search-input-pill:hover,
+    .search-input-pill:focus-within {
+      background-color: #303134;
+      border-color: #5f6368;
+      box-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    .search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 16px;
+      font-family: inherit;
+      padding-right: 8px;
+    }
+
+    .search-icons {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      padding: 4px;
+      border-radius: 50%;
+      transition: color 0.15s ease;
+    }
+
+    .icon-btn:hover {
+      color: #fff;
+    }
+
+    .icon-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    .search-divider {
+      width: 1px;
+      height: 20px;
+      background-color: #5f6368;
+    }
+
+    .header-user-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-left: auto;
+    }
+
+    .user-avatar-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #7c3aed;
+      border: 2px solid #38bdf8;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+    }
+
+    /* Sub Navigation Tabs */
+    .serp-tabs {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 14px;
+      overflow-x: auto;
+      margin-left: 140px;
+      padding-bottom: 2px;
+    }
+
+    .serp-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 4px 10px 4px;
+      color: var(--text-muted);
+      text-decoration: none;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      transition: color 0.15s ease;
+    }
+
+    .serp-tab:hover {
+      color: var(--text-main);
+    }
+
+    .serp-tab.active {
+      color: #fff;
+      font-weight: 500;
+      border-bottom-color: #fff;
+    }
+
+    .serp-tab.ai-mode-tab {
+      color: #c084fc;
+      font-weight: 500;
+      position: relative;
+    }
+
+    .serp-tab.ai-mode-tab:hover {
+      color: #e9d5ff;
+    }
+
+    .ai-sparkle-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--ai-gradient);
+      color: #fff;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      font-size: 11px;
+    }
+
+    /* Main SERP Layout (2 Columns) */
+    .serp-container {
+      display: flex;
+      max-width: 1240px;
+      margin-left: 140px;
+      padding: 24px 20px 60px 0;
+      gap: 56px;
+    }
+
+    .results-column {
+      flex: 1;
+      max-width: 652px;
+    }
+
+    .knowledge-column {
+      width: 368px;
+      flex-shrink: 0;
+    }
+
+    /* Search Result Card */
+    .result-card {
+      margin-bottom: 32px;
+    }
+
+    .result-source-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+      cursor: pointer;
+    }
+
+    .source-favicon {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #303134;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .source-favicon img,
+    .source-favicon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .source-meta {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.25;
+    }
+
+    .source-name {
+      font-size: 14px;
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    .source-url {
+      font-size: 12px;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .source-more-btn {
+      margin-left: auto;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .result-title {
+      display: inline-block;
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--link-color);
+      text-decoration: none;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+
+    .result-title:hover {
+      text-decoration: underline;
+    }
+
+    .result-snippet {
+      font-size: 14px;
+      color: #bdc1c6;
+      line-height: 1.58;
+      word-wrap: break-word;
+    }
+
+    .result-snippet b,
+    .result-snippet strong {
+      color: #fff;
+    }
+
+    /* Nested Sitelinks List */
+    .sitelinks-list {
+      margin-top: 14px;
+      border-top: 1px solid #303134;
+    }
+
+    .sitelink-item {
+      padding: 12px 0;
+      border-bottom: 1px solid #303134;
+    }
+
+    .sitelink-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-decoration: none;
+    }
+
+    .sitelink-title {
+      font-size: 16px;
+      color: var(--link-color);
+      font-weight: 400;
+    }
+
+    .sitelink-title:hover {
+      text-decoration: underline;
+    }
+
+    .sitelink-arrow {
+      color: var(--text-muted);
+      font-size: 18px;
+    }
+
+    .sitelink-snippet {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .sitelinks-more-link {
+      display: inline-block;
+      margin-top: 12px;
+      color: var(--link-color);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .sitelinks-more-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Secondary Result (App / Play Store) */
+    .secondary-result {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #303134;
+    }
+
+    /* Knowledge Graph Panel */
+    .knowledge-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .kp-header {
+      display: flex;
+      align-items: center;
+      padding: 16px 16px 12px 16px;
+      gap: 12px;
+    }
+
+    .kp-brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #111;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .kp-title {
+      font-size: 26px;
+      font-weight: 500;
+      color: #fff;
+    }
+
+    .kp-menu-btn {
+      margin-left: auto;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    /* Collage Gallery (3 images matching Image 1) */
+    .kp-collage-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      grid-template-rows: 110px 110px;
+      gap: 4px;
+      background: #111;
+      overflow: hidden;
+    }
+
+    .kp-collage-item {
+      position: relative;
+      overflow: hidden;
+      background: #202124;
+    }
+
+    .kp-collage-item.featured {
+      grid-row: span 2;
+    }
+
+    .kp-collage-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+
+    .kp-collage-item:hover img {
+      transform: scale(1.04);
+    }
+
+    .kp-body {
+      padding: 16px;
+    }
+
+    .kp-description {
+      font-size: 13.5px;
+      color: #bdc1c6;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .kp-description a {
+      color: var(--link-color);
+      text-decoration: none;
+    }
+
+    .kp-description a:hover {
+      text-decoration: underline;
+    }
+
+    .kp-attrs-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-top: 1px solid #303134;
+      font-size: 13px;
+    }
+
+    .kp-attrs-table tr {
+      border-bottom: 1px solid #303134;
+    }
+
+    .kp-attr-label {
+      padding: 10px 0;
+      color: var(--text-muted);
+      width: 100px;
+      vertical-align: top;
+    }
+
+    .kp-attr-value {
+      padding: 10px 0;
+      color: var(--text-main);
+      text-decoration: none;
+      line-height: 1.4;
+    }
+
+    .kp-attr-value a {
+      color: var(--text-main);
+      text-decoration: underline dotted #5f6368;
+    }
+
+    .kp-attr-value a:hover {
+      color: var(--link-color);
+    }
+
+    /* AI Mode Chat Drawer */
+    .ai-chat-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 460px;
+      height: 100vh;
+      background: #18191c;
+      border-left: 1px solid #303134;
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      z-index: 200;
+      transform: translateX(100%);
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .ai-chat-drawer.open {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      padding: 16px 20px;
+      background: #1f2023;
+      border-bottom: 1px solid #303134;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .drawer-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      color: #fff;
+    }
+
+    .engine-pill {
+      font-size: 11px;
+      padding: 2px 8px;
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 12px;
+      color: #c084fc;
+    }
+
+    .btn-close-drawer {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 20px;
+      padding: 4px;
+    }
+
+    .btn-close-drawer:hover {
+      color: #fff;
+    }
+
+    .drawer-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .chat-bubble {
+      max-width: 88%;
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .chat-bubble.assistant {
+      align-self: flex-start;
+      background: #25272c;
+      border: 1px solid #33363d;
+      color: #e8eaed;
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-bubble.user {
+      align-self: flex-end;
+      background: #2563eb;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .action-card {
+      margin-top: 10px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: monospace;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .action-card .act-type {
+      color: #4ade80;
+      font-weight: bold;
+    }
+
+    .drawer-footer {
+      padding: 16px;
+      background: #1f2023;
+      border-top: 1px solid #303134;
+    }
+
+    .drawer-input-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #303134;
+      border-radius: 24px;
+      padding: 6px 14px;
+      border: 1px solid #5f6368;
+    }
+
+    .drawer-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .btn-send-chat {
+      background: var(--ai-gradient);
+      border: none;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .quick-chips-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .chat-chip {
+      background: #25272c;
+      border: 1px solid #383b42;
+      color: #9aa0a6;
+      font-size: 11.5px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .chat-chip:hover {
+      color: #fff;
+      border-color: #5f6368;
+    }
+  </style>
+</head>
+<body>
+  <!-- SERP Header -->
+  <header class="serp-header">
+    <div class="header-top-row">
+      <a href="/newtab.html" class="brand-logo" title="Braver Home">
+        <span class="lion">🦁</span>
+        <span>Braver</span>
+      </a>
+
+      <div class="search-bar-wrapper">
+        <form id="serp-search-form" class="search-input-pill" role="search">
+          <input
+            type="text"
+            id="serp-input"
+            class="search-input"
+            value="facebook"
+            aria-label="Search"
+          />
+          <div class="search-icons">
+            <button type="button" class="icon-btn" id="btn-clear-serp" title="Clear search">
+              <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+            <div class="search-divider"></div>
+            <button type="button" class="icon-btn" id="btn-voice" title="Search by voice">
+              <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+            </button>
+            <button type="button" class="icon-btn" id="btn-lens" title="Search by image">
+              <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+            </button>
+            <button type="submit" class="icon-btn" title="Search">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="header-user-actions">
+        <button class="icon-btn" title="Share search">
+          <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+        </button>
+        <button class="icon-btn" title="Braver Apps">
+          <svg viewBox="0 0 24 24"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM6 4c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 12c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+        </button>
+        <div class="user-avatar-badge" title="FS Ferdows">FS</div>
+      </div>
+    </div>
+
+    <!-- Category Tabs -->
+    <nav class="serp-tabs" aria-label="Search Categories">
+      <button class="serp-tab ai-mode-tab" id="btn-tab-ai">
+        <span class="ai-sparkle-badge">✨</span>
+        <span>AI Mode</span>
+      </button>
+      <a href="#" class="serp-tab active" data-cat="all">All</a>
+      <a href="#" class="serp-tab" data-cat="images">Images</a>
+      <a href="#" class="serp-tab" data-cat="forums">Forums</a>
+      <a href="#" class="serp-tab" data-cat="videos">Videos</a>
+      <a href="#" class="serp-tab" data-cat="news">News</a>
+      <a href="#" class="serp-tab" data-cat="shorts">Short videos</a>
+      <a href="#" class="serp-tab" data-cat="more">More ▾</a>
+      <a href="#" class="serp-tab" data-cat="tools">Tools</a>
+    </nav>
+  </header>
+
+  <!-- SERP Main Content Area -->
+  <main class="serp-container">
+    <!-- Left Column: Organic Results -->
+    <section class="results-column" id="results-column">
+      <!-- Main Organic Card: Facebook -->
+      <article class="result-card" id="main-result-card">
+        <div class="result-source-row" onclick="navigateToUrl('https://www.facebook.com')">
+          <div class="source-favicon">
+            <svg viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </div>
+          <div class="source-meta">
+            <span class="source-name" id="res-source-name">Facebook</span>
+            <span class="source-url" id="res-source-url">https://www.facebook.com</span>
+          </div>
+          <div class="source-more-btn">⋮</div>
+        </div>
+
+        <a href="https://www.facebook.com" class="result-title" id="res-title" onclick="event.preventDefault(); navigateToUrl('https://www.facebook.com');">
+          Facebook - log in or sign up
+        </a>
+
+        <p class="result-snippet" id="res-snippet">
+          Create an account or <b>log into Facebook</b>. Connect with friends, family and other people you know. Share photos and videos, send messages and get updates.
+        </p>
+
+        <!-- Sitelinks -->
+        <div class="sitelinks-list" id="res-sitelinks">
+          <div class="sitelink-item">
+            <a href="https://www.facebook.com/login" class="sitelink-header" onclick="event.preventDefault(); navigateToUrl('https://www.facebook.com/login');">
+              <span class="sitelink-title">Log in</span>
+              <span class="sitelink-arrow">›</span>
+            </a>
+            <p class="sitelink-snippet">Log in to Facebook to start sharing and connecting with your ...</p>
+          </div>
+
+          <div class="sitelink-item">
+            <a href="https://www.facebook.com" class="sitelink-header" onclick="event.preventDefault(); navigateToUrl('https://www.facebook.com');">
+              <span class="sitelink-title">Posts</span>
+              <span class="sitelink-arrow">›</span>
+            </a>
+            <p class="sitelink-snippet">When it comes to the perfect pet costume, Facebook ...</p>
+          </div>
+
+          <div class="sitelink-item">
+            <a href="https://www.facebook.com/recover/initiate" class="sitelink-header" onclick="event.preventDefault(); navigateToUrl('https://www.facebook.com/recover/initiate');">
+              <span class="sitelink-title">Forgot password?</span>
+              <span class="sitelink-arrow">›</span>
+            </a>
+            <p class="sitelink-snippet">Log into Facebook to start sharing and connecting with your ...</p>
+          </div>
+
+          <div class="sitelink-item">
+            <a href="https://www.facebook.com/r.php" class="sitelink-header" onclick="event.preventDefault(); navigateToUrl('https://www.facebook.com/r.php');">
+              <span class="sitelink-title">Create new account</span>
+              <span class="sitelink-arrow">›</span>
+            </a>
+            <p class="sitelink-snippet">Sign up for Facebook and find your friends. Create an account to ...</p>
+          </div>
+
+          <div class="sitelink-item">
+            <a href="https://www.facebook.com/login" class="sitelink-header" onclick="event.preventDefault(); navigateToUrl('https://www.facebook.com/login');">
+              <span class="sitelink-title">Facebook login</span>
+              <span class="sitelink-arrow">›</span>
+            </a>
+          </div>
+
+          <a href="https://www.facebook.com" class="sitelinks-more-link" onclick="event.preventDefault(); navigateToUrl('https://www.facebook.com');">
+            More results from facebook.com »
+          </a>
+        </div>
+      </article>
+
+      <!-- Secondary Result: Google Play -->
+      <article class="result-card secondary-result" id="secondary-result-card">
+        <div class="result-source-row" onclick="navigateToUrl('https://play.google.com/store/apps/details?id=com.facebook.katana')">
+          <div class="source-favicon" style="background:#fff;">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="#4285F4" d="M3 20.5v-17c0-.83.67-1.5 1.5-1.5.31 0 .61.1.86.29l10.9 7.56-4.5 4.5L3 20.5z"/><path fill="#34A853" d="M16.26 9.85l4.38 3.04c.82.57.82 1.5 0 2.07l-4.38 3.04-3.5-3.5 3.5-4.65z"/><path fill="#EA4335" d="M5.36 2.29L16.26 9.85l-4.5 4.5-8.76-8.76c.25-.19.55-.29.86-.29z"/><path fill="#FBBC05" d="M3 20.5l8.76-8.76 4.5 4.5-10.9 7.56c-.25.19-.55.29-.86.29-.83 0-1.5-.67-1.5-1.5v-2.09z"/></svg>
+          </div>
+          <div class="source-meta">
+            <span class="source-name">Google Play</span>
+            <span class="source-url">https://play.google.com › store › apps › details › id=com...</span>
+          </div>
+          <div class="source-more-btn">⋮</div>
+        </div>
+
+        <a href="https://play.google.com/store/apps/details?id=com.facebook.katana" class="result-title" onclick="event.preventDefault(); navigateToUrl('https://play.google.com/store/apps/details?id=com.facebook.katana');">
+          Facebook - Apps on Google Play
+        </a>
+      </article>
+    </section>
+
+    <!-- Right Column: Knowledge Graph Panel (Meta) -->
+    <aside class="knowledge-column" id="knowledge-column">
+      <div class="knowledge-panel" id="knowledge-panel">
+        <div class="kp-header">
+          <div class="kp-brand-badge" id="kp-brand-badge">
+            <span style="color:#0081fb;">♾️</span>
+            <span>Meta</span>
+          </div>
+          <h2 class="kp-title" id="kp-title">Meta</h2>
+          <div class="kp-menu-btn">⋮</div>
+        </div>
+
+        <!-- 3-Image Collage Grid Matching Image 1 -->
+        <div class="kp-collage-grid" id="kp-collage-grid">
+          <div class="kp-collage-item featured">
+            <img src="/assets/meta_vr.jpg" alt="Meta Quest VR" id="kp-img-1" />
+          </div>
+          <div class="kp-collage-item">
+            <img src="/assets/meta_desk.jpg" alt="Meta Hardware" id="kp-img-2" />
+          </div>
+          <div class="kp-collage-item">
+            <img src="/assets/meta_apps.jpg" alt="Meta Social Ecosystem" id="kp-img-3" />
+          </div>
+        </div>
+
+        <div class="kp-body">
+          <p class="kp-description" id="kp-description">
+            Meta Platforms, Inc., headquartered in Menlo Park, California, is an American multinational technology company and is one of the Big Tech companies. Meta owns and operates several...
+            <a href="https://en.wikipedia.org/wiki/Meta_Platforms" target="_blank" id="kp-wiki-link">Wikipedia</a>
+          </p>
+
+          <table class="kp-attrs-table">
+            <tbody>
+              <tr>
+                <td class="kp-attr-label">Founders</td>
+                <td class="kp-attr-value" id="kp-founders">
+                  <a href="#">Mark Zuckerberg</a>, <a href="#">Eduardo Saverin</a>, <a href="#">Dustin Moskovitz</a>, <a href="#">Chris Hughes</a>
+                </td>
+              </tr>
+              <tr>
+                <td class="kp-attr-label">CEO</td>
+                <td class="kp-attr-value" id="kp-ceo">
+                  <a href="#">Mark Zuckerberg</a> (Jul 2004–)
+                </td>
+              </tr>
+              <tr>
+                <td class="kp-attr-label">Headquarters</td>
+                <td class="kp-attr-value" id="kp-hq">
+                  Menlo Park, California, United States
+                </td>
+              </tr>
+              <tr>
+                <td class="kp-attr-label">Products</td>
+                <td class="kp-attr-value" id="kp-products">
+                  Facebook, Instagram, WhatsApp, Messenger, Threads, Meta Quest
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Conversational AI Mode Chat Drawer (Heretic + OmniRoute & FreeLLMAPI) -->
+  <aside class="ai-chat-drawer" id="ai-chat-drawer" aria-label="Braver AI Mode Assistant">
+    <div class="drawer-header">
+      <div class="drawer-title">
+        <span class="ai-sparkle-badge">✨</span>
+        <span>Braver AI Mode</span>
+        <span class="engine-pill">Heretic Engine</span>
+      </div>
+      <button class="btn-close-drawer" id="btn-close-drawer" title="Close AI Mode">✕</button>
+    </div>
+
+    <div class="drawer-messages" id="drawer-messages">
+      <div class="chat-bubble assistant">
+        <strong>🦁 Braver AI Copilot</strong>
+        <p style="margin-top: 4px;">Hello! I am Braver AI, powered by the Heretic refusal-free model architecture and OmniRoute / FreeLLMAPI. Ask me anything, or instruct me to execute any web browsing task directly.</p>
+      </div>
+    </div>
+
+    <div class="drawer-footer">
+      <div class="quick-chips-row">
+        <button class="chat-chip" data-task="Search and buy high-end laptop on ElectroTech">🛒 Buy laptop</button>
+        <button class="chat-chip" data-task="Navigate to Facebook and inspect login form">🔵 Open Facebook</button>
+        <button class="chat-chip" data-task="Summarize latest technology and AI research">🔬 Tech news</button>
+      </div>
+
+      <div class="drawer-input-row">
+        <input
+          type="text"
+          id="drawer-input"
+          class="drawer-input"
+          placeholder="Ask anything or command browser task..."
+          aria-label="AI message input"
+        />
+        <button class="btn-send-chat" id="btn-send-chat" title="Send message">↑</button>
+      </div>
+    </div>
+  </aside>
+
+  <script>
+    // Universal URL Navigation
+    function navigateToUrl(targetUrl) {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: targetUrl }, '*');
+      } else {
+        window.location.href = targetUrl;
+      }
+    }
+
+    // Dynamic SERP data generator
+    const ENTITY_DATA = {
+      facebook: {
+        title: 'Facebook - log in or sign up',
+        url: 'https://www.facebook.com',
+        sourceName: 'Facebook',
+        snippet: 'Create an account or <b>log into Facebook</b>. Connect with friends, family and other people you know. Share photos and videos, send messages and get updates.',
+        sitelinks: [
+          { title: 'Log in', url: 'https://www.facebook.com/login', snippet: 'Log in to Facebook to start sharing and connecting with your ...' },
+          { title: 'Posts', url: 'https://www.facebook.com', snippet: 'When it comes to the perfect pet costume, Facebook ...' },
+          { title: 'Forgot password?', url: 'https://www.facebook.com/recover/initiate', snippet: 'Log into Facebook to start sharing and connecting with your ...' },
+          { title: 'Create new account', url: 'https://www.facebook.com/r.php', snippet: 'Sign up for Facebook and find your friends. Create an account to ...' },
+          { title: 'Facebook login', url: 'https://www.facebook.com/login', snippet: '' }
+        ],
+        kp: {
+          title: 'Meta',
+          badge: 'Meta',
+          img1: '/assets/meta_vr.jpg',
+          img2: '/assets/meta_desk.jpg',
+          img3: '/assets/meta_apps.jpg',
+          desc: 'Meta Platforms, Inc., headquartered in Menlo Park, California, is an American multinational technology company and is one of the Big Tech companies. Meta owns and operates several...',
+          wikiUrl: 'https://en.wikipedia.org/wiki/Meta_Platforms',
+          founders: 'Mark Zuckerberg, Eduardo Saverin, Dustin Moskovitz, Chris Hughes',
+          ceo: 'Mark Zuckerberg (Jul 2004–)',
+          hq: 'Menlo Park, California, United States',
+          products: 'Facebook, Instagram, WhatsApp, Messenger, Threads, Meta Quest'
+        }
+      },
+      youtube: {
+        title: 'YouTube: Watch, Listen, Stream',
+        url: 'https://www.youtube.com',
+        sourceName: 'YouTube',
+        snippet: 'Enjoy the videos and music you love, upload original content, and share it all with friends, family, and the world on <b>YouTube</b>.',
+        sitelinks: [
+          { title: 'Trending', url: 'https://www.youtube.com/feed/trending', snippet: 'See what the world is watching in real time.' },
+          { title: 'Subscriptions', url: 'https://www.youtube.com/feed/subscriptions', snippet: 'Catch up with your favorite channels and creators.' },
+          { title: 'YouTube Music', url: 'https://music.youtube.com', snippet: 'Stream official songs, albums, playlists, and music videos.' }
+        ],
+        kp: {
+          title: 'YouTube',
+          badge: 'YouTube',
+          img1: '/assets/meta_apps.jpg',
+          img2: '/assets/meta_vr.jpg',
+          img3: '/assets/meta_desk.jpg',
+          desc: 'YouTube is an American online video sharing and social media platform owned by Google. Accessible worldwide, it was launched on February 14, 2005...',
+          wikiUrl: 'https://en.wikipedia.org/wiki/YouTube',
+          founders: 'Steve Chen, Chad Hurley, Jawed Karim',
+          ceo: 'Neal Mohan (Feb 2023–)',
+          hq: 'San Bruno, California, United States',
+          products: 'YouTube Premium, YouTube Music, YouTube Kids, YouTube TV'
+        }
+      },
+      fsferdows: {
+        title: 'FS FERDOWS | Senior Design Engineer & Spatial UI Architect',
+        url: 'https://fsferdows.com',
+        sourceName: 'FS Ferdows',
+        snippet: 'Remote Senior Design Engineer & AI Architect delivering high-performance spatial UI design systems, fullstack React / Next.js web architectures, and autonomous AI agent systems.',
+        sitelinks: [
+          { title: 'Spatial UI & Architecture', url: 'https://fsferdows.com', snippet: 'Empirical research and design systems across 47 production software products.' },
+          { title: 'Published Scientific Papers', url: 'https://fsferdows.com', snippet: 'Zenodo Record 21801334 | DOI: 10.5281/zenodo.21801334' },
+          { title: 'Resume & Contact', url: 'https://fsferdows.com', snippet: 'Hire Remote for US, UK, EU, and global engineering challenges.' }
+        ],
+        kp: {
+          title: 'FS FERDOWS',
+          badge: 'Architect',
+          img1: '/assets/meta_vr.jpg',
+          img2: '/assets/meta_desk.jpg',
+          img3: '/assets/meta_apps.jpg',
+          desc: 'F. S. Ferdows is a Senior Design Engineer, Spatial UI Architect, and empirical researcher specializing in token-enforced design systems, autonomous AI agents, and high-performance spatial computing.',
+          wikiUrl: 'https://fsferdows.com',
+          founders: 'F. S. Ferdows',
+          ceo: 'Lead Principal Architect',
+          hq: 'Dhaka, Bangladesh & Remote Global',
+          products: 'Spatial UI Design Systems, Autonomous Agent Architecture, Braver Browser'
+        }
+      }
+    };
+
+    // Parse URL parameter
+    const params = new URLSearchParams(window.location.search);
+    const query = (params.get('q') || 'facebook').trim();
+    document.getElementById('serp-input').value = query;
+    document.title = `${query} - Braver Search`;
+
+    // Apply entity data if matching
+    const key = query.toLowerCase().replace(/[^a-z]/g, '');
+    const data = ENTITY_DATA[key] || {
+      title: `${query} - Official Site & Information`,
+      url: `https://${key || 'example'}.com`,
+      sourceName: query.charAt(0).toUpperCase() + query.slice(1),
+      snippet: `Explore all top ranked results, documentation, and live community discussions for <b>${query}</b> across the open web with Braver's high-speed index.`,
+      sitelinks: [
+        { title: 'Overview & Features', url: `https://${key || 'example'}.com`, snippet: `Detailed guide and features for ${query}.` },
+        { title: 'Community & Docs', url: `https://${key || 'example'}.com`, snippet: `Explore guides and tutorials.` }
+      ],
+      kp: ENTITY_DATA.facebook.kp
+    };
+
+    document.getElementById('res-source-name').textContent = data.sourceName;
+    document.getElementById('res-source-url').textContent = data.url;
+    document.getElementById('res-title').textContent = data.title;
+    document.getElementById('res-title').href = data.url;
+    document.getElementById('res-snippet').innerHTML = data.snippet;
+
+    if (data.kp) {
+      document.getElementById('kp-title').textContent = data.kp.title;
+      document.getElementById('kp-description').innerHTML = `${data.kp.desc} <a href="${data.kp.wikiUrl}" target="_blank">Wikipedia</a>`;
+      document.getElementById('kp-founders').textContent = data.kp.founders;
+      document.getElementById('kp-ceo').textContent = data.kp.ceo;
+      document.getElementById('kp-hq').textContent = data.kp.hq;
+      document.getElementById('kp-products').textContent = data.kp.products;
+    }
+
+    // Form submit handler
+    document.getElementById('serp-search-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = document.getElementById('serp-input').value.trim();
+      if (!val) return;
+      window.location.search = `?q=${encodeURIComponent(val)}`;
+    });
+
+    document.getElementById('btn-clear-serp').addEventListener('click', () => {
+      document.getElementById('serp-input').value = '';
+      document.getElementById('serp-input').focus();
+    });
+
+    // AI Mode Drawer Handlers
+    const aiDrawer = document.getElementById('ai-chat-drawer');
+    const btnTabAi = document.getElementById('btn-tab-ai');
+    const btnCloseDrawer = document.getElementById('btn-close-drawer');
+    const drawerInput = document.getElementById('drawer-input');
+    const btnSendChat = document.getElementById('btn-send-chat');
+    const drawerMessages = document.getElementById('drawer-messages');
+
+    function toggleAiMode(open) {
+      if (open) aiDrawer.classList.add('open');
+      else aiDrawer.classList.remove('open');
+    }
+
+    btnTabAi.addEventListener('click', () => toggleAiMode(true));
+    btnCloseDrawer.addEventListener('click', () => toggleAiMode(false));
+
+    async function sendChatMessage(msgText) {
+      const text = (msgText || drawerInput.value || '').trim();
+      if (!text) return;
+      drawerInput.value = '';
+
+      // User Bubble
+      const userBubble = document.createElement('div');
+      userBubble.className = 'chat-bubble user';
+      userBubble.textContent = text;
+      drawerMessages.appendChild(userBubble);
+      drawerMessages.scrollTop = drawerMessages.scrollHeight;
+
+      // Loading bubble
+      const loadingBubble = document.createElement('div');
+      loadingBubble.className = 'chat-bubble assistant';
+      loadingBubble.innerHTML = `<em>Thinking with Heretic & OmniRoute/FreeLLMAPI...</em>`;
+      drawerMessages.appendChild(loadingBubble);
+      drawerMessages.scrollTop = drawerMessages.scrollHeight;
+
+      try {
+        const res = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, context: { currentUrl: window.location.href } })
+        });
+        const data = await res.json();
+
+        let actionHtml = '';
+        if (data.action && data.action.type && data.action.type !== 'none') {
+          actionHtml = `
+            <div class="action-card">
+              <span class="act-type">⚡ BROWSER ACTION: ${data.action.type.toUpperCase()}</span>
+              <span>Target: <code>${data.action.target || 'N/A'}</code></span>
+            </div>
+          `;
+          if (data.action.type === 'navigate' && data.action.target) {
+            setTimeout(() => navigateToUrl(data.action.target), 1200);
+          }
+        }
+
+        loadingBubble.innerHTML = `
+          <strong>🦁 Braver AI</strong>
+          <p style="margin-top: 4px;">${data.reply || 'Task processed.'}</p>
+          ${actionHtml}
+          <div style="margin-top: 6px; font-size: 11px; color: #9aa0a6;">Provider: ${data.provider || 'OmniRoute'} (${data.latencyMs || 25}ms)</div>
+        `;
+      } catch (err) {
+        loadingBubble.innerHTML = `<span style="color:#ef4444;">Failed to communicate with AI model gateway.</span>`;
+      }
+      drawerMessages.scrollTop = drawerMessages.scrollHeight;
+    }
+
+    btnSendChat.addEventListener('click', () => sendChatMessage());
+    drawerInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendChatMessage();
+    });
+
+    document.querySelectorAll('.chat-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        sendChatMessage(chip.getAttribute('data-task'));
+      });
+    });
+
+    // Check if URL has ?ai=1 or if user searched with AI intent
+    if (params.get('ai') === '1' || query.startsWith('ai:') || query.startsWith('agent:')) {
+      toggleAiMode(true);
+      if (query.length > 5) {
+        sendChatMessage(query.replace(/^(ai:|agent:)\s*/i, ''));
+      }
+    }
+  </script>
+</body>
+</html>

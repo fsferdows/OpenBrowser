@@ -350,17 +350,13 @@
       }
 
       html += `
-        <div class="autocomplete-item search-action" data-url="https://search.brave.com/search?q=${encodeURIComponent(val)}">
+        <div class="autocomplete-item search-action" data-url="/search.html?q=${encodeURIComponent(val)}">
           <span class="auto-icon">🦁</span>
-          <span class="auto-label">Search Brave for "<strong>${val}</strong>"</span>
-        </div>
-        <div class="autocomplete-item search-action" data-url="https://www.google.com/search?q=${encodeURIComponent(val)}">
-          <span class="auto-icon">🔍</span>
-          <span class="auto-label">Search Google for "<strong>${val}</strong>"</span>
+          <span class="auto-label">Search Braver for "<strong>${val}</strong>"</span>
         </div>
         <div class="autocomplete-item agent-action" data-goal="${val}">
-          <span class="auto-icon">🦁✨</span>
-          <span class="auto-label">Ask Autonomous Agent: "<strong>${val}</strong>"</span>
+          <span class="auto-icon">✨</span>
+          <span class="auto-label">Ask Braver AI Mode: "<strong>${val}</strong>"</span>
         </div>
       `;
 
@@ -400,6 +396,28 @@
 
   function navigateLiveUrl(rawUrl) {
     let targetUrl = (rawUrl || '').trim();
+
+    // Check if navigating to internal Braver Search SERP
+    if (targetUrl.startsWith('/search.html') || targetUrl.startsWith('search.html')) {
+      const localUrl = targetUrl.startsWith('/') ? targetUrl : `/${targetUrl}`;
+      state.activeUrl = localUrl;
+      state.activeScenario = 'search';
+      const qMatch = localUrl.match(/[?&]q=([^&]*)/);
+      const query = qMatch ? decodeURIComponent(qMatch[1]) : 'Search';
+      dom.omnibox.value = query;
+      dom.viewportTitle.textContent = `${query} - Braver Search`;
+      dom.viewportUrlBadge.textContent = `braver://search?q=${encodeURIComponent(query)}`;
+      dom.shieldsHostname.textContent = 'search.braver.internal';
+      dom.sslPopoverHost.textContent = 'search.braver.internal';
+      const activeTabTitle = document.querySelector('.tab-item.active .tab-title');
+      if (activeTabTitle) {
+        activeTabTitle.textContent = `${query} - Braver`;
+      }
+      dom.webview.src = localUrl;
+      appendLog('system', `🔍 Displaying Braver Search results for: "${query}"`);
+      return;
+    }
+
     const dest = resolveOmniboxDestination(targetUrl);
     targetUrl = dest.url || targetUrl;
 
@@ -475,6 +493,9 @@
     if (dest.type === 'agent') {
       appendLog('system', `🤖 Autonomous agent instruction via Omnibox: "${dest.goal}"`);
       runAutonomousGoal(dest.goal, state.activeScenario);
+    } else if (dest.type === 'search') {
+      appendLog('system', `🔍 Search via Omnibox: "${dest.query}"`);
+      navigateLiveUrl(`/search.html?q=${encodeURIComponent(dest.query)}`);
     } else {
       appendLog('system', `🌐 Omnibox destination resolved: ${dest.type.toUpperCase()} -> ${dest.url}`);
       navigateLiveUrl(dest.url);
