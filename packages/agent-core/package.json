@@ -1,0 +1,14 @@
+{
+  "name": "@agentic-browser/agent-core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.js",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "@agentic-browser/shared": "0.1.0",
+    "@agentic-browser/control": "0.1.0",
+    "@agentic-browser/gateway": "0.1.0"
+  }
+}
