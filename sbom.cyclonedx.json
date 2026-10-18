@@ -1,0 +1,69 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:81df6be2-bb97-4155-bf04-add233cfec90",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-10-18T14:19:45.739Z",
+    "component": {
+      "type": "application",
+      "name": "agentic-browser",
+      "version": "0.1.0",
+      "description": "Production-grade AI agentic browser with learned, versioned, self-repairing skills"
+    }
+  },
+  "components": [
+    {
+      "type": "framework",
+      "name": "chromium",
+      "version": "main-pinned",
+      "purl": "pkg:github/chromium/chromium@d15c7054891604504f6d8a96fbed1682a671ffae",
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "freellmapi",
+      "version": "main-pinned",
+      "purl": "pkg:github/tashfeenahmed/freellmapi@d2e2615c1598d0fc1b0d7cd8fb361d037f407de9",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "service",
+      "name": "omniroute",
+      "version": "3.8.52",
+      "purl": "pkg:github/diegosouzapw/omniroute@89ebf6ae26b9dd8726392a0180c970c2976dbae9",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "tool",
+      "name": "rea",
+      "version": "6.5.0",
+      "purl": "pkg:github/morluto/rea@ceeff5a41788e47e5aee96a4baf191a6ce7fde4b",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    }
+  ]
+}

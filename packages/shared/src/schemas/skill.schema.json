@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentic-browser.local/schemas/skill.schema.json",
+  "title": "AgenticBrowserSkill",
+  "description": "Canonical schema specification for Agentic Browser reusable skills",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "description",
+    "version",
+    "schema_version",
+    "parameters",
+    "triggers",
+    "domains_allowed",
+    "steps",
+    "risk_level",
+    "requires_confirmation",
+    "tests",
+    "success_metrics",
+    "provenance",
+    "signature",
+    "changelog"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 100
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 1000
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "schema_version": {
+      "type": "string",
+      "enum": ["1.0.0"]
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["type", "description"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["string", "number", "boolean", "array", "object"]
+          },
+          "description": { "type": "string" },
+          "required": { "type": "boolean", "default": false },
+          "default": {}
+        }
+      }
+    },
+    "triggers": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "domains_allowed": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "action", "target", "expect", "on_fail"],
+        "properties": {
+          "id": { "type": "string" },
+          "action": {
+            "type": "string",
+            "enum": ["navigate", "click", "fill", "select", "press_key", "scroll", "extract", "wait", "upload", "download"]
+          },
+          "target": {
+            "type": "object",
+            "required": ["role", "name"],
+            "properties": {
+              "role": { "type": "string" },
+              "name": { "type": "string" },
+              "selector": { "type": "string" },
+              "xpath": { "type": "string" },
+              "coordinates": {
+                "type": "object",
+                "properties": {
+                  "x": { "type": "number" },
+                  "y": { "type": "number" }
+                }
+              }
+            }
+          },
+          "value": { "type": "string" },
+          "expect": {
+            "type": "object",
+            "required": ["condition"],
+            "properties": {
+              "condition": { "type": "string" },
+              "timeout_ms": { "type": "integer", "default": 5000 }
+            }
+          },
+          "on_fail": {
+            "type": "object",
+            "required": ["strategy"],
+            "properties": {
+              "strategy": {
+                "type": "string",
+                "enum": ["retry", "repair", "abort", "fallback_step"]
+              },
+              "fallback_step_id": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "requires_confirmation": {
+      "type": "boolean"
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["test_id", "input_params", "expected_terminal_state"],
+        "properties": {
+          "test_id": { "type": "string" },
+          "input_params": { "type": "object" },
+          "expected_terminal_state": { "type": "string" }
+        }
+      }
+    },
+    "success_metrics": {
+      "type": "object",
+      "required": ["max_duration_ms", "max_steps"],
+      "properties": {
+        "max_duration_ms": { "type": "integer" },
+        "max_steps": { "type": "integer" },
+        "expected_items_count": { "type": "integer" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["author", "created_at", "source_type"],
+      "properties": {
+        "author": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "source_type": {
+          "type": "string",
+          "enum": ["human_authored", "recorded_demonstration", "autonomous_learned"]
+        }
+      }
+    },
+    "signature": {
+      "type": "string"
+    },
+    "changelog": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["version", "date", "notes"],
+        "properties": {
+          "version": { "type": "string" },
+          "date": { "type": "string" },
+          "notes": { "type": "string" }
+        }
+      }
+    }
+  }
+}

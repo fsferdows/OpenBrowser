@@ -1,0 +1,10 @@
+# Open Questions and Assumptions
+
+This document tracks system unknowns, technical assumptions, owners, and their concrete resolution paths.
+
+| ID | Title / Question | Impact | Owner | Resolution Path | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **OQ-001** | **Host Disk Space Constraints for Vendor Extraction** | Host machine has ~230 MB free space. Full raw extraction of `chromium-main.zip` (4.36GB) and `OmniRoute-release-v3.8.52.zip` (773MB) cannot fit on disk simultaneously. | Lead Architect | 1. Implement Phase A strategy (standard host Chrome with CDP and extension), bypassing the need to extract Chromium C++ source tree.<br>2. Pin vendor archives in root, extract essential runtime interfaces.<br>3. Document recommendation for host owner to free 5–10 GB (e.g. archiving large zip files in Desktop/Trash) prior to extensive multi-vendor compilation. | Resolved (Workaround Active) |
+| **OQ-002** | **CDP Connection Mode: WebSocket vs `chrome.debugger`** | Whether agent control should run via an external process connecting to `--remote-debugging-port=9222` or inside the extension via `chrome.debugger`. | Control Layer Team | Support dual mode: external WebSocket connection for headless/scheduler runs, and `chrome.debugger` for purely in-browser side panel operation. Documented in ADR-0001. | Resolved |
+| **OQ-003** | **Voice Input Pipeline Architecture** | Voice input in command bar requires speech recognition without excessive local compute latency. | UI Team | Primary: Web Speech API hosted in the extension side panel (zero local compute latency, native accessibility integration). Secondary: Audio capture routed to local Whisper / OmniRoute endpoint if offline privacy is required. | Open (Target: Phase 6) |
+| **OQ-004** | **Skill Cryptographic Signing Authority** | How to verify signatures of imported skills across user instances without centralized key distribution. | Security Team | Adopt Ed25519 public-key signature standard embedded in skill JSON manifests. Public keys can be added to user-trusted profiles, with a mandatory interactive review step before executing any imported skill. | Open (Target: Phase 4) |

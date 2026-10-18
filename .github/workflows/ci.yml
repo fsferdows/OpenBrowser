@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run Secret Scanning
+        run: npm run security:scan
+
+      - name: Run Third-Party License Audit
+        run: npm run licenses:audit
+
+      - name: Run Code Hygiene and Anti-Slop Linter
+        run: npm run lint
+
+      - name: Run Monorepo Unit & Integration Test Suite
+        run: npm test
+
+      - name: Verify CycloneDX SBOM Generation
+        run: npm run sbom:generate

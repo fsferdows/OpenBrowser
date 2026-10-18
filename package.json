@@ -1,0 +1,22 @@
+{
+  "name": "agentic-browser-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "node --test packages/*/tests/*.test.js packages/*/tests/**/*.test.js scripts/*.test.js",
+    "lint": "node scripts/lint.mjs",
+    "typecheck": "node scripts/typecheck-stub.mjs",
+    "security:scan": "node scripts/scan-secrets.mjs",
+    "licenses:audit": "node scripts/audit-licenses.mjs",
+    "sbom:generate": "node scripts/generate-sbom.mjs",
+    "ci": "npm run security:scan && npm run licenses:audit && npm run lint && npm run test"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=9.0.0"
+  }
+}

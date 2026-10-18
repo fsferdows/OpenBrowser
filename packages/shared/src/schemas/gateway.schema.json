@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentic-browser.local/schemas/gateway.schema.json",
+  "title": "GatewayResponseSchema",
+  "description": "Structured output schema returned by the model gateway for agent execution steps",
+  "type": "object",
+  "required": ["thought", "action", "target", "expected_outcome", "risk_level"],
+  "additionalProperties": false,
+  "properties": {
+    "thought": {
+      "type": "string",
+      "description": "Rationale and evaluation of current observation against overall goal"
+    },
+    "action": {
+      "type": "string",
+      "enum": ["navigate", "click", "fill", "select", "press_key", "scroll", "extract", "wait", "finish", "fail"]
+    },
+    "target": {
+      "type": "object",
+      "required": ["role", "name"],
+      "properties": {
+        "role": { "type": "string" },
+        "name": { "type": "string" },
+        "selector": { "type": "string" }
+      }
+    },
+    "value": {
+      "type": "string"
+    },
+    "expected_outcome": {
+      "type": "string"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    }
+  }
+}
