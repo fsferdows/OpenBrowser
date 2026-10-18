@@ -23,6 +23,69 @@
     scriptBlockingActive: false
   };
 
+  const TOP_SITE_MAP = {
+    facebook: 'https://www.facebook.com',
+    fb: 'https://www.facebook.com',
+    youtube: 'https://www.youtube.com',
+    yt: 'https://www.youtube.com',
+    google: 'https://www.google.com',
+    reddit: 'https://www.reddit.com',
+    twitter: 'https://x.com',
+    x: 'https://x.com',
+    github: 'https://github.com',
+    wikipedia: 'https://www.wikipedia.org',
+    amazon: 'https://www.amazon.com',
+    instagram: 'https://www.instagram.com',
+    linkedin: 'https://www.linkedin.com',
+    tiktok: 'https://www.tiktok.com',
+    netflix: 'https://www.netflix.com',
+    gmail: 'https://mail.google.com',
+    chatgpt: 'https://chatgpt.com',
+    hackernews: 'https://news.ycombinator.com',
+    ycombinator: 'https://news.ycombinator.com'
+  };
+
+  const AGENT_PREFIX_REGEX = /^(agent:\s*|run\s+agent:\s*|task:\s*)/i;
+  const AGENT_VERB_REGEX = /^(automate|scrape|fill\s+(out\s+)?|buy\s+|checkout\s+)/i;
+  const TLD_REGEX = /^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(\/.*)?$/;
+
+  function resolveOmniboxDestination(rawInput) {
+    const input = (rawInput || '').trim();
+    if (!input) return { type: 'internal', url: 'brave://newtab' };
+
+    if (input.startsWith('brave://') || input.startsWith('chrome://') || input.startsWith('about:')) {
+      return { type: 'internal', url: input };
+    }
+    if (AGENT_PREFIX_REGEX.test(input)) {
+      return { type: 'agent', goal: input.replace(AGENT_PREFIX_REGEX, '').trim() };
+    }
+    if (AGENT_VERB_REGEX.test(input) && !input.includes('.')) {
+      return { type: 'agent', goal: input };
+    }
+    if (input.startsWith('http://') || input.startsWith('https://')) {
+      return { type: 'url', url: input };
+    }
+    if (/^localhost(:\d+)?(\/.*)?$/i.test(input)) {
+      return { type: 'domain', url: `http://${input}` };
+    }
+
+    const key = input.toLowerCase();
+    if (TOP_SITE_MAP[key]) {
+      return { type: 'direct_site', url: TOP_SITE_MAP[key], siteName: key };
+    }
+
+    if (TLD_REGEX.test(input) && !input.includes(' ')) {
+      return { type: 'domain', url: `https://${input}` };
+    }
+
+    return {
+      type: 'search',
+      url: `https://search.brave.com/search?q=${encodeURIComponent(input)}`,
+      searchEngine: 'brave',
+      query: input
+    };
+  }
+
   const TAB_DATA = {
     newtab: {
       title: 'Brave | New Tab',
@@ -156,6 +219,8 @@
     cdpPopoverStatus: document.getElementById('cdp-popover-status'),
     cdpPopoverTargetCount: document.getElementById('cdp-popover-target-count'),
     cdpTargetsList: document.getElementById('cdp-targets-list'),
+    btnLaunchChrome: document.getElementById('btn-launch-chrome'),
+    btnLaunchBrave: document.getElementById('btn-launch-brave'),
 
     // Viewport
     webview: document.getElementById('browser-webview'),
@@ -260,11 +325,40 @@
     switchTab('newtab');
   });
 
-  // Omnibox Navigation & Autocomplete
+  // Omnibox Navigation & Real-Time Dynamic Autocomplete
   dom.omnibox.addEventListener('input', () => {
     const val = dom.omnibox.value.trim();
     if (val.length > 0 && !val.startsWith('brave://')) {
-      dom.autocompleteQuery.textContent = val;
+      const lower = val.toLowerCase();
+      const directMatch = TOP_SITE_MAP[lower] || Object.entries(TOP_SITE_MAP).find(([k]) => k.startsWith(lower))?.[1];
+      const directDomain = directMatch ? (TOP_SITE_MAP[lower] ? lower : Object.keys(TOP_SITE_MAP).find(k => k.startsWith(lower))) : null;
+
+      let html = '';
+      if (directMatch) {
+        html += `
+          <div class="autocomplete-item site-action" data-url="${directMatch}">
+            <span class="auto-icon">🌐</span>
+            <span class="auto-label">Visit <strong>${directDomain}.com</strong> — ${directMatch}</span>
+          </div>
+        `;
+      }
+
+      html += `
+        <div class="autocomplete-item search-action" data-url="https://search.brave.com/search?q=${encodeURIComponent(val)}">
+          <span class="auto-icon">🦁</span>
+          <span class="auto-label">Search Brave for "<strong>${val}</strong>"</span>
+        </div>
+        <div class="autocomplete-item search-action" data-url="https://www.google.com/search?q=${encodeURIComponent(val)}">
+          <span class="auto-icon">🔍</span>
+          <span class="auto-label">Search Google for "<strong>${val}</strong>"</span>
+        </div>
+        <div class="autocomplete-item agent-action" data-goal="${val}">
+          <span class="auto-icon">🦁✨</span>
+          <span class="auto-label">Ask Autonomous Agent: "<strong>${val}</strong>"</span>
+        </div>
+      `;
+
+      dom.searchAutocomplete.innerHTML = html;
       dom.searchAutocomplete.classList.remove('hidden');
     } else {
       dom.searchAutocomplete.classList.add('hidden');
@@ -287,19 +381,22 @@
     if (!item) return;
 
     dom.searchAutocomplete.classList.add('hidden');
-    if (item.classList.contains('search-action')) {
+    if (item.classList.contains('agent-action')) {
+      const goal = item.getAttribute('data-goal') || dom.omnibox.value.trim();
+      runAutonomousGoal(goal, state.activeScenario);
+    } else if (item.getAttribute('data-url')) {
+      navigateLiveUrl(item.getAttribute('data-url'));
+    } else {
       const query = dom.omnibox.value.trim();
       handleOmniboxSubmit(query);
-    } else {
-      const targetUrl = item.getAttribute('data-url');
-      if (targetUrl.includes('catalog')) switchTab('catalog');
-      else if (targetUrl.includes('form')) switchTab('form');
-      else if (targetUrl.includes('auth')) switchTab('handoff');
     }
   });
 
   function navigateLiveUrl(rawUrl) {
-    let targetUrl = rawUrl.trim();
+    let targetUrl = (rawUrl || '').trim();
+    const dest = resolveOmniboxDestination(targetUrl);
+    targetUrl = dest.url || targetUrl;
+
     if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
       targetUrl = `https://${targetUrl}`;
     }
@@ -326,29 +423,55 @@
 
     // Load via live web proxy
     dom.webview.src = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
-    appendLog('system', `🌐 Navigating to live web destination via proxy: ${targetUrl}`);
+    appendLog('system', `🌐 Navigating to live web destination: ${targetUrl}`);
+
+    // Sync to live Google Chrome CDP session in real time
+    fetch('/api/chrome/navigate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: targetUrl })
+    }).then(res => res.json()).then(data => {
+      if (data.livePage && data.livePage.elementCount) {
+        appendLog('system', `🟢 Google Chrome CDP attached: "${data.livePage.title || 'Page'}" (${data.livePage.elementCount} live DOM nodes)`);
+      }
+    }).catch(() => {});
 
     // Run REA live audit on external URL
     runReaLiveInspection(targetUrl);
   }
 
   function handleOmniboxSubmit(val) {
-    if (val.startsWith('brave://settings')) {
+    const trimmed = (val || '').trim();
+    if (!trimmed) return;
+
+    if (trimmed.startsWith('brave://settings')) {
       openSettingsModal();
-    } else if (val.startsWith('brave://') || val === 'newtab') {
+      return;
+    }
+    if (trimmed.startsWith('brave://') || trimmed === 'newtab') {
       switchTab('newtab');
-    } else if (val.includes('shop') || val.includes('catalog')) {
+      return;
+    }
+    if (trimmed.includes('shop') || trimmed.includes('catalog')) {
       switchTab('catalog');
-    } else if (val.includes('form') || val.includes('portal')) {
+      return;
+    }
+    if (trimmed.includes('portal') || trimmed === 'form') {
       switchTab('form');
-    } else if (val.includes('auth') || val.includes('gate') || val.includes('security')) {
+      return;
+    }
+    if (trimmed.includes('auth') || trimmed.includes('security')) {
       switchTab('handoff');
-    } else if (val.startsWith('http://') || val.startsWith('https://') || val.startsWith('www.') || val.includes('.com') || val.includes('.org') || val.includes('.net') || val.includes('.io') || val.includes('.edu')) {
-      navigateLiveUrl(val);
+      return;
+    }
+
+    const dest = resolveOmniboxDestination(trimmed);
+    if (dest.type === 'agent') {
+      appendLog('system', `🤖 Autonomous agent instruction via Omnibox: "${dest.goal}"`);
+      runAutonomousGoal(dest.goal, state.activeScenario);
     } else {
-      // Treat as automated instruction for the autonomous agent!
-      appendLog('system', `Search / goal dispatched via Omnibox: "${val}"`);
-      runAutonomousGoal(val, state.activeScenario);
+      appendLog('system', `🌐 Omnibox destination resolved: ${dest.type.toUpperCase()} -> ${dest.url}`);
+      navigateLiveUrl(dest.url);
     }
   }
 
@@ -1035,6 +1158,40 @@
   // ==========================================================================
   // Real-Time Server-Sent Events (SSE) Stream
   // ==========================================================================
+  // Real-Time Server-Sent Events (SSE) Stream & CDP Integration
+  // ==========================================================================
+  if (dom.btnLaunchChrome) {
+    dom.btnLaunchChrome.addEventListener('click', async () => {
+      try {
+        appendLog('system', '🚀 Launching Google Chrome with remote debugging on port 9222...');
+        const res = await fetch('/api/chrome/launch', { method: 'POST' });
+        const data = await res.json();
+        appendLog('system', data.message || 'Chrome launch requested.');
+      } catch (err) {
+        appendLog('system', `Launch failed: ${err.message}`);
+      }
+    });
+  }
+
+  if (dom.btnLaunchBrave) {
+    dom.btnLaunchBrave.addEventListener('click', () => {
+      appendLog('system', '🦁 Run `npm run browser:brave` in your terminal to start Brave with CDP on port 9222.');
+      alert('To start Brave on port 9222, execute in terminal:\nnpm run browser:brave');
+    });
+  }
+
+  if (dom.cdpTargetsList) {
+    dom.cdpTargetsList.addEventListener('click', (e) => {
+      const item = e.target.closest('.cdp-target-item');
+      if (!item) return;
+      const targetUrl = item.getAttribute('data-url');
+      if (targetUrl && targetUrl !== 'about:blank' && !targetUrl.startsWith('chrome-extension://')) {
+        dom.cdpPopover.classList.add('hidden');
+        navigateLiveUrl(targetUrl);
+      }
+    });
+  }
+
   function initRealtimeStream() {
     try {
       const eventSource = new EventSource('/api/stream');
@@ -1046,12 +1203,13 @@
           // 1. Update CDP Basement Status
           if (payload.cdp && dom.btnCdpStatus) {
             const isConnected = payload.cdp.connected;
+            const browserName = (payload.cdp.browser || 'Chromium').split('/')[0];
             dom.btnCdpStatus.className = `action-btn cdp-badge ${isConnected ? 'connected' : 'simulated'}`;
             dom.cdpStatusDot.textContent = isConnected ? '🟢' : '⚪';
-            dom.cdpStatusText.textContent = isConnected ? 'CDP: Live (9222)' : 'CDP: Simulated';
+            dom.cdpStatusText.textContent = isConnected ? `${browserName} CDP: Live (9222)` : 'CDP: Simulated';
 
             if (dom.cdpPopoverStatus) {
-              dom.cdpPopoverStatus.textContent = isConnected ? 'Connected to Chromium/Brave CDP' : 'Simulated Fallback (Port 9222 Closed)';
+              dom.cdpPopoverStatus.textContent = isConnected ? `Connected to ${payload.cdp.browser}` : 'Simulated Fallback (Port 9222 Closed)';
               dom.cdpPopoverStatus.style.color = isConnected ? '#4ade80' : '#f59e0b';
             }
 
@@ -1059,11 +1217,16 @@
               dom.cdpPopoverTargetCount.textContent = `${payload.cdp.targetsCount} Active Target(s)`;
             }
 
+            // Real-Time DOM Node Count from live page
+            if (payload.cdp.activePage && payload.cdp.activePage.elementCount && dom.reaInteractiveCount) {
+              dom.reaInteractiveCount.textContent = `${payload.cdp.activePage.interactiveCount || 12} live elements (${payload.cdp.activePage.elementCount} DOM nodes)`;
+            }
+
             if (payload.cdp.targets && dom.cdpTargetsList) {
               dom.cdpTargetsList.innerHTML = payload.cdp.targets.map(t => `
-                <div style="padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-                  <span style="color: #38bdf8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;">${t.title || 'Tab'}</span>
-                  <span style="color: #94a3b8; font-size: 10px;">${(t.id || '').slice(0, 10)}</span>
+                <div class="cdp-target-item" data-url="${t.url || ''}" style="padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='rgba(56,189,248,0.1)'" onmouseout="this.style.background='transparent'">
+                  <span style="color: #38bdf8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;" title="${t.title || 'Tab'}">🔗 ${t.title || 'Tab'}</span>
+                  <span style="color: #94a3b8; font-size: 10px;">${(t.type || 'page')}</span>
                 </div>
               `).join('');
             }
