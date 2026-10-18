@@ -304,6 +304,9 @@
       targetUrl = `https://${targetUrl}`;
     }
 
+    state.activeUrl = targetUrl;
+    state.activeScenario = 'live';
+
     dom.omnibox.value = targetUrl;
     dom.viewportTitle.textContent = `Live: ${targetUrl}`;
     dom.viewportUrlBadge.textContent = targetUrl;
@@ -312,6 +315,11 @@
       const parsed = new URL(targetUrl);
       dom.shieldsHostname.textContent = parsed.hostname;
       dom.sslPopoverHost.textContent = parsed.hostname;
+
+      const activeTabTitle = document.querySelector('.tab-item.active .tab-title');
+      if (activeTabTitle) {
+        activeTabTitle.textContent = parsed.hostname;
+      }
     } catch (_) {
       dom.shieldsHostname.textContent = targetUrl;
     }
@@ -741,6 +749,13 @@
   dom.btnRunAgent.addEventListener('click', () => {
     const goal = dom.goalInput.value.trim();
     if (!goal) return;
+
+    // Direct URL Navigation
+    if (goal.startsWith('http://') || goal.startsWith('https://') || goal.startsWith('www.') || /[\w-]+\.(com|org|net|io|edu|gov|dev|ai)/i.test(goal)) {
+      navigateLiveUrl(goal);
+      return;
+    }
+
     runAutonomousGoal(goal, state.activeScenario);
   });
 
@@ -764,6 +779,14 @@
   async function runAutonomousGoal(goal, scenario, isReplay = false) {
     if (state.agentRunning) return;
 
+    const goalTrimmed = (goal || '').trim();
+
+    // If goal is a URL, navigate directly to live destination
+    if (goalTrimmed.startsWith('http://') || goalTrimmed.startsWith('https://') || goalTrimmed.startsWith('www.') || /[\w-]+\.(com|org|net|io|edu|gov|dev|ai)/i.test(goalTrimmed)) {
+      navigateLiveUrl(goalTrimmed);
+      return;
+    }
+
     state.agentRunning = true;
     state.killSwitchActivated = false;
     state.waitingForHumanHandoff = false;
@@ -773,13 +796,27 @@
     switchDockPanel('copilot');
     updateAgentStatus('planning');
 
-    appendLog('system', `Dispatching goal: "${goal}" on scenario: [${scenario.toUpperCase()}]`);
+    appendLog('system', `Dispatching goal: "${goalTrimmed}" on target: [${state.activeUrl || scenario.toUpperCase()}]`);
 
     try {
+      // Capture live HTML from webview for REA reverse engineering
+      let activeHtml = '';
+      try {
+        const doc = dom.webview.contentDocument || dom.webview.contentWindow.document;
+        if (doc && doc.documentElement) {
+          activeHtml = doc.documentElement.outerHTML;
+        }
+      } catch (_) {}
+
       const res = await fetch('/api/run-task', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goal, scenario })
+        body: JSON.stringify({
+          goal: goalTrimmed,
+          scenario,
+          url: state.activeUrl,
+          html: activeHtml
+        })
       });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -809,7 +846,13 @@
           updateAgentStatus('acting');
         }
 
-        // Simulate agent cursor movement based on step selector
+        // Handle navigation actions directly
+        if (step.action === 'navigate' && step.url) {
+          navigateLiveUrl(step.url);
+          await new Promise(r => setTimeout(r, 600));
+        }
+
+        // Simulate agent cursor movement based on real element bounding box
         const cursorCoords = getElementCoords(step.selector, i);
         showCursor(cursorCoords.x, cursorCoords.y, `[${step.action.toUpperCase()}] ${step.targetDesc}`);
 
@@ -848,6 +891,22 @@
   }
 
   function getElementCoords(selector, stepIndex) {
+    try {
+      const doc = dom.webview.contentDocument || dom.webview.contentWindow.document;
+      if (doc && selector) {
+        const el = doc.querySelector(selector);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          const iframeRect = dom.webview.getBoundingClientRect();
+          if (iframeRect.width > 0 && iframeRect.height > 0) {
+            const xPercent = Math.min(92, Math.max(8, ((rect.left + rect.width / 2) / iframeRect.width) * 100));
+            const yPercent = Math.min(92, Math.max(8, ((rect.top + rect.height / 2) / iframeRect.height) * 100));
+            return { x: Math.round(xPercent), y: Math.round(yPercent) };
+          }
+        }
+      }
+    } catch (_) {}
+
     if (!selector) return { x: 50, y: 35 };
     if (selector.includes('search')) return { x: 38, y: 18 };
     if (selector.includes('username')) return { x: 42, y: 28 };
@@ -868,6 +927,11 @@
 
   function applyStepToIframe(step) {
     try {
+      if (step.action === 'navigate' && step.url) {
+        navigateLiveUrl(step.url);
+        return;
+      }
+
       const doc = dom.webview.contentDocument || dom.webview.contentWindow.document;
       if (!doc) return;
 
@@ -881,6 +945,7 @@
           if (step.action === 'fill' && step.value) {
             el.value = step.value;
             el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
           } else if (step.action === 'select' && step.value) {
             el.value = step.value;
             el.dispatchEvent(new Event('change', { bubbles: true }));
