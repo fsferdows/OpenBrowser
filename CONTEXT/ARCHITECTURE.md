@@ -70,6 +70,8 @@ graph TD
 
 ### 2. Browser Control Layer
 - **Interface**: Chrome DevTools Protocol (CDP) WebSocket connection (`chrome.debugger` or local CDP port `9222`).
+- **Live Chrome Observation (ADR-0009)**: Recreates `rea-main`'s `CdpConnection` WebSocket protocol to establish real-time JSON-RPC duplex communication with Google Chrome and Brave. Dispatches live commands (`Page.navigate`, `Runtime.evaluate`, `DOM.getDocument`, `Page.captureScreenshot`), extracts live DOM node counts and interactive elements, and streams live browser targets via SSE (`/api/stream`).
+- **Omnibox Destination & Search Engine**: Normalizes user input into direct site navigation (e.g. `facebook` -> `https://www.facebook.com`, `youtube` -> `https://www.youtube.com`), domain TLD resolution, and routes arbitrary search queries to Brave Search and Google Search with real-time autocomplete suggestions.
 - **Observation Priority**:
   1. *Accessibility Tree First*: Queries `Accessibility.getFullAXTree` to identify interactive elements by accessibility role, name, description, and state (`disabled`, `expanded`, `checked`).
   2. *DOM Querying*: Uses `DOM.getDocument` and `DOM.querySelector` for standard CSS/XPath resolution.

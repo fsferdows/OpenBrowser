@@ -4,12 +4,13 @@ import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawn } from 'node:child_process';
 
 import { PolicyEngine } from '../packages/safety/src/policy-engine.js';
 import { EncryptedVault } from '../packages/safety/src/vault.js';
 import { SkillLibrary, SelfRepairEngine, ReaAnalysisAdapter } from '../packages/skill-engine/src/index.js';
 import { GatewayClient } from '../packages/gateway/src/index.js';
-import { ChromiumCdpClient, TargetResolver, AccessibilityTree } from '../packages/control/src/index.js';
+import { ChromiumCdpClient, TargetResolver, AccessibilityTree, resolveOmniboxDestination, TOP_SITE_MAP } from '../packages/control/src/index.js';
 import { ACTIONS, RISK_LEVELS, i18n } from '../packages/shared/src/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -274,23 +275,32 @@ const server = createServer(async (req, res) => {
   // Live Web Proxy API: Enables rendering any external website inside the Brave Studio iframe
   // by stripping frame-ancestors/x-frame-options and injecting base href and telemetry hooks
   if (req.method === 'GET' && pathname === '/api/proxy') {
-    const targetUrl = parsedUrl.searchParams.get('url');
-    if (!targetUrl) {
+    const rawTarget = parsedUrl.searchParams.get('url');
+    if (!rawTarget) {
       res.writeHead(400, { 'Content-Type': 'text/plain' });
       res.end('Missing url parameter');
       return;
     }
 
     try {
-      let finalUrl = targetUrl;
+      const destination = resolveOmniboxDestination(rawTarget);
+      let finalUrl = destination.url || rawTarget;
       if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
         finalUrl = `https://${finalUrl}`;
       }
 
+      // Sync active Chrome CDP tab to this URL if connected
+      chromiumClient.isCdpConnected().then(connected => {
+        if (connected) {
+          chromiumClient.navigateTarget('target-active', finalUrl).catch(() => {});
+        }
+      }).catch(() => {});
+
       const fetchRes = await fetch(finalUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Brave/124.0.0.0',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Brave/124.0.0.0',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9'
         }
       });
 
@@ -337,10 +347,107 @@ const server = createServer(async (req, res) => {
     } catch (err) {
       res.writeHead(502, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(`<html><body style="font-family:sans-serif;background:#0f172a;color:#f8fafc;padding:40px;">
-        <h2>🦁 Brave Shield Gateway: Unable to proxy live URL</h2>
+        <h2>🦁 Brave Shield Gateway: Live Navigation</h2>
         <p style="color:#ef4444;">${err.message}</p>
-        <p style="color:#94a3b8;">Target: <code>${targetUrl}</code></p>
+        <p style="color:#94a3b8;">Target: <code>${rawTarget}</code></p>
       </body></html>`);
+    }
+    return;
+  }
+
+  // Omnibox Resolution API
+  if (req.method === 'GET' && pathname === '/api/omnibox/resolve') {
+    const q = parsedUrl.searchParams.get('q') || '';
+    const destination = resolveOmniboxDestination(q);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ query: q, destination }));
+    return;
+  }
+
+  // Google Chrome Live Data API
+  if (req.method === 'GET' && pathname === '/api/chrome/live-data') {
+    try {
+      const isConnected = await chromiumClient.isCdpConnected();
+      const browserInfo = await chromiumClient.getBrowserInfo();
+      const targets = await chromiumClient.listTargets();
+      const pageTarget = targets.find(t => t.type === 'page');
+      let activePage = null;
+      if (pageTarget) {
+        activePage = await chromiumClient.captureLivePage(pageTarget.id);
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        connected: isConnected,
+        browser: browserInfo.browser,
+        protocolVersion: browserInfo.protocolVersion,
+        targetsCount: targets.length,
+        targets: targets.map(t => ({ id: t.id, title: t.title, url: t.url, type: t.type })),
+        activePage
+      }));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  // Google Chrome / CDP Live Navigate API
+  if (req.method === 'POST' && pathname === '/api/chrome/navigate') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const query = payload.query || payload.url || 'about:blank';
+        const destination = resolveOmniboxDestination(query);
+        const targetUrl = destination.url || query;
+
+        const targets = await chromiumClient.listTargets();
+        const pageTarget = targets.find(t => t.type === 'page');
+        const targetId = payload.targetId || (pageTarget ? pageTarget.id : 'target-active');
+
+        const navResult = await chromiumClient.navigateTarget(targetId, targetUrl);
+        const livePage = await chromiumClient.captureLivePage(targetId);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          destination,
+          targetId,
+          navResult,
+          livePage
+        }));
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // Google Chrome CDP Auto-Launch API
+  if (req.method === 'POST' && pathname === '/api/chrome/launch') {
+    try {
+      const isConnected = await chromiumClient.isCdpConnected();
+      if (isConnected) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'Google Chrome CDP is already running on port 9222.' }));
+        return;
+      }
+
+      const scriptPath = join(__dirname, 'scripts', 'launch-chrome-cdp.sh');
+      const child = spawn('bash', [scriptPath], {
+        detached: true,
+        stdio: 'ignore'
+      });
+      child.unref();
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, message: 'Google Chrome launched with remote debugging port 9222.' }));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
     }
     return;
   }
@@ -357,14 +464,24 @@ const server = createServer(async (req, res) => {
     const sendEvent = async () => {
       try {
         const isConnected = await chromiumClient.isCdpConnected();
+        const browserInfo = await chromiumClient.getBrowserInfo();
         const targets = await chromiumClient.listTargets();
+        const pageTarget = targets.find(t => t.type === 'page');
+        let activePage = null;
+        if (pageTarget) {
+          activePage = await chromiumClient.captureLivePage(pageTarget.id);
+        }
+
         const payload = {
           timestamp: Date.now(),
           cdp: {
             connected: isConnected,
+            browser: browserInfo.browser,
+            protocolVersion: browserInfo.protocolVersion,
             host: `${chromiumClient.host}:${chromiumClient.port}`,
             targetsCount: targets.length,
-            targets: targets.map(t => ({ id: t.id, title: t.title, url: t.url, type: t.type }))
+            targets: targets.map(t => ({ id: t.id, title: t.title, url: t.url, type: t.type })),
+            activePage
           },
           memory: {
             heapUsedMB: (process.memoryUsage().heapUsed / (1024 * 1024)).toFixed(1),

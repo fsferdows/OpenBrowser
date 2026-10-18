@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Real-Time Browser Data, CDP Launcher, and Live Web Proxy:
+- Real-Time Chrome CDP Observation & Omnibox Search Resolution (ADR-0009):
+  - `packages/control/src/omnibox-resolver.js`: Intelligent Omnibox destination engine expanding top site shortcuts (`facebook`, `youtube`, `google`, `reddit`, `github`, `amazon`, `wikipedia`, etc.), domain names with TLDs, and routing general search queries to Brave Search (`https://search.brave.com/search?q=...`) and Google Search.
+  - `packages/control/tests/omnibox-resolver.test.js`: 5-test unit test suite verifying domain expansion, URL preservation, query routing, and agent directive identification.
+  - `packages/control/src/chromium-client.js`: Recreated `rea-main`'s `CdpConnection` WebSocket protocol in `ChromiumCdpClient`. Features duplex WebSocket sessions, live browser version discovery (`getBrowserInfo()`), live target navigation (`navigateTarget()`), and real-time page metrics extraction (`captureLivePage()`).
+  - `packages/control/tests/chromium-client.test.js`: Expanded test suite covering browser metadata queries, target navigation, and live DOM metric captures.
+  - `scripts/launch-chrome-cdp.sh`: One-click bash script to launch Google Chrome on macOS with `--remote-debugging-port=9222` and isolated temporary profile. Added `"browser:chrome"` script to `package.json`.
+  - `scripts/serve-localhost.mjs`: Added `/api/omnibox/resolve`, `/api/chrome/live-data`, `/api/chrome/navigate`, and `/api/chrome/launch` REST endpoints. Upgraded `/api/stream` SSE to push live Chrome version, active targets, and active page DOM metrics in real time.
+  - `public/`: Enhanced Omnibox with real-time dynamic autocomplete (direct site navigation, Brave search, Google search, and agent directives). Added live bookmarks for YouTube, Facebook, and Google. Added 1-click Google Chrome CDP launch button and clickable live target switcher in the CDP popover.
   - `scripts/launch-brave-cdp.sh`: One-click bash script to launch real installed Brave Browser on macOS with remote debugging port 9222 and isolated temporary profile. Added `npm run browser:brave` command in `package.json`.
   - `packages/control/src/chromium-client.js`: Added `isCdpConnected()` to reliably verify whether the live CDP port is responsive, falling back gracefully to simulated targets when offline.
   - `packages/control/tests/chromium-client.test.js`: Added unit tests verifying live and offline CDP connection checks.

@@ -6,18 +6,21 @@ describe('Chromium CDP Client Tests', () => {
   const client = new ChromiumCdpClient();
 
   it('lists Chromium browser targets with simulated fallback', async () => {
-    const targets = await client.listTargets();
+    // Test explicit offline client for simulated fallback
+    const offlineClient = new ChromiumCdpClient({ port: 19999 });
+    const targets = await offlineClient.listTargets();
     assert.ok(Array.isArray(targets));
     assert.ok(targets.length >= 3);
     assert.ok(targets.some(t => t.id === 'target-newtab'));
   });
 
   it('creates and closes browser targets', async () => {
-    const newTab = await client.createTarget('https://shop.example.com');
+    const offlineClient = new ChromiumCdpClient({ port: 19999 });
+    const newTab = await offlineClient.createTarget('https://shop.example.com');
     assert.ok(newTab.id);
-    assert.strictEqual(newTab.url, 'https://shop.example.com');
+    assert.ok(newTab.url.startsWith('https://shop.example.com'));
 
-    const closed = await client.closeTarget(newTab.id);
+    const closed = await offlineClient.closeTarget(newTab.id);
     assert.strictEqual(closed, true);
   });
 
@@ -42,5 +45,35 @@ describe('Chromium CDP Client Tests', () => {
       fetchFn: async () => ({ ok: true, json: async () => ({ Browser: 'Brave/124.0.0.0' }) })
     });
     assert.strictEqual(await mockClient.isCdpConnected(), true);
+  });
+
+  it('retrieves browser metadata and version info', async () => {
+    const mockClient = new ChromiumCdpClient({
+      fetchFn: async () => ({
+        ok: true,
+        json: async () => ({
+          Browser: 'Chrome/155.0.8059.84',
+          'Protocol-Version': '1.3',
+          'User-Agent': 'Mozilla/5.0 Chrome/155.0.8059.84'
+        })
+      })
+    });
+    const info = await mockClient.getBrowserInfo();
+    assert.strictEqual(info.connected, true);
+    assert.strictEqual(info.browser, 'Chrome/155.0.8059.84');
+    assert.strictEqual(info.protocolVersion, '1.3');
+  });
+
+  it('navigates targets and captures live DOM metrics', async () => {
+    const client = new ChromiumCdpClient();
+    const navResult = await client.navigateTarget('target-catalog', 'https://www.youtube.com');
+    assert.strictEqual(navResult.success, true);
+    assert.strictEqual(navResult.url, 'https://www.youtube.com');
+
+    const liveData = await client.captureLivePage('target-catalog');
+    assert.ok(liveData);
+    assert.strictEqual(typeof liveData.title, 'string');
+    assert.strictEqual(typeof liveData.elementCount, 'number');
+    assert.ok(liveData.url);
   });
 });

@@ -140,13 +140,16 @@
 
     <!-- Brave Bookmarks Bar -->
     <div class="bookmarks-bar" id="bookmarks-bar" role="toolbar" aria-label="Bookmarks">
-      <button class="bookmark-chip" data-url="/catalog.html">🛒 ElectroTech</button>
-      <button class="bookmark-chip" data-url="/form.html">📝 Developer Portal</button>
-      <button class="bookmark-chip" data-url="/auth-hand-off.html">🛡️ Security Gate</button>
-      <button class="bookmark-chip" data-url="/catalog.html" data-scenario="repair">🔧 Self-Repair Demo</button>
+      <button class="bookmark-chip live-web" data-url="youtube" data-live="true">🔴 YouTube</button>
+      <button class="bookmark-chip live-web" data-url="facebook" data-live="true">🔵 Facebook</button>
+      <button class="bookmark-chip live-web" data-url="google" data-live="true">🟢 Google</button>
+      <button class="bookmark-chip live-web" data-url="https://news.ycombinator.com" data-live="true">📰 Hacker News</button>
+      <button class="bookmark-chip live-web" data-url="https://en.wikipedia.org/wiki/Brave_(web_browser)" data-live="true">🌐 Wikipedia</button>
       <div class="bookmark-separator"></div>
-      <button class="bookmark-chip live-web" data-url="https://news.ycombinator.com" data-live="true">📰 Hacker News (Live)</button>
-      <button class="bookmark-chip live-web" data-url="https://en.wikipedia.org/wiki/Brave_(web_browser)" data-live="true">🌐 Wikipedia (Live)</button>
+      <button class="bookmark-chip" data-url="/catalog.html">🛒 ElectroTech</button>
+      <button class="bookmark-chip" data-url="/form.html">📝 Dev Portal</button>
+      <button class="bookmark-chip" data-url="/auth-hand-off.html">🛡️ Security Gate</button>
+      <button class="bookmark-chip" data-url="/catalog.html" data-scenario="repair">🔧 Self-Repair</button>
     </div>
   </header>
 
@@ -211,9 +214,9 @@
       <div class="cdp-targets-scroll" id="cdp-targets-list" style="margin-top: 8px; max-height: 120px; overflow-y: auto; font-family: monospace; font-size: 11px; background: rgba(0,0,0,0.25); padding: 6px; border-radius: 6px;">
         <!-- Targets injected dynamically -->
       </div>
-      <div style="margin-top: 10px; padding: 8px; background: rgba(255, 85, 0, 0.08); border: 1px solid rgba(255, 85, 0, 0.25); border-radius: 6px; font-size: 11px; line-height: 1.4;">
-        <span style="color: #ff5500; font-weight: bold;">To attach real Brave Browser:</span><br>
-        Run in terminal: <code style="color: #fff; background: rgba(0,0,0,0.4); padding: 2px 4px; border-radius: 3px;">npm run browser:brave</code>
+      <div style="margin-top: 10px; display: flex; gap: 8px;">
+        <button id="btn-launch-chrome" style="flex: 1; font-size: 11px; padding: 7px; background: #2563eb; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">🌐 Launch Chrome CDP</button>
+        <button id="btn-launch-brave" style="flex: 1; font-size: 11px; padding: 7px; background: #ea580c; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">🦁 Launch Brave CDP</button>
       </div>
     </div>
     <div class="ssl-popover-footer">
