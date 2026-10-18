@@ -488,15 +488,28 @@
           <span id="viewport-page-title">Brave | New Tab</span>
           <span class="viewport-url-badge" id="viewport-url-badge">brave://newtab</span>
         </div>
-        <div class="cdp-telemetry-badge">
-          <span>Chromium CDP Basement Connected</span>
-          <span>•</span>
-          <span>REA Observer Listening</span>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="viewport-view-modes">
+            <button class="view-mode-btn active" id="btn-mode-web" title="Interactive DOM View with Shields & REA">🌐 Web View</button>
+            <button class="view-mode-btn" id="btn-mode-cdp" title="Real-Time Google Chrome Stream via CDP">⚡ Live Chrome</button>
+          </div>
+          <div class="cdp-telemetry-badge">
+            <span>Chromium CDP Basement Connected</span>
+            <span>•</span>
+            <span>REA Observer Listening</span>
+          </div>
         </div>
       </div>
 
       <div class="viewport-frame-wrapper" id="webview-container">
         <iframe id="browser-webview" src="/newtab.html" title="Browser Tab Viewport"></iframe>
+        <!-- Live Google Chrome CDP Screen Stream -->
+        <div id="cdp-live-stream-container" class="cdp-live-stream-container hidden">
+          <img id="cdp-live-stream-img" class="cdp-live-stream-img" src="/api/chrome/screenshot" alt="Live Google Chrome CDP Viewport" />
+          <div class="cdp-stream-overlay">
+            <span class="cdp-stream-badge">🔴 LIVE CHROME CDP (Port 9222)</span>
+          </div>
+        </div>
         <!-- Smooth Animated Autonomous Agent Cursor -->
         <div id="brave-agent-cursor" class="brave-agent-cursor" aria-hidden="true">
           <div class="cursor-pointer"></div>

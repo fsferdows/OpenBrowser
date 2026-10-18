@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Real-Time Chrome CDP Observation & Omnibox Search Resolution (ADR-0009):
+- Search Bar Routing & External Site Access Resolution:
+  - `public/newtab.html`: Fixed search bar dispatching which previously hardcoded `'catalog'` scenario. Input now emits `BRAVE_SEARCH_OR_NAVIGATE` directly to Omnibox destination engine. Updated top visited tiles to navigate real URLs (YouTube, Facebook, Google, FS Ferdows, Wikipedia, Hacker News, GitHub).
+  - `public/app.js`: Removed aggressive substring keyword switching (`shop`, `catalog`, `portal`, `form`) in `handleOmniboxSubmit` that hijacked legitimate user search queries and forced `catalog.html`. Updated `TAB_DATA['newtab'].scenario` to `'newtab'`. Added `BRAVE_SEARCH_OR_NAVIGATE` message event handling.
+  - `public/`: Added Dual Viewport Mode switcher: "🌐 Web View" (interactive DOM with Shields and REA inspection) and "⚡ Live Chrome" (real-time streaming viewport from Google Chrome via CDP port 9222 with interactive click forwarding).
+  - `packages/control/src/chromium-client.js`: Added `captureScreenshot(targetId)`, `captureRenderedHtml(targetId)`, `navigateAndRender(targetUrl)`, and `dispatchScroll(targetId)` to `ChromiumCdpClient` enabling automated live page rendering and visual capture directly from Google Chrome.
+  - `packages/control/tests/chromium-client.test.js`: Added test suite for screenshot capture and rendered HTML extraction with graceful fallbacks.
+  - `scripts/serve-localhost.mjs`: Upgraded `/api/proxy` with automatic HTTP redirect following, canonical `<base href>` post-redirect resolution, anti-frame-busting shims (`window.top = window.self`, `window.parent = window.self`) to prevent `refused to connect` errors, link and form interceptors, and automatic fallback to Google Chrome CDP rendering for bot-protected and SPA sites (YouTube, Facebook). Added `/api/chrome/screenshot` and `/api/chrome/input` endpoints.
+
   - `packages/control/src/omnibox-resolver.js`: Intelligent Omnibox destination engine expanding top site shortcuts (`facebook`, `youtube`, `google`, `reddit`, `github`, `amazon`, `wikipedia`, etc.), domain names with TLDs, and routing general search queries to Brave Search (`https://search.brave.com/search?q=...`) and Google Search.
   - `packages/control/tests/omnibox-resolver.test.js`: 5-test unit test suite verifying domain expansion, URL preservation, query routing, and agent directive identification.
   - `packages/control/src/chromium-client.js`: Recreated `rea-main`'s `CdpConnection` WebSocket protocol in `ChromiumCdpClient`. Features duplex WebSocket sessions, live browser version discovery (`getBrowserInfo()`), live target navigation (`navigateTarget()`), and real-time page metrics extraction (`captureLivePage()`).

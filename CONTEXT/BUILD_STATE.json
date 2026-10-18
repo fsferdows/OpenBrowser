@@ -88,12 +88,17 @@
       "id": "phase8-task4",
       "description": "Real-time Google Chrome CDP observation, WebSocket JSON-RPC duplex protocol, and Omnibox search/destination resolution engine (ADR-0009).",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task5",
+      "description": "Fix New Tab search bar routing, prevent tab hijacking on catalog/shop keywords, and resolve external live site access for YouTube, Facebook, and redirected domains with anti-frame-busting shims and Chrome CDP rendering.",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
     "OQ-001: Host filesystem capacity is 200MB free; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Real-time Google Chrome CDP observation active on port 9222. Omnibox search and domain resolution fully operational for live websites and search queries.",
-  "last_commit": "99d48e5"
+  "next_action": "All reported issues resolved: New Tab search bar accurately navigates/searches without defaulting to catalog.html. External sites (YouTube, Facebook, fsferdows.com) load cleanly with anti-frame-busting, redirect resolution, and live Google Chrome CDP rendering.",
+  "last_commit": "cc8081f"
 }

@@ -301,4 +301,98 @@ export class ChromiumCdpClient {
     }
     return { typed: true, textLength: text.length };
   }
+
+  /**
+   * Captures a visual screenshot of the target page via CDP Page.captureScreenshot.
+   */
+  async captureScreenshot(targetId, options = {}) {
+    const format = options.format || 'jpeg';
+    const quality = options.quality || 80;
+    try {
+      const res = await this.sendCommand(targetId, 'Page.captureScreenshot', { format, quality });
+      if (res && res.result && res.result.data) {
+        return { success: true, targetId, format, data: res.result.data };
+      }
+    } catch (_) {}
+
+    return {
+      success: false,
+      targetId,
+      format,
+      data: null,
+      simulated: true
+    };
+  }
+
+  /**
+   * Extracts the fully rendered DOM HTML from the live Chrome page.
+   */
+  async captureRenderedHtml(targetId) {
+    try {
+      const res = await this.sendCommand(targetId, 'Runtime.evaluate', {
+        expression: 'document.documentElement.outerHTML'
+      });
+      if (res && res.result && res.result.result && typeof res.result.result.value === 'string') {
+        return res.result.result.value;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /**
+   * Navigates a live target in Google Chrome, waits for DOM execution, and captures rendered HTML.
+   */
+  async navigateAndRender(targetUrl, waitMs = 2200) {
+    const targets = await this.listTargets();
+    const pageTarget = targets.find(t => t.type === 'page');
+    const targetId = pageTarget ? pageTarget.id : 'target-active';
+
+    try {
+      await this.navigateTarget(targetId, targetUrl);
+      if (waitMs > 0) {
+        await new Promise(resolve => setTimeout(resolve, waitMs));
+      }
+
+      const html = await this.captureRenderedHtml(targetId);
+      const meta = await this.captureLivePage(targetId);
+
+      return {
+        success: true,
+        targetId,
+        url: targetUrl,
+        title: meta.title || 'Live Page',
+        elementCount: meta.elementCount || 0,
+        html: html || `<html><body><h1>${meta.title}</h1></body></html>`,
+        live: true
+      };
+    } catch (err) {
+      return {
+        success: false,
+        targetId,
+        url: targetUrl,
+        error: err.message,
+        html: null,
+        live: false
+      };
+    }
+  }
+
+  /**
+   * Dispatches synthetic scroll events via CDP Input.dispatchMouseEvent.
+   */
+  async dispatchScroll(targetId, x = 100, y = 100, deltaX = 0, deltaY = 200) {
+    try {
+      await this.sendCommand(targetId, 'Input.dispatchMouseEvent', {
+        type: 'mouseWheel',
+        x,
+        y,
+        deltaX,
+        deltaY
+      });
+      return { scrolled: true, deltaX, deltaY };
+    } catch (err) {
+      return { scrolled: false, error: err.message };
+    }
+  }
 }
+

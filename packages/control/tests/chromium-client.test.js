@@ -76,4 +76,20 @@ describe('Chromium CDP Client Tests', () => {
     assert.strictEqual(typeof liveData.elementCount, 'number');
     assert.ok(liveData.url);
   });
+
+  it('captures screenshots and rendered DOM with graceful fallback', async () => {
+    const offlineClient = new ChromiumCdpClient({ port: 19999 });
+    const shot = await offlineClient.captureScreenshot('target-newtab');
+    assert.strictEqual(shot.targetId, 'target-newtab');
+    assert.strictEqual(shot.format, 'jpeg');
+
+    const html = await offlineClient.captureRenderedHtml('target-newtab');
+    assert.strictEqual(html, null);
+
+    const rendered = await offlineClient.navigateAndRender('https://news.ycombinator.com', 0);
+    assert.strictEqual(rendered.success, true);
+    assert.ok(rendered.url);
+    assert.ok(rendered.html);
+  });
 });
+

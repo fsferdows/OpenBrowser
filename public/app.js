@@ -20,7 +20,9 @@
     activeDockPanel: 'copilot',
     tokensEarned: 15.4,
     advancedShieldsOpen: false,
-    scriptBlockingActive: false
+    scriptBlockingActive: false,
+    viewportMode: 'web',
+    cdpStreamTimer: null
   };
 
   const TOP_SITE_MAP = {
@@ -91,7 +93,7 @@
       title: 'Brave | New Tab',
       url: 'brave://newtab',
       iframeSrc: '/newtab.html',
-      scenario: 'catalog',
+      scenario: 'newtab',
       hostname: 'brave.internal',
       trackersCount: 0
     },
@@ -226,6 +228,10 @@
     webview: document.getElementById('browser-webview'),
     viewportTitle: document.getElementById('viewport-page-title'),
     viewportUrlBadge: document.getElementById('viewport-url-badge'),
+    btnModeWeb: document.getElementById('btn-mode-web'),
+    btnModeCdp: document.getElementById('btn-mode-cdp'),
+    cdpLiveStreamContainer: document.getElementById('cdp-live-stream-container'),
+    cdpLiveStreamImg: document.getElementById('cdp-live-stream-img'),
     agentCursor: document.getElementById('brave-agent-cursor'),
     cursorTooltip: document.getElementById('cursor-tooltip'),
 
@@ -448,19 +454,19 @@
       openSettingsModal();
       return;
     }
-    if (trimmed.startsWith('brave://') || trimmed === 'newtab') {
+    if (trimmed === 'brave://newtab' || trimmed === 'newtab') {
       switchTab('newtab');
       return;
     }
-    if (trimmed.includes('shop') || trimmed.includes('catalog')) {
+    if (trimmed === 'brave://catalog' || trimmed === 'demo:catalog') {
       switchTab('catalog');
       return;
     }
-    if (trimmed.includes('portal') || trimmed === 'form') {
+    if (trimmed === 'brave://form' || trimmed === 'demo:form') {
       switchTab('form');
       return;
     }
-    if (trimmed.includes('auth') || trimmed.includes('security')) {
+    if (trimmed === 'brave://auth' || trimmed === 'demo:auth') {
       switchTab('handoff');
       return;
     }
@@ -474,6 +480,63 @@
       navigateLiveUrl(dest.url);
     }
   }
+
+  function setViewportMode(mode) {
+    state.viewportMode = mode;
+    if (mode === 'cdp') {
+      dom.btnModeCdp?.classList.add('active');
+      dom.btnModeWeb?.classList.remove('active');
+      dom.webview.style.display = 'none';
+      dom.cdpLiveStreamContainer?.classList.remove('hidden');
+      refreshCdpStream();
+      if (!state.cdpStreamTimer) {
+        state.cdpStreamTimer = setInterval(refreshCdpStream, 800);
+      }
+      appendLog('system', '⚡ Viewport switched to Live Google Chrome CDP Screen Stream (Port 9222)');
+    } else {
+      dom.btnModeWeb?.classList.add('active');
+      dom.btnModeCdp?.classList.remove('active');
+      dom.webview.style.display = 'block';
+      dom.cdpLiveStreamContainer?.classList.add('hidden');
+      if (state.cdpStreamTimer) {
+        clearInterval(state.cdpStreamTimer);
+        state.cdpStreamTimer = null;
+      }
+      appendLog('system', '🌐 Viewport switched to Interactive Web DOM View with Shields & REA');
+    }
+  }
+
+  function refreshCdpStream() {
+    if (dom.cdpLiveStreamImg && state.viewportMode === 'cdp') {
+      const img = new Image();
+      img.onload = () => {
+        dom.cdpLiveStreamImg.src = img.src;
+      };
+      img.src = `/api/chrome/screenshot?t=${Date.now()}`;
+    }
+  }
+
+  dom.btnModeWeb?.addEventListener('click', () => setViewportMode('web'));
+  dom.btnModeCdp?.addEventListener('click', () => setViewportMode('cdp'));
+
+  // Forward clicks on CDP stream image to Chrome
+  dom.cdpLiveStreamImg?.addEventListener('click', (e) => {
+    const rect = dom.cdpLiveStreamImg.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    const scaleX = (dom.cdpLiveStreamImg.naturalWidth || 1280) / rect.width;
+    const scaleY = (dom.cdpLiveStreamImg.naturalHeight || 800) / rect.height;
+    const realX = Math.round(clickX * scaleX);
+    const realY = Math.round(clickY * scaleY);
+
+    fetch('/api/chrome/input', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'click', x: realX, y: realY })
+    }).then(() => {
+      setTimeout(refreshCdpStream, 150);
+    }).catch(() => {});
+  });
 
   dom.navHome.addEventListener('click', () => switchTab('newtab'));
   dom.navReload.addEventListener('click', () => {
@@ -513,12 +576,17 @@
     if (!event.data) return;
     if (event.data.type === 'BRAVE_NAVIGATE') {
       const targetUrl = event.data.url;
-      if (targetUrl.includes('catalog')) switchTab('catalog');
-      else if (targetUrl.includes('form')) switchTab('form');
-      else if (targetUrl.includes('auth')) switchTab('handoff');
+      if (targetUrl === 'brave://catalog' || targetUrl.includes('catalog.html')) switchTab('catalog');
+      else if (targetUrl === 'brave://form' || targetUrl.includes('form.html')) switchTab('form');
+      else if (targetUrl === 'brave://auth' || targetUrl.includes('auth-hand-off.html')) switchTab('handoff');
+      else navigateLiveUrl(targetUrl);
+    } else if (event.data.type === 'BRAVE_SEARCH_OR_NAVIGATE') {
+      const query = event.data.query;
+      dom.omniboxInput.value = query;
+      handleOmniboxSubmit(query);
     } else if (event.data.type === 'BRAVE_RUN_TASK') {
       const { goal, scenario } = event.data;
-      if (scenario && TAB_DATA[scenario]) {
+      if (scenario && scenario !== 'newtab' && TAB_DATA[scenario]) {
         switchTab(scenario);
       }
       runAutonomousGoal(goal, scenario || state.activeScenario);

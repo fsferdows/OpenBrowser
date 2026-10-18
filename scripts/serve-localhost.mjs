@@ -289,30 +289,97 @@ const server = createServer(async (req, res) => {
         finalUrl = `https://${finalUrl}`;
       }
 
-      // Sync active Chrome CDP tab to this URL if connected
-      chromiumClient.isCdpConnected().then(connected => {
-        if (connected) {
+      const isCdp = parsedUrl.searchParams.get('mode') === 'cdp' ||
+                    finalUrl.includes('facebook.com') ||
+                    finalUrl.includes('youtube.com');
+
+      const isConnected = await chromiumClient.isCdpConnected();
+
+      let html = null;
+      let effectiveUrl = finalUrl;
+
+      // For SPAs and bot-protected sites like Facebook and YouTube, prefer Google Chrome CDP rendering
+      if (isCdp && isConnected) {
+        const renderResult = await chromiumClient.navigateAndRender(finalUrl, 2000);
+        if (renderResult && renderResult.success && renderResult.html && renderResult.html.length > 500) {
+          html = renderResult.html;
+          effectiveUrl = renderResult.url || finalUrl;
+        }
+      }
+
+      // If CDP rendering was not used or did not produce HTML, fetch via proxy
+      if (!html) {
+        // Sync active Chrome CDP tab to this URL if connected
+        if (isConnected) {
           chromiumClient.navigateTarget('target-active', finalUrl).catch(() => {});
         }
-      }).catch(() => {});
 
-      const fetchRes = await fetch(finalUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Brave/124.0.0.0',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9'
+        const fetchRes = await fetch(finalUrl, {
+          redirect: 'follow',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Brave/124.0.0.0',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9'
+          }
+        });
+
+        effectiveUrl = fetchRes.url || finalUrl;
+        const contentType = fetchRes.headers.get('content-type') || 'text/html';
+
+        if (contentType.includes('text/html')) {
+          html = await fetchRes.text();
+
+          // Check for anti-bot blocks (e.g. Facebook "Sorry, something went wrong")
+          if (html.includes('Sorry, something went wrong') && isConnected) {
+            const retryCdp = await chromiumClient.navigateAndRender(effectiveUrl, 2200);
+            if (retryCdp && retryCdp.success && retryCdp.html && !retryCdp.html.includes('Sorry, something went wrong')) {
+              html = retryCdp.html;
+            }
+          }
+        } else {
+          const buffer = await fetchRes.arrayBuffer();
+          res.writeHead(200, {
+            'Content-Type': contentType,
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end(Buffer.from(buffer));
+          return;
         }
-      });
+      }
 
-      const contentType = fetchRes.headers.get('content-type') || 'text/html';
-
-      if (contentType.includes('text/html')) {
-        let html = await fetchRes.text();
-
-        const baseHref = `<base href="${finalUrl}">`;
-        const bridgeScript = `
+      // Inject anti-frame-busting shim, base href, and link interceptor
+      const baseHref = `<base href="${effectiveUrl}">`;
+      const bridgeScript = `
 <script>
-  window.__BRAVE_PROXY_URL__ = ${JSON.stringify(finalUrl)};
+  // Brave Autonomous Browser Bridge & Frame Protection
+  try {
+    Object.defineProperty(window, 'top', { get: () => window.self, configurable: true });
+    Object.defineProperty(window, 'parent', { get: () => window.self, configurable: true });
+  } catch (_) {}
+
+  window.__BRAVE_PROXY_URL__ = ${JSON.stringify(effectiveUrl)};
+
+  // Intercept links to keep navigation inside the Brave Autonomous Browser
+  document.addEventListener('click', function(e) {
+    const a = e.target.closest('a');
+    if (a && a.href && !a.href.startsWith('javascript:') && !a.href.startsWith('#')) {
+      e.preventDefault();
+      window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: a.href }, '*');
+    }
+  }, true);
+
+  // Intercept form submissions
+  document.addEventListener('submit', function(e) {
+    const form = e.target;
+    if (form && form.action && (form.method || 'GET').toUpperCase() === 'GET') {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const params = new URLSearchParams(formData).toString();
+      const destUrl = form.action.includes('?') ? form.action + '&' + params : form.action + '?' + params;
+      window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: destUrl }, '*');
+    }
+  }, true);
+
   window.addEventListener('DOMContentLoaded', () => {
     try {
       window.parent.postMessage({
@@ -325,25 +392,18 @@ const server = createServer(async (req, res) => {
   });
 </script>
 `;
-        if (html.includes('<head>')) {
-          html = html.replace('<head>', `<head>${baseHref}${bridgeScript}`);
-        } else {
-          html = `${baseHref}${bridgeScript}${html}`;
-        }
 
-        res.writeHead(200, {
-          'Content-Type': 'text/html; charset=utf-8',
-          'Access-Control-Allow-Origin': '*'
-        });
-        res.end(html);
+      if (html.includes('<head>')) {
+        html = html.replace('<head>', `<head>${baseHref}${bridgeScript}`);
       } else {
-        const buffer = await fetchRes.arrayBuffer();
-        res.writeHead(200, {
-          'Content-Type': contentType,
-          'Access-Control-Allow-Origin': '*'
-        });
-        res.end(Buffer.from(buffer));
+        html = `${baseHref}${bridgeScript}${html}`;
       }
+
+      res.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(html);
     } catch (err) {
       res.writeHead(502, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(`<html><body style="font-family:sans-serif;background:#0f172a;color:#f8fafc;padding:40px;">
@@ -418,6 +478,62 @@ const server = createServer(async (req, res) => {
           navResult,
           livePage
         }));
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // Google Chrome CDP Live Screenshot API
+  if (req.method === 'GET' && pathname === '/api/chrome/screenshot') {
+    try {
+      const targets = await chromiumClient.listTargets();
+      const pageTarget = targets.find(t => t.type === 'page');
+      const targetId = parsedUrl.searchParams.get('targetId') || (pageTarget ? pageTarget.id : 'target-active');
+      const shot = await chromiumClient.captureScreenshot(targetId, { format: 'jpeg', quality: 80 });
+      if (shot && shot.data) {
+        const buffer = Buffer.from(shot.data, 'base64');
+        res.writeHead(200, {
+          'Content-Type': 'image/jpeg',
+          'Cache-Control': 'no-cache, no-store',
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end(buffer);
+        return;
+      }
+      res.writeHead(503, { 'Content-Type': 'text/plain' });
+      res.end('Screenshot unavailable');
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end(`Screenshot error: ${err.message}`);
+    }
+    return;
+  }
+
+  // Google Chrome CDP Live Input Relay API
+  if (req.method === 'POST' && pathname === '/api/chrome/input') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const targets = await chromiumClient.listTargets();
+        const pageTarget = targets.find(t => t.type === 'page');
+        const targetId = payload.targetId || (pageTarget ? pageTarget.id : 'target-active');
+        const { type, x, y, text, deltaX, deltaY } = payload;
+
+        if (type === 'click') {
+          await chromiumClient.dispatchClick(targetId, x || 100, y || 100);
+        } else if (type === 'type' && text) {
+          await chromiumClient.dispatchType(targetId, text);
+        } else if (type === 'scroll') {
+          await chromiumClient.dispatchScroll(targetId, x || 100, y || 100, deltaX || 0, deltaY || 100);
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, targetId, type }));
       } catch (err) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: err.message }));
