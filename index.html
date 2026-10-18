@@ -464,6 +464,7 @@
           <div class="viewport-view-modes">
             <button class="view-mode-btn active" id="btn-mode-web" title="Interactive DOM View with Shields & REA">🌐 Web View</button>
             <button class="view-mode-btn" id="btn-mode-cdp" title="Real-Time Google Chrome Stream via CDP">⚡ Live Chrome</button>
+            <button class="view-mode-btn login-window-btn" id="btn-open-login-window" title="Open Native Google Chrome Window to Sign in to Google, YouTube, Facebook, GitHub, X with 2FA/Passkeys">🔓 Login Window</button>
           </div>
           <div class="cdp-telemetry-badge">
             <span>Chromium CDP Basement Connected</span>
@@ -477,10 +478,11 @@
         <div id="webview-progress-bar" class="webview-progress-bar hidden"></div>
         <iframe id="browser-webview" src="/newtab.html" title="Browser Tab Viewport"></iframe>
         <!-- Live Google Chrome CDP Screen Stream -->
-        <div id="cdp-live-stream-container" class="cdp-live-stream-container hidden">
+        <div id="cdp-live-stream-container" class="cdp-live-stream-container hidden" tabindex="0">
           <img id="cdp-live-stream-img" class="cdp-live-stream-img" src="/api/chrome/screenshot" alt="Live Google Chrome CDP Viewport" />
           <div class="cdp-stream-overlay">
             <span class="cdp-stream-badge">🔴 LIVE CHROME CDP (Port 9222)</span>
+            <span class="cdp-interaction-hint">⌨️ Click to focus &amp; type with keyboard • Scroll with mouse wheel</span>
           </div>
         </div>
         <!-- Smooth Animated Autonomous Agent Cursor -->
