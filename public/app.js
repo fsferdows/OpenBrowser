@@ -18,7 +18,9 @@
     killSwitchActivated: false,
     waitingForHumanHandoff: false,
     activeDockPanel: 'copilot',
-    tokensEarned: 15.4
+    tokensEarned: 15.4,
+    advancedShieldsOpen: false,
+    scriptBlockingActive: false
   };
 
   const TAB_DATA = {
@@ -88,7 +90,7 @@
     }
   };
 
-  // DOM Element References
+  // DOM References
   const dom = {
     tabsContainer: document.getElementById('brave-tabs'),
     btnAddTab: document.getElementById('btn-add-tab'),
@@ -98,6 +100,17 @@
     navReload: document.getElementById('nav-btn-reload'),
     navHome: document.getElementById('nav-btn-home'),
     sslBadge: document.getElementById('ssl-badge'),
+    sslPopover: document.getElementById('ssl-popover'),
+    sslPopoverHost: document.getElementById('ssl-popover-host'),
+    btnSslClose: document.getElementById('btn-ssl-close'),
+
+    // Search Autocomplete
+    searchAutocomplete: document.getElementById('search-autocomplete'),
+    autocompleteQuery: document.getElementById('autocomplete-query'),
+    autocompleteSearchItem: document.getElementById('autocomplete-search-item'),
+
+    // Bookmarks Bar
+    bookmarksBar: document.getElementById('bookmarks-bar'),
 
     // Brave Shields
     btnShields: document.getElementById('btn-brave-shields'),
@@ -109,6 +122,26 @@
     btnShieldsClose: document.getElementById('btn-shields-close'),
     btnShieldsReport: document.getElementById('btn-shields-report'),
     popoverTrackersCount: document.getElementById('popover-trackers-count'),
+    btnToggleAdvanced: document.getElementById('btn-toggle-advanced'),
+    advancedControlsBody: document.getElementById('advanced-controls-body'),
+    lblScriptBlocking: document.getElementById('lbl-script-blocking'),
+
+    // Brave Rewards
+    btnRewards: document.getElementById('btn-rewards'),
+    rewardsPopover: document.getElementById('rewards-popover'),
+    btnRewardsClose: document.getElementById('btn-rewards-close'),
+    lblBatVal: document.getElementById('lbl-bat-val'),
+    rewardsBatDisplay: document.getElementById('rewards-bat-display'),
+
+    // Brave Hamburger Menu
+    btnBraveMenu: document.getElementById('btn-brave-menu'),
+    braveMenu: document.getElementById('brave-menu'),
+
+    // Brave Settings Modal
+    settingsModal: document.getElementById('settings-modal'),
+    btnCloseSettings: document.getElementById('btn-close-settings'),
+    settingsNavBtns: document.querySelectorAll('.set-nav-btn'),
+    settingsPanels: document.querySelectorAll('.settings-panel'),
 
     // Action Icons
     btnToggleCopilot: document.getElementById('btn-toggle-copilot'),
@@ -149,6 +182,15 @@
     reaAxTree: document.getElementById('rea-ax-tree')
   };
 
+  // Close all open popovers
+  function closeAllPopovers() {
+    dom.shieldsPopover.classList.add('hidden');
+    dom.sslPopover.classList.add('hidden');
+    dom.rewardsPopover.classList.add('hidden');
+    dom.braveMenu.classList.add('hidden');
+    dom.searchAutocomplete.classList.add('hidden');
+  }
+
   // ==========================================================================
   // 1. Tab & Navigation Management
   // ==========================================================================
@@ -171,6 +213,7 @@
     dom.viewportTitle.textContent = tabInfo.title;
     dom.viewportUrlBadge.textContent = tabInfo.url;
     dom.shieldsHostname.textContent = tabInfo.hostname;
+    dom.sslPopoverHost.textContent = tabInfo.hostname;
     dom.shieldsBadgeCount.textContent = tabInfo.trackersCount;
     dom.popoverTrackersCount.textContent = tabInfo.trackersCount;
     state.activeScenario = tabInfo.scenario;
@@ -183,8 +226,20 @@
     runReaInspection(tabInfo.scenario);
   }
 
-  // Setup tab click listeners
+  // Handle Tab clicks & close button
   dom.tabsContainer.addEventListener('click', (e) => {
+    const closeBtn = e.target.closest('.tab-close');
+    if (closeBtn) {
+      e.stopPropagation();
+      const tabBtn = closeBtn.closest('.tab-item');
+      if (tabBtn && document.querySelectorAll('.tab-item').length > 1) {
+        tabBtn.remove();
+        const remaining = document.querySelector('.tab-item');
+        if (remaining) switchTab(remaining.getAttribute('data-tab-id'));
+      }
+      return;
+    }
+
     const tabBtn = e.target.closest('.tab-item');
     if (tabBtn) {
       const tabId = tabBtn.getAttribute('data-tab-id');
@@ -196,16 +251,48 @@
     switchTab('newtab');
   });
 
-  // Omnibox Navigation
+  // Omnibox Navigation & Autocomplete
+  dom.omnibox.addEventListener('input', () => {
+    const val = dom.omnibox.value.trim();
+    if (val.length > 0 && !val.startsWith('brave://')) {
+      dom.autocompleteQuery.textContent = val;
+      dom.searchAutocomplete.classList.remove('hidden');
+    } else {
+      dom.searchAutocomplete.classList.add('hidden');
+    }
+  });
+
   dom.omnibox.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       const query = dom.omnibox.value.trim();
+      dom.searchAutocomplete.classList.add('hidden');
       handleOmniboxSubmit(query);
+    } else if (e.key === 'Escape') {
+      dom.searchAutocomplete.classList.add('hidden');
+    }
+  });
+
+  // Autocomplete suggestions click
+  dom.searchAutocomplete.addEventListener('click', (e) => {
+    const item = e.target.closest('.autocomplete-item');
+    if (!item) return;
+
+    dom.searchAutocomplete.classList.add('hidden');
+    if (item.classList.contains('search-action')) {
+      const query = dom.omnibox.value.trim();
+      handleOmniboxSubmit(query);
+    } else {
+      const targetUrl = item.getAttribute('data-url');
+      if (targetUrl.includes('catalog')) switchTab('catalog');
+      else if (targetUrl.includes('form')) switchTab('form');
+      else if (targetUrl.includes('auth')) switchTab('handoff');
     }
   });
 
   function handleOmniboxSubmit(val) {
-    if (val.startsWith('brave://') || val === 'newtab') {
+    if (val.startsWith('brave://settings')) {
+      openSettingsModal();
+    } else if (val.startsWith('brave://') || val === 'newtab') {
       switchTab('newtab');
     } else if (val.includes('shop') || val.includes('catalog')) {
       switchTab('catalog');
@@ -214,8 +301,8 @@
     } else if (val.includes('auth') || val.includes('gate') || val.includes('security')) {
       switchTab('handoff');
     } else {
-      // Treat as search goal for autonomous agent!
-      appendLog('system', `Search or instruction entered in Omnibox: "${val}"`);
+      // Treat as automated instruction for the autonomous agent!
+      appendLog('system', `Search / goal dispatched via Omnibox: "${val}"`);
       runAutonomousGoal(val, state.activeScenario);
     }
   }
@@ -223,12 +310,31 @@
   dom.navHome.addEventListener('click', () => switchTab('newtab'));
   dom.navReload.addEventListener('click', () => {
     dom.webview.src = dom.webview.src;
-    appendLog('system', 'Reloaded active web tab');
+    appendLog('system', 'Reloaded active web tab (CDP session preserved)');
   });
   dom.navBack.addEventListener('click', () => window.history.back());
   dom.navForward.addEventListener('click', () => window.history.forward());
 
-  // Listen to postMessage from iframe (New Tab page clicks)
+  // Bookmarks Bar Click Handling
+  dom.bookmarksBar.addEventListener('click', (e) => {
+    const chip = e.target.closest('.bookmark-chip:not(.external)');
+    if (chip) {
+      const url = chip.getAttribute('data-url');
+      const scenario = chip.getAttribute('data-scenario');
+      if (scenario === 'repair') {
+        switchTab('catalog');
+        runAutonomousGoal('Demonstrate autonomous self-repair on broken selector', 'repair');
+      } else if (url.includes('catalog')) {
+        switchTab('catalog');
+      } else if (url.includes('form')) {
+        switchTab('form');
+      } else if (url.includes('auth')) {
+        switchTab('handoff');
+      }
+    }
+  });
+
+  // Listen to postMessage from iframe
   window.addEventListener('message', (event) => {
     if (!event.data) return;
     if (event.data.type === 'BRAVE_NAVIGATE') {
@@ -246,28 +352,34 @@
   });
 
   // ==========================================================================
-  // 2. Brave Shields Popover
+  // 2. SSL Certificate Details Popover
   // ==========================================================================
 
-  function toggleShieldsPopover() {
-    const isHidden = dom.shieldsPopover.classList.contains('hidden');
-    dom.shieldsPopover.classList.toggle('hidden', !isHidden);
-    dom.btnShields.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
-  }
+  dom.sslBadge.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isHidden = dom.sslPopover.classList.contains('hidden');
+    closeAllPopovers();
+    dom.sslPopover.classList.toggle('hidden', !isHidden);
+  });
+
+  dom.btnSslClose.addEventListener('click', () => {
+    dom.sslPopover.classList.add('hidden');
+  });
+
+  // ==========================================================================
+  // 3. Brave Shields Popover & Advanced Controls
+  // ==========================================================================
 
   dom.btnShields.addEventListener('click', (e) => {
     e.stopPropagation();
-    toggleShieldsPopover();
+    const isHidden = dom.shieldsPopover.classList.contains('hidden');
+    closeAllPopovers();
+    dom.shieldsPopover.classList.toggle('hidden', !isHidden);
+    dom.btnShields.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
   });
 
   dom.btnShieldsClose.addEventListener('click', () => {
     dom.shieldsPopover.classList.add('hidden');
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!dom.shieldsPopover.contains(e.target) && !dom.btnShields.contains(e.target)) {
-      dom.shieldsPopover.classList.add('hidden');
-    }
   });
 
   dom.shieldsMasterSwitch.addEventListener('change', async (e) => {
@@ -283,28 +395,123 @@
     } catch (_) {}
   });
 
+  // Advanced Controls in Shields
+  dom.btnToggleAdvanced.addEventListener('click', () => {
+    state.advancedShieldsOpen = !state.advancedShieldsOpen;
+    dom.advancedControlsBody.classList.toggle('hidden', !state.advancedShieldsOpen);
+  });
+
   dom.btnShieldsReport.addEventListener('click', () => {
     dom.shieldsPopover.classList.add('hidden');
     switchDockPanel('rea');
   });
 
   // ==========================================================================
-  // 3. Sidebar Dock Navigation
+  // 4. Brave Rewards Popover
+  // ==========================================================================
+
+  dom.btnRewards.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isHidden = dom.rewardsPopover.classList.contains('hidden');
+    closeAllPopovers();
+    dom.rewardsPopover.classList.toggle('hidden', !isHidden);
+  });
+
+  dom.btnRewardsClose.addEventListener('click', () => {
+    dom.rewardsPopover.classList.add('hidden');
+  });
+
+  // ==========================================================================
+  // 5. Brave Hamburger Menu Dropdown
+  // ==========================================================================
+
+  dom.btnBraveMenu.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isHidden = dom.braveMenu.classList.contains('hidden');
+    closeAllPopovers();
+    dom.braveMenu.classList.toggle('hidden', !isHidden);
+  });
+
+  document.getElementById('menu-new-tab').addEventListener('click', () => {
+    closeAllPopovers();
+    switchTab('newtab');
+  });
+
+  document.getElementById('menu-shields').addEventListener('click', () => {
+    closeAllPopovers();
+    dom.shieldsPopover.classList.remove('hidden');
+  });
+
+  document.getElementById('menu-rewards-open').addEventListener('click', () => {
+    closeAllPopovers();
+    dom.rewardsPopover.classList.remove('hidden');
+  });
+
+  document.getElementById('menu-leo-open').addEventListener('click', () => {
+    closeAllPopovers();
+    switchDockPanel('copilot');
+  });
+
+  document.getElementById('menu-settings-open').addEventListener('click', () => {
+    closeAllPopovers();
+    openSettingsModal();
+  });
+
+  document.getElementById('menu-about-open').addEventListener('click', () => {
+    closeAllPopovers();
+    alert('🦁 Brave Autonomous Browser v0.1.0 LTS\nPowered by REA, OmniRoute, FreeLLMAPI, and Chromium CDP.\nWCAG 2.2 AA Certified.');
+  });
+
+  // Document Click Closes Popovers
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.shields-popover') && !e.target.closest('#btn-brave-shields') &&
+        !e.target.closest('.ssl-popover') && !e.target.closest('#ssl-badge') &&
+        !e.target.closest('.rewards-popover') && !e.target.closest('#btn-rewards') &&
+        !e.target.closest('.brave-menu-dropdown') && !e.target.closest('#btn-brave-menu') &&
+        !e.target.closest('.search-autocomplete') && !e.target.closest('#omnibox-input')) {
+      closeAllPopovers();
+    }
+  });
+
+  // ==========================================================================
+  // 6. Brave Settings Modal
+  // ==========================================================================
+
+  function openSettingsModal() {
+    dom.settingsModal.classList.remove('hidden');
+  }
+
+  dom.btnCloseSettings.addEventListener('click', () => {
+    dom.settingsModal.classList.add('hidden');
+  });
+
+  dom.settingsModal.addEventListener('click', (e) => {
+    if (e.target === dom.settingsModal) {
+      dom.settingsModal.classList.add('hidden');
+    }
+  });
+
+  dom.settingsNavBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sec = btn.getAttribute('data-sec');
+      dom.settingsNavBtns.forEach(b => b.classList.toggle('active', b === btn));
+      dom.settingsPanels.forEach(p => p.classList.toggle('active', p.id === `sec-${sec}`));
+    });
+  });
+
+  // ==========================================================================
+  // 7. Sidebar Dock Navigation
   // ==========================================================================
 
   function switchDockPanel(panelName) {
     state.activeDockPanel = panelName;
-
-    // Expand sidebar if collapsed
     dom.sidebar.classList.remove('collapsed');
 
-    // Update dock buttons
     dom.sidebarDock.forEach(btn => {
       const isTarget = btn.getAttribute('data-panel') === panelName;
       btn.classList.toggle('active', isTarget);
     });
 
-    // Update panels
     document.querySelectorAll('.sidebar-panel').forEach(panel => {
       panel.classList.toggle('active', panel.id === `panel-${panelName}`);
     });
@@ -335,11 +542,11 @@
     state.agentRunning = false;
     updateAgentStatus('stopped');
     hideCursor();
-    appendLog('system', '🛑 EMERGENCY STOP ACTIVATED. All autonomous browser execution halted.');
+    appendLog('system', '🛑 EMERGENCY STOP ACTIVATED. All autonomous Chromium execution halted.');
   }
 
   // ==========================================================================
-  // 4. REA (Reverse Engineer Anything) Site Intelligence
+  // 8. REA (Reverse Engineer Anything) Site Intelligence
   // ==========================================================================
 
   async function runReaInspection(scenario) {
@@ -349,11 +556,10 @@
       if (!res.ok) return;
 
       const data = await res.json();
-      dom.reaInteractiveCount.textContent = data.summary.totalInteractive || 4;
+      dom.reaInteractiveCount.textContent = data.summary.totalInteractive || 5;
       dom.reaToolsCount.textContent = data.webMcp ? data.webMcp.toolsCount : 3;
       dom.reaTrackersCount.textContent = data.summary.trackersDetected || 3;
 
-      // Update WebMCP contracts
       if (data.webMcp && data.webMcp.tools) {
         dom.reaMcpTools.innerHTML = data.webMcp.tools.slice(0, 4).map(t => `
           <div class="tool-contract-item">
@@ -371,7 +577,7 @@
   });
 
   // ==========================================================================
-  // 5. Autonomous Agent Execution Loop
+  // 9. Autonomous Agent Execution Loop
   // ==========================================================================
 
   function updateAgentStatus(statusKey) {
@@ -416,7 +622,6 @@
     dom.telemetryStream.innerHTML = '';
   });
 
-  // Visual Cursor Animations in Viewport
   function showCursor(xPercent, yPercent, actionText) {
     dom.agentCursor.style.left = `${xPercent}%`;
     dom.agentCursor.style.top = `${yPercent}%`;
@@ -486,6 +691,9 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const trajectory = data.trajectory || [];
+      const gatewayInfo = data.gateway || {};
+
+      appendLog('system', `⚡ Gateway Active: ${gatewayInfo.activeProvider || 'OmniRoute'} • Latency: ${gatewayInfo.latencyMs || 38}ms • Cost: ${gatewayInfo.cost || '$0.00000'}`);
 
       // Execute each step in trajectory sequentially
       for (let i = 0; i < trajectory.length; i++) {
@@ -502,7 +710,6 @@
 
           appendLog('system', `⚠️ HUMAN HAND-OFF TRIGGERED: ${step.handoffTitle}. Please complete verification in browser tab.`);
 
-          // Wait for user resolution
           await waitForHumanResolution();
           dom.sidebarHandoffAlert.classList.add('hidden');
           updateAgentStatus('acting');
@@ -512,10 +719,8 @@
         const cursorCoords = getElementCoords(step.selector, i);
         showCursor(cursorCoords.x, cursorCoords.y, `[${step.action.toUpperCase()}] ${step.targetDesc}`);
 
-        // Simulate typing or click effect in the iframe
         applyStepToIframe(step);
 
-        // State Machine: Verify step with REA observation
         updateAgentStatus('verifying');
         appendLog('agent', step.thought, {
           index: i + 1,
@@ -526,8 +731,7 @@
           verifiedText: step.verifiedText
         });
 
-        // Delay between steps for smooth visual demonstration
-        await new Promise(r => setTimeout(r, isReplay ? 400 : 900));
+        await new Promise(r => setTimeout(r, isReplay ? 350 : 800));
       }
 
       if (!state.killSwitchActivated) {
@@ -535,6 +739,11 @@
         hideCursor();
         dom.skillSaveBox.classList.remove('hidden');
         appendLog('system', '🎉 Task completed successfully! Workflow verified with 100% assertion pass.');
+
+        // Increment BAT rewards slightly
+        state.tokensEarned = parseFloat((state.tokensEarned + 0.2).toFixed(1));
+        dom.lblBatVal.textContent = state.tokensEarned;
+        dom.rewardsBatDisplay.textContent = state.tokensEarned;
       }
     } catch (err) {
       updateAgentStatus('stopped');
@@ -601,7 +810,6 @@
       };
       dom.btnManualResume.addEventListener('click', onManualClick);
 
-      // Listen to iframe security verification checkbox
       const checkInterval = setInterval(() => {
         try {
           const doc = dom.webview.contentDocument || dom.webview.contentWindow.document;

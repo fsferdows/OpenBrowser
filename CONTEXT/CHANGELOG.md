@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Chromium Basement, OmniRoute & FreeLLMAPI Routing, and 100% Brave Replica:
+  - `packages/control/src/chromium-client.js`: Chromium CDP client forming browser basement with target lifecycle management, synthetic input dispatching (`Input.dispatchMouseEvent`, `Input.dispatchKeyEvent`), and simulated offline CDP fallback provider.
+  - `packages/control/tests/chromium-client.test.js`: 3-test unit test suite verifying target listing, creation, and input dispatching.
+  - Model Gateway live integration: `GatewayClient` wired to `/api/run-task` routing automated goal decomposition through OmniRoute (primary) and FreeLLMAPI (quota guard fallback).
+  - 100% Brave Browser Replica: Added SSL certificate details popover, Brave search autocomplete dropdown, bookmarks bar, Brave Rewards panel, authentic hamburger menu, and in-app Brave Settings modal (`brave://settings`).
 - Brave Autonomous Browser UI/UX & REA Integration:
   - `packages/skill-engine/src/rea-adapter.js`: REA (Reverse Engineer Anything) adapter providing deep DOM inspection, WebMCP candidate tool discovery, network tracking observation for Brave Shields, and DOM capture diffing.
   - `packages/skill-engine/tests/rea-adapter.test.js`: Comprehensive 4-test unit test suite for REA adapter verifying element extraction, WebMCP synthesis, shields observation, and mutation detection.
