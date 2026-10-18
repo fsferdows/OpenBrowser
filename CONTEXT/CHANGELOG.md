@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Real-Time Browser Data, CDP Launcher, and Live Web Proxy:
+  - `scripts/launch-brave-cdp.sh`: One-click bash script to launch real installed Brave Browser on macOS with remote debugging port 9222 and isolated temporary profile. Added `npm run browser:brave` command in `package.json`.
+  - `packages/control/src/chromium-client.js`: Added `isCdpConnected()` to reliably verify whether the live CDP port is responsive, falling back gracefully to simulated targets when offline.
+  - `packages/control/tests/chromium-client.test.js`: Added unit tests verifying live and offline CDP connection checks.
+  - `scripts/serve-localhost.mjs`: Added persistent Server-Sent Events (SSE) `/api/stream` pushing continuous 1-second telemetry (CDP targets, heap/RSS memory, Shields stats), `/api/proxy?url=...` live web proxy with CSP/frame stripping, and `/api/rea/live-inspect?url=...` for live external site reverse engineering.
+  - `public/`: Added live CDP status badge (`🟢 CDP: Live` / `⚪ CDP: Simulated`) with interactive connection details modal, live bookmarks (`Hacker News`, `Wikipedia`), and live URL Omnibox routing.
 - Chromium Basement, OmniRoute & FreeLLMAPI Routing, and 100% Brave Replica:
   - `packages/control/src/chromium-client.js`: Chromium CDP client forming browser basement with target lifecycle management, synthetic input dispatching (`Input.dispatchMouseEvent`, `Input.dispatchKeyEvent`), and simulated offline CDP fallback provider.
   - `packages/control/tests/chromium-client.test.js`: 3-test unit test suite verifying target listing, creation, and input dispatching.
