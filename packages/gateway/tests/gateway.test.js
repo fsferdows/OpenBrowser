@@ -37,6 +37,12 @@ describe('Model Gateway Client & Failover Tests', () => {
     assert.equal(response.providerId, 'omniroute-primary');
     assert.equal(response.result.action, ACTIONS.FILL);
     assert.equal(response.result.value, 'alice');
+    assert.ok(response.metrics);
+    assert.ok(response.metrics.latencyMs >= 0);
+    assert.ok(response.metrics.promptTokens > 0);
+    assert.ok(response.metrics.totalTokens > 0);
+    assert.ok(response.metrics.estimatedCostUsd >= 0);
+    assert.equal(client.metricsHistory.length, 1);
   });
 
   test('triggers automatic failover when primary provider returns HTTP 500', async () => {

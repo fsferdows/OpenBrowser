@@ -24,6 +24,7 @@ export class GatewayClient {
     this.fetchFn = options.fetchFn || globalThis.fetch;
     this.activeProviderIndex = 0;
     this.providerFailureCounts = new Map();
+    this.metricsHistory = [];
   }
 
   getCurrentProvider() {
@@ -53,6 +54,7 @@ export class GatewayClient {
       const timer = setTimeout(() => controller.abort(), options.timeoutMs || this.timeoutMs);
 
       try {
+        const startTime = performance.now();
         const payload = {
           model: options.model || provider.model,
           messages,
@@ -84,10 +86,35 @@ export class GatewayClient {
         // Strict schema validation of the model's action plan
         validateGatewayResponse(parsedContent);
 
+        const latencyMs = Math.round(performance.now() - startTime);
+        const promptTokens = data.usage?.prompt_tokens || Math.max(1, Math.round(JSON.stringify(messages).length / 4));
+        const completionTokens = data.usage?.completion_tokens || Math.max(1, Math.round(contentStr.length / 4));
+        const totalTokens = promptTokens + completionTokens;
+
+        // Estimated cost based on model rate tier (Free providers are $0)
+        const isFree = provider.id.includes('free') || provider.id.includes('local');
+        const estimatedCostUsd = isFree ? 0 : Number(((promptTokens * 0.000003) + (completionTokens * 0.000015)).toFixed(6));
+
+        const metrics = {
+          latencyMs,
+          promptTokens,
+          completionTokens,
+          totalTokens,
+          estimatedCostUsd
+        };
+
+        this.metricsHistory.push({
+          timestamp: new Date().toISOString(),
+          providerId: provider.id,
+          model: provider.model,
+          ...metrics
+        });
+
         return {
           providerId: provider.id,
           model: provider.model,
-          result: parsedContent
+          result: parsedContent,
+          metrics
         };
       } catch (err) {
         clearTimeout(timer);
