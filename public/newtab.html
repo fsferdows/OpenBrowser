@@ -1,468 +1,915 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Brave | New Tab</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Braver</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='20' font-size='20'>🦁</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --brave-orange: #ff5500;
-      --brave-orange-gradient: linear-gradient(135deg, #ff5500 0%, #ff1a51 100%);
-      --brave-purple: #7d5fff;
-      --brave-bg: #0b0c12;
-      --brave-card-bg: rgba(26, 28, 38, 0.75);
-      --brave-border: rgba(255, 255, 255, 0.1);
-      --brave-text-primary: #ffffff;
-      --brave-text-secondary: #9ea4b5;
+      --bg-color: #202124;
+      --surface-color: #303134;
+      --surface-hover: #3c4043;
+      --border-color: #5f6368;
+      --text-primary: #e8eaed;
+      --text-secondary: #9aa0a6;
+      --link-blue: #8ab4f8;
+      --ai-purple: #c084fc;
+      --ai-gradient: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
 
     body {
-      background: radial-gradient(circle at 50% 20%, #1c152e 0%, #0c0d14 70%);
-      color: var(--brave-text-primary);
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      font-family: 'Roboto', Arial, sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 40px;
       overflow-x: hidden;
+      user-select: none;
     }
 
-    /* Top Stats Grid */
-    .shields-banner {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      max-width: 1100px;
-      margin: 0 auto 40px auto;
-      width: 100%;
-    }
-
-    .stat-card {
-      background: var(--brave-card-bg);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--brave-border);
-      border-radius: 14px;
-      padding: 20px;
+    /* Top Navigation */
+    .top-nav {
       display: flex;
-      flex-direction: column;
-      transition: transform 0.2s, border-color 0.2s;
-    }
-
-    .stat-card:hover {
-      transform: translateY(-2px);
-      border-color: rgba(255, 85, 0, 0.4);
-    }
-
-    .stat-val {
-      font-size: 32px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      margin-bottom: 4px;
-      background: var(--brave-orange-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .stat-label {
+      justify-content: flex-end;
+      align-items: center;
+      padding: 16px 24px;
+      gap: 18px;
       font-size: 13px;
-      color: var(--brave-text-secondary);
-      font-weight: 500;
     }
 
-    /* Center Content */
-    .center-dashboard {
-      max-width: 860px;
-      margin: 0 auto;
-      width: 100%;
-      text-align: center;
+    .top-nav a {
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 400;
+      opacity: 0.9;
+      transition: opacity 0.15s ease;
+    }
+
+    .top-nav a:hover {
+      text-decoration: underline;
+      opacity: 1;
+    }
+
+    .apps-icon-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: #bdc1c6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .apps-icon-btn:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+    }
+
+    .user-profile-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #7c3aed;
+      border: 2px solid #38bdf8;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .user-profile-badge:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+    }
+
+    /* Main Center Section */
+    .center-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 28px;
-    }
-
-    .clock-display {
-      font-size: 68px;
-      font-weight: 200;
-      letter-spacing: -1px;
-      line-height: 1;
-      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    }
-
-    .greeting-text {
-      font-size: 20px;
-      color: var(--brave-text-secondary);
-      font-weight: 400;
-      margin-top: -12px;
-    }
-
-    /* Autonomous Search & Goal Bar */
-    .prompt-box {
+      margin: auto;
       width: 100%;
-      background: rgba(22, 24, 34, 0.85);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 28px;
-      padding: 10px 14px 10px 22px;
+      max-width: 684px;
+      padding: 0 20px;
+      text-align: center;
+    }
+
+    /* Braver Logo */
+    .brand-hero {
+      margin-bottom: 26px;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 12px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-      transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    .prompt-box:focus-within {
-      border-color: var(--brave-orange);
-      box-shadow: 0 8px 36px rgba(255, 85, 0, 0.25);
+    .brand-name {
+      font-size: 88px;
+      font-weight: 500;
+      letter-spacing: -1.5px;
+      color: #ffffff;
+      line-height: 1;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
     }
 
-    .lion-badge {
-      font-size: 22px;
-      filter: drop-shadow(0 2px 6px rgba(255, 85, 0, 0.5));
+    /* Pill Search Bar */
+    .search-pill-container {
+      width: 100%;
+      position: relative;
     }
 
-    .prompt-input {
+    .search-pill {
+      width: 100%;
+      height: 48px;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px 0 16px;
+      gap: 12px;
+      transition: background-color 0.15s, box-shadow 0.15s, border-color 0.15s;
+    }
+
+    .search-pill:hover {
+      background-color: var(--surface-color);
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
+      border-color: rgba(223, 225, 229, 0);
+    }
+
+    .search-pill:focus-within {
+      background-color: var(--surface-color);
+      box-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+      border-color: transparent;
+    }
+
+    .btn-plus-icon {
+      background: transparent;
+      border: none;
+      color: #9aa0a6;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      transition: color 0.15s ease, background 0.15s ease;
+    }
+
+    .btn-plus-icon:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .search-input {
       flex: 1;
       background: transparent;
       border: none;
       outline: none;
-      color: #fff;
+      color: #ffffff;
       font-size: 16px;
-      font-weight: 400;
+      font-family: inherit;
+      padding: 0 4px;
+      user-select: text;
     }
 
-    .prompt-input::placeholder {
-      color: #72788e;
-    }
-
-    .btn-dispatch {
-      background: var(--brave-orange-gradient);
-      color: #fff;
-      border: none;
-      padding: 10px 22px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
+    .pill-actions {
       display: flex;
       align-items: center;
-      gap: 8px;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-
-    .btn-dispatch:hover {
-      opacity: 0.95;
-      transform: scale(1.02);
-    }
-
-    /* Quick Action Chips */
-    .quick-chips {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
       gap: 10px;
-      margin-top: -10px;
     }
 
-    .chip-btn {
-      background: rgba(30, 32, 45, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 20px;
-      color: #cfd4e3;
-      padding: 8px 16px;
-      font-size: 13px;
+    .icon-action-btn {
+      background: transparent;
+      border: none;
       cursor: pointer;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      transition: color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .icon-action-btn:hover {
+      color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .ai-mode-pill-btn {
+      background: rgba(168, 85, 247, 0.12);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      color: var(--ai-purple);
+      border-radius: 16px;
+      padding: 5px 12px;
+      font-size: 13px;
+      font-weight: 500;
       display: flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.2s;
-    }
-
-    .chip-btn:hover {
-      background: rgba(255, 85, 0, 0.15);
-      border-color: rgba(255, 85, 0, 0.4);
-      color: #fff;
-      transform: translateY(-1px);
-    }
-
-    /* Top Visited Sites Grid */
-    .tiles-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 16px;
-      width: 100%;
-      margin-top: 10px;
-    }
-
-    .tile-item {
-      background: var(--brave-card-bg);
-      border: 1px solid var(--brave-border);
-      border-radius: 16px;
-      padding: 16px 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
       cursor: pointer;
-      text-decoration: none;
-      color: var(--brave-text-primary);
-      transition: transform 0.2s, background 0.2s, border-color 0.2s;
-    }
-
-    .tile-item:hover {
-      transform: translateY(-4px);
-      background: rgba(38, 41, 56, 0.8);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .tile-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    .tile-title {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--brave-text-secondary);
-      max-width: 90px;
+      transition: all 0.2s ease;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
-    /* Footer Info */
-    .newtab-footer {
+    .ai-mode-pill-btn:hover {
+      background: rgba(168, 85, 247, 0.24);
+      border-color: #c084fc;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+    }
+
+    .sparkle-icon {
+      font-size: 13px;
+    }
+
+    /* Buttons Row */
+    .buttons-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .search-action-btn {
+      background-color: var(--surface-color);
+      border: 1px solid var(--surface-color);
+      color: var(--text-primary);
+      border-radius: 4px;
+      padding: 0 16px;
+      height: 36px;
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+    }
+
+    .search-action-btn:hover {
+      background-color: var(--surface-hover);
+      border-color: var(--border-color);
+      color: #ffffff;
+    }
+
+    /* Language Selection */
+    .lang-row {
+      margin-top: 28px;
+      font-size: 13px;
+      color: #bdc1c6;
+    }
+
+    .lang-link {
+      color: var(--link-blue);
+      text-decoration: none;
+      margin-left: 6px;
+      cursor: pointer;
+    }
+
+    .lang-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Footer */
+    .page-footer {
+      background-color: #171717;
+      border-top: 1px solid #303134;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .footer-location {
+      padding: 14px 28px;
+      border-bottom: 1px solid #303134;
+    }
+
+    .footer-links-row {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      color: var(--brave-text-secondary);
-      max-width: 1100px;
-      margin: 40px auto 0 auto;
-      width: 100%;
+      flex-wrap: wrap;
+      padding: 12px 28px;
+      gap: 16px;
     }
 
-    .footer-left {
+    .footer-links-group {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links-group a {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    .footer-links-group a:hover {
+      text-decoration: underline;
+      color: var(--text-primary);
+    }
+
+    /* Autocomplete dropdown */
+    .autocomplete-box {
+      position: absolute;
+      top: 52px;
+      left: 0;
+      right: 0;
+      background: var(--surface-color);
+      border-radius: 12px;
+      border: 1px solid #3c4043;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      overflow: hidden;
+      z-index: 50;
+      display: none;
+      text-align: left;
+    }
+
+    .autocomplete-box.active {
+      display: block;
+    }
+
+    .ac-item {
+      padding: 10px 16px;
       display: flex;
       align-items: center;
       gap: 12px;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: background-color 0.1s ease;
     }
 
-    .footer-badge {
-      display: inline-flex;
+    .ac-item:hover {
+      background-color: var(--surface-hover);
+    }
+
+    .ac-item .ac-icon {
+      font-size: 16px;
+      color: var(--text-secondary);
+    }
+
+    /* Slide-out AI Mode Chat Drawer */
+    .ai-drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 998;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .ai-drawer-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .ai-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 440px;
+      max-width: 90vw;
+      height: 100vh;
+      background: #18191c;
+      border-left: 1px solid #3c4043;
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 999;
+      user-select: text;
+    }
+
+    .ai-drawer.open {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #2d2e33;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #1e1f23;
+    }
+
+    .drawer-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .drawer-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #ffffff;
+      display: flex;
       align-items: center;
       gap: 6px;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 4px 10px;
-      border-radius: 12px;
+    }
+
+    .engine-tag {
       font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(168, 85, 247, 0.2);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      font-weight: 500;
+    }
+
+    .btn-close-drawer {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+
+    .btn-close-drawer:hover {
+      color: #ffffff;
+    }
+
+    .drawer-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .chat-bubble {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+
+    .chat-bubble.user {
+      align-self: flex-end;
+      background: #2563eb;
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .chat-bubble.assistant {
+      align-self: flex-start;
+      background: #232429;
+      color: #e2e8f0;
+      border: 1px solid #333640;
+      border-bottom-left-radius: 4px;
+    }
+
+    .action-card {
+      margin-top: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(168, 85, 247, 0.12);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .action-card .act-type {
+      color: #c084fc;
+      font-weight: 700;
+    }
+
+    .action-card code {
+      font-family: monospace;
+      color: #93c5fd;
+      word-break: break-all;
+    }
+
+    .drawer-chips {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 8px 16px;
+      border-top: 1px solid #2d2e33;
+      background: #1a1b1f;
+    }
+
+    .chat-chip {
+      background: #25262c;
+      border: 1px solid #3c4043;
+      color: var(--text-secondary);
+      border-radius: 12px;
+      padding: 5px 10px;
+      font-size: 12px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .chat-chip:hover {
+      background: #32343c;
+      color: #ffffff;
+      border-color: #5f6368;
+    }
+
+    .drawer-input-row {
+      padding: 14px 16px;
+      border-top: 1px solid #2d2e33;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #1e1f23;
+    }
+
+    .drawer-input {
+      flex: 1;
+      background: #2b2c31;
+      border: 1px solid #3c4043;
+      border-radius: 20px;
+      padding: 10px 16px;
+      color: #ffffff;
+      font-size: 13.5px;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .drawer-input:focus {
+      border-color: #a855f7;
+    }
+
+    .btn-send-chat {
+      background: var(--ai-gradient);
+      border: none;
+      color: #ffffff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn-send-chat:hover {
+      transform: scale(1.05);
+      opacity: 0.95;
     }
   </style>
 </head>
 <body>
-  <!-- Top Privacy Shields & Autonomy Stats -->
-  <header class="shields-banner" role="region" aria-label="Privacy Shields and Autonomous Stats">
-    <div class="stat-card">
-      <div class="stat-val" id="stat-trackers">2,481</div>
-      <div class="stat-label">Trackers & ads blocked</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-val" id="stat-bandwidth">34.2 MB</div>
-      <div class="stat-label">Bandwidth saved</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-val" id="stat-time">2.4 s</div>
-      <div class="stat-label">Estimated time saved</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-val" id="stat-autonomy">100%</div>
-      <div class="stat-label">Autonomous Verification Rate</div>
-    </div>
+
+  <!-- Top Right Navigation Bar (Exact Replica of Image 2) -->
+  <header class="top-nav" role="navigation" aria-label="Quick links">
+    <a href="https://mail.google.com" target="_blank" rel="noopener">Gmail</a>
+    <a href="/search.html?q=images&tab=images">Images</a>
+    <button class="apps-icon-btn" aria-label="Braver apps" title="Braver apps">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM6 4c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 12c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+      </svg>
+    </button>
+    <div class="user-profile-badge" title="Braver Account: Faisal (FS)">FS</div>
   </header>
 
-  <!-- Center Content -->
-  <main class="center-dashboard">
-    <div class="clock-display" id="live-clock">12:00:00</div>
-    <div class="greeting-text" id="greeting-msg">Welcome to Brave Autonomous Browser</div>
-
-    <!-- Autonomous Task Dispatch & Web Search Omnibox -->
-    <div class="prompt-box">
-      <span class="lion-badge">🦁</span>
-      <input
-        type="text"
-        id="home-prompt"
-        class="prompt-input"
-        placeholder="Search the web or enter URL (e.g. youtube, facebook, fsferdows.com)..."
-        aria-label="Search the web or type a URL"
-      />
-      <button class="btn-dispatch" id="btn-home-dispatch">
-        <span>Search / Go</span>
-        <span>→</span>
-      </button>
+  <!-- Center Content: Logo, Search Pill, Buttons, Language Row -->
+  <main class="center-container">
+    <div class="brand-hero">
+      <h1 class="brand-name">Braver</h1>
     </div>
 
-    <!-- Quick Action Chips -->
-    <div class="quick-chips">
-      <button class="chip-btn" data-goal="Search laptop and add to cart" data-scenario="catalog">
-        🛒 Buy high-end laptop
-      </button>
-      <button class="chip-btn" data-goal="Fill developer registration form and submit" data-scenario="form">
-        📝 Auto-fill developer portal
-      </button>
-      <button class="chip-btn" data-goal="Resolve security checkpoint with human hand-off" data-scenario="handoff">
-        🛡️ Anti-bot checkpoint hand-off
-      </button>
-      <button class="chip-btn" data-goal="Test broken selector self-repair with accessibility tree" data-scenario="repair">
-        🔧 Autonomous self-repair demo
-      </button>
+    <form class="search-pill-container" id="search-form" action="/search.html" method="GET">
+      <div class="search-pill">
+        <button type="button" class="btn-plus-icon" id="btn-plus" title="New task or tab">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+        </button>
+
+        <input
+          type="text"
+          id="search-input"
+          name="q"
+          class="search-input"
+          autocomplete="off"
+          autofocus
+          aria-label="Search"
+          placeholder=""
+        />
+
+        <div class="pill-actions">
+          <!-- Voice Search Mic Icon -->
+          <button type="button" class="icon-action-btn" id="btn-mic" title="Search by voice">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+            </svg>
+          </button>
+
+          <!-- Google Lens / Camera Icon -->
+          <button type="button" class="icon-action-btn" id="btn-lens" title="Search by image">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21 6h-3.17L16 4H8L6.17 6H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-9 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.65 0-3 1.35-3 3s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z"/>
+            </svg>
+          </button>
+
+          <!-- AI Mode Pill Button -->
+          <button type="button" class="ai-mode-pill-btn" id="btn-ai-mode" title="Chat with AI in Refusal-Free Heretic Mode">
+            <span class="sparkle-icon">✨</span>
+            <span>AI Mode</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Real-Time Autocomplete suggestions -->
+      <div class="autocomplete-box" id="autocomplete-box"></div>
+    </form>
+
+    <!-- Center Buttons -->
+    <div class="buttons-row">
+      <button type="submit" form="search-form" class="search-action-btn" id="btn-braver-search">Braver Search</button>
+      <button type="button" class="search-action-btn" id="btn-lucky">I'm Feeling Lucky</button>
     </div>
 
-    <!-- Top Visited Sites Grid -->
-    <nav class="tiles-grid" aria-label="Top Sites">
-      <a href="https://www.youtube.com" class="tile-item" id="tile-youtube">
-        <div class="tile-icon" style="color: #ff0000;">🔴</div>
-        <span class="tile-title">YouTube</span>
-      </a>
-      <a href="https://www.facebook.com" class="tile-item" id="tile-facebook">
-        <div class="tile-icon" style="color: #1877f2;">🔵</div>
-        <span class="tile-title">Facebook</span>
-      </a>
-      <a href="https://fsferdows.com" class="tile-item" id="tile-fsferdows">
-        <div class="tile-icon" style="color: #60a5fa;">💻</div>
-        <span class="tile-title">FS Ferdows</span>
-      </a>
-      <a href="https://en.wikipedia.org" class="tile-item" id="tile-wiki">
-        <div class="tile-icon" style="color: #ffffff;">🌐</div>
-        <span class="tile-title">Wikipedia</span>
-      </a>
-      <a href="https://news.ycombinator.com" class="tile-item" id="tile-hackernews">
-        <div class="tile-icon" style="color: #ff6600;">📰</div>
-        <span class="tile-title">Hacker News</span>
-      </a>
-      <a href="https://github.com" class="tile-item" id="tile-github">
-        <div class="tile-icon" style="color: #ffffff;">🐙</div>
-        <span class="tile-title">GitHub</span>
-      </a>
-      <a href="/catalog.html" class="tile-item" id="tile-catalog">
-        <div class="tile-icon" style="color: #ffaa00;">🛒</div>
-        <span class="tile-title">ElectroTech</span>
-      </a>
-      <a href="/form.html" class="tile-item" id="tile-form">
-        <div class="tile-icon" style="color: #00d26a;">📝</div>
-        <span class="tile-title">Dev Portal</span>
-      </a>
-    </nav>
+    <!-- Language Selector (Exact match to Image 2: "Google offered in: বাংলা" -> "Braver offered in: বাংলা") -->
+    <div class="lang-row">
+      Braver offered in: <a href="?hl=bn" class="lang-link" id="btn-bangla">বাংলা</a>
+    </div>
   </main>
 
-  <!-- Footer Info -->
-  <footer class="newtab-footer">
-    <div class="footer-left">
-      <span class="footer-badge">🦁 Brave v0.1.0 LTS</span>
-      <span class="footer-badge">🔬 REA Engine Active</span>
-      <span class="footer-badge">⚡ OmniRoute & FreeLLMAPI Connected</span>
-    </div>
-    <div class="footer-right">
-      <span>Private &amp; Autonomous • WCAG 2.2 AA</span>
+  <!-- Bottom Footer (Exact match to Image 2: "Bangladesh") -->
+  <footer class="page-footer">
+    <div class="footer-location" id="footer-country">Bangladesh</div>
+    <div class="footer-links-row">
+      <div class="footer-links-group">
+        <a href="/about.html">About</a>
+        <a href="/advertising.html">Advertising</a>
+        <a href="/business.html">Business</a>
+        <a href="/howsearchworks.html">How Search works</a>
+      </div>
+      <div class="footer-links-group">
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
+        <a href="/settings.html">Settings</a>
+      </div>
     </div>
   </footer>
 
+  <!-- Slide-out AI Mode Chat Drawer (Heretic + OmniRoute + FreeLLMAPI) -->
+  <div class="ai-drawer-overlay" id="drawer-overlay"></div>
+  <aside class="ai-drawer" id="ai-drawer" aria-label="Braver AI Mode">
+    <div class="drawer-header">
+      <div class="drawer-title-group">
+        <span style="font-size: 20px;">✨</span>
+        <h2 class="drawer-title">Braver AI Mode</h2>
+        <span class="engine-tag">Heretic + OmniRoute</span>
+      </div>
+      <button class="btn-close-drawer" id="btn-close-drawer" aria-label="Close AI Mode">&times;</button>
+    </div>
+
+    <div class="drawer-messages" id="drawer-messages">
+      <div class="chat-bubble assistant">
+        <strong>🦁 Braver AI Agent</strong>
+        <p style="margin-top: 4px;">Welcome to refusal-free autonomous mode powered by Heretic and OmniRoute/FreeLLMAPI gateways.</p>
+        <p style="margin-top: 4px; color: #94a3b8; font-size: 12px;">Ask anything, request real-time live data, or command browser tasks (e.g. "Open Facebook and prepare login", "Search latest tech").</p>
+      </div>
+    </div>
+
+    <div class="drawer-chips">
+      <button class="chat-chip" data-task="Open Facebook and navigate to login">Open Facebook</button>
+      <button class="chat-chip" data-task="Search real-time technology news">Latest Tech News</button>
+      <button class="chat-chip" data-task="Explain how Braver uses FreeLLMAPI and OmniRoute">Architecture Info</button>
+      <button class="chat-chip" data-task="Summarize Meta Platforms and Quest 3">Meta Quest 3 Info</button>
+    </div>
+
+    <div class="drawer-input-row">
+      <input
+        type="text"
+        class="drawer-input"
+        id="drawer-input"
+        placeholder="Ask Braver AI or instruct browser action..."
+        autocomplete="off"
+      />
+      <button class="btn-send-chat" id="btn-send-chat" title="Send message">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
+      </button>
+    </div>
+  </aside>
+
   <script>
-    // Live Clock
-    function updateClock() {
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      document.getElementById('live-clock').textContent = `${hours}:${minutes}:${seconds}`;
+    const searchForm = document.getElementById('search-form');
+    const searchInput = document.getElementById('search-input');
+    const autocompleteBox = document.getElementById('autocomplete-box');
+    const btnAiMode = document.getElementById('btn-ai-mode');
+    const btnLucky = document.getElementById('btn-lucky');
+    const btnBangla = document.getElementById('btn-bangla');
+    const aiDrawer = document.getElementById('ai-drawer');
+    const drawerOverlay = document.getElementById('drawer-overlay');
+    const btnCloseDrawer = document.getElementById('btn-close-drawer');
+    const drawerInput = document.getElementById('drawer-input');
+    const btnSendChat = document.getElementById('btn-send-chat');
+    const drawerMessages = document.getElementById('drawer-messages');
 
-      const h = now.getHours();
-      let greeting = 'Good morning, Operator';
-      if (h >= 12 && h < 17) greeting = 'Good afternoon, Operator';
-      else if (h >= 17) greeting = 'Good evening, Operator';
-      document.getElementById('greeting-msg').textContent = greeting;
+    // Language handling
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('hl') === 'bn') {
+      document.getElementById('btn-braver-search').textContent = 'ব্রেভার অনুসন্ধান';
+      document.getElementById('btn-lucky').textContent = 'আমি ভাগ্যবান মনে করছি';
+      document.querySelector('.lang-row').innerHTML = 'Braver offered in: <a href="?hl=en" class="lang-link">English</a>';
     }
-    setInterval(updateClock, 1000);
-    updateClock();
 
-    // Fetch live Shields stats
-    fetch('/api/shields/stats')
-      .then(r => r.json())
-      .then(stats => {
-        if (stats.trackersBlocked) {
-          document.getElementById('stat-trackers').textContent = stats.trackersBlocked.toLocaleString();
-        }
-        if (stats.bandwidthSavedMB) {
-          document.getElementById('stat-bandwidth').textContent = stats.bandwidthSavedMB + ' MB';
-        }
-        if (stats.timeSavedSec) {
-          document.getElementById('stat-time').textContent = stats.timeSavedSec + ' s';
-        }
-      })
-      .catch(() => {});
+    // Autocomplete dictionary for popular queries
+    const SUGGESTIONS = [
+      { q: 'facebook', icon: '🌐', label: 'facebook — Social networking service' },
+      { q: 'facebook login', icon: '🔍', label: 'facebook login' },
+      { q: 'youtube', icon: '📺', label: 'youtube — Video sharing platform' },
+      { q: 'meta quest 3', icon: '🥽', label: 'meta quest 3 vr' },
+      { q: 'github', icon: '🐙', label: 'github — Software repository' },
+      { q: 'chatgpt', icon: '🤖', label: 'chatgpt — AI assistant' }
+    ];
 
-    // Send search or navigation request to browser shell
-    function sendSearchOrNavigateToParent(query) {
+    searchInput.addEventListener('input', () => {
+      const val = searchInput.value.trim().toLowerCase();
+      if (!val) {
+        autocompleteBox.classList.remove('active');
+        return;
+      }
+
+      const matches = SUGGESTIONS.filter(s => s.q.includes(val));
+      if (matches.length > 0) {
+        autocompleteBox.innerHTML = matches.map(m => `
+          <div class="ac-item" data-query="${m.q}">
+            <span class="ac-icon">${m.icon}</span>
+            <span>${m.label}</span>
+          </div>
+        `).join('');
+        autocompleteBox.classList.add('active');
+      } else {
+        autocompleteBox.innerHTML = `
+          <div class="ac-item" data-query="${val}">
+            <span class="ac-icon">🔍</span>
+            <span>Search Braver for "<strong>${val}</strong>"</span>
+          </div>
+        `;
+        autocompleteBox.classList.add('active');
+      }
+    });
+
+    autocompleteBox.addEventListener('click', (e) => {
+      const item = e.target.closest('.ac-item');
+      if (item) {
+        const q = item.getAttribute('data-query');
+        searchInput.value = q;
+        autocompleteBox.classList.remove('active');
+        executeSearch(q);
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!searchForm.contains(e.target)) {
+        autocompleteBox.classList.remove('active');
+      }
+    });
+
+    function executeSearch(query) {
+      const q = (query || searchInput.value || '').trim();
+      if (!q) return;
+
+      // Check if user specifically requested AI mode via prefix
+      if (q.startsWith('ai:') || q.startsWith('agent:')) {
+        openAiMode();
+        sendChatMessage(q.replace(/^(ai:|agent:)\s*/i, ''));
+        return;
+      }
+
+      const targetUrl = `/search.html?q=${encodeURIComponent(q)}`;
       if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'BRAVE_SEARCH_OR_NAVIGATE', query }, '*');
+        window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: targetUrl }, '*');
+      } else {
+        window.location.href = targetUrl;
       }
     }
 
-    // Parent messaging for scenario task dispatch
-    function sendTaskToParent(goal, scenario) {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'BRAVE_RUN_TASK', goal, scenario }, '*');
-      }
+    searchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      executeSearch();
+    });
+
+    btnLucky.addEventListener('click', () => {
+      const q = searchInput.value.trim() || 'facebook';
+      executeSearch(q);
+    });
+
+    // AI Mode Drawer Handlers
+    function openAiMode() {
+      aiDrawer.classList.add('open');
+      drawerOverlay.classList.add('open');
+      drawerInput.focus();
     }
 
-    document.getElementById('btn-home-dispatch').addEventListener('click', () => {
-      const input = document.getElementById('home-prompt');
-      const query = input.value.trim();
-      if (!query) return;
-      sendSearchOrNavigateToParent(query);
-    });
+    function closeAiMode() {
+      aiDrawer.classList.remove('open');
+      drawerOverlay.classList.remove('open');
+    }
 
-    document.getElementById('home-prompt').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        document.getElementById('btn-home-dispatch').click();
-      }
-    });
+    btnAiMode.addEventListener('click', openAiMode);
+    btnCloseDrawer.addEventListener('click', closeAiMode);
+    drawerOverlay.addEventListener('click', closeAiMode);
 
-    document.querySelectorAll('.chip-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const goal = btn.getAttribute('data-goal');
-        const scenario = btn.getAttribute('data-scenario');
-        sendTaskToParent(goal, scenario);
-      });
-    });
+    async function sendChatMessage(msgText) {
+      const text = (msgText || drawerInput.value || '').trim();
+      if (!text) return;
+      drawerInput.value = '';
 
-    // Intercept tile clicks to communicate with browser shell
-    document.querySelectorAll('.tile-item').forEach(tile => {
-      tile.addEventListener('click', (e) => {
-        const href = tile.getAttribute('href');
-        if (!href) return;
-        e.preventDefault();
-        if (href.startsWith('/')) {
-          if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: href }, '*');
-          } else {
-            window.location.href = href;
+      // User Bubble
+      const userBubble = document.createElement('div');
+      userBubble.className = 'chat-bubble user';
+      userBubble.textContent = text;
+      drawerMessages.appendChild(userBubble);
+      drawerMessages.scrollTop = drawerMessages.scrollHeight;
+
+      // Assistant Thinking Bubble
+      const assistantBubble = document.createElement('div');
+      assistantBubble.className = 'chat-bubble assistant';
+      assistantBubble.innerHTML = `<em>Thinking with Heretic & OmniRoute/FreeLLMAPI...</em>`;
+      drawerMessages.appendChild(assistantBubble);
+      drawerMessages.scrollTop = drawerMessages.scrollHeight;
+
+      try {
+        const res = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, context: { currentUrl: window.location.href } })
+        });
+        const data = await res.json();
+
+        let actionHtml = '';
+        if (data.action && data.action.type && data.action.type !== 'none') {
+          actionHtml = `
+            <div class="action-card">
+              <span class="act-type">⚡ BROWSER ACTION: ${data.action.type.toUpperCase()}</span>
+              <span>Target: <code>${data.action.target || 'N/A'}</code></span>
+            </div>
+          `;
+
+          if (data.action.type === 'navigate' && data.action.target) {
+            setTimeout(() => {
+              if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: data.action.target }, '*');
+              } else {
+                window.location.href = data.action.target;
+              }
+            }, 1200);
           }
-        } else {
-          sendSearchOrNavigateToParent(href);
         }
+
+        assistantBubble.innerHTML = `
+          <strong>🦁 Braver AI</strong>
+          <p style="margin-top: 4px;">${data.reply || 'Task completed.'}</p>
+          ${actionHtml}
+          <div style="margin-top: 6px; font-size: 11px; color: #9aa0a6;">Provider: ${data.provider || 'OmniRoute'} (${data.latencyMs || 25}ms)</div>
+        `;
+      } catch (err) {
+        assistantBubble.innerHTML = `<span style="color:#ef4444;">Failed to communicate with AI gateway.</span>`;
+      }
+      drawerMessages.scrollTop = drawerMessages.scrollHeight;
+    }
+
+    btnSendChat.addEventListener('click', () => sendChatMessage());
+    drawerInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendChatMessage();
+    });
+
+    document.querySelectorAll('.chat-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        sendChatMessage(chip.getAttribute('data-task'));
       });
     });
   </script>

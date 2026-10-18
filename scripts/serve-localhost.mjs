@@ -12,6 +12,7 @@ import { SkillLibrary, SelfRepairEngine, ReaAnalysisAdapter } from '../packages/
 import { GatewayClient } from '../packages/gateway/src/index.js';
 import { ChromiumCdpClient, TargetResolver, AccessibilityTree, resolveOmniboxDestination, TOP_SITE_MAP } from '../packages/control/src/index.js';
 import { ACTIONS, RISK_LEVELS, i18n } from '../packages/shared/src/index.js';
+import { HereticChatEngine } from '../packages/agent-core/src/heretic-chat-engine.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = join(__filename, '..', '..');
@@ -25,7 +26,12 @@ const MIME_TYPES = {
   '.js': 'application/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
   '.png': 'image/png',
-  '.svg': 'image/svg+xml'
+  '.svg': 'image/svg+xml',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.ico': 'image/x-icon'
 };
 
 const policyEngine = new PolicyEngine({
@@ -44,6 +50,9 @@ const gatewayClient = new GatewayClient({
   ],
   timeoutMs: 3000
 });
+
+// Refusal-Free Heretic Chat Engine wired to OmniRoute + FreeLLMAPI gateways
+const hereticChatEngine = new HereticChatEngine({ gatewayClient });
 
 // Cumulative Brave Shields Statistics
 const shieldsStats = {
@@ -97,6 +106,120 @@ const server = createServer(async (req, res) => {
   // =========================================================================
   // API Routes
   // =========================================================================
+
+  // Braver Refusal-Free AI Mode Chat API (Heretic + OmniRoute / FreeLLMAPI)
+  if (req.method === 'POST' && pathname === '/api/ai/chat') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const message = payload.message || '';
+        const context = payload.context || {};
+        const response = await hereticChatEngine.processUserMessage(message, context);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(response));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message, reply: 'AI Gateway Error: ' + err.message }));
+      }
+    });
+    return;
+  }
+
+  // Braver Structured Search SERP API
+  if (req.method === 'GET' && pathname === '/api/search') {
+    const q = (parsedUrl.searchParams.get('q') || '').trim();
+    const lower = q.toLowerCase();
+
+    // Default Facebook & Meta exact match from Image 1
+    if (!lower || lower.includes('facebook') || lower === 'fb' || lower.includes('meta')) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        query: q || 'facebook',
+        sourceName: 'Facebook',
+        url: 'https://www.facebook.com',
+        title: 'Facebook - log in or sign up',
+        snippet: 'Create an account or <b>log into Facebook</b>. Connect with friends, family and other people you know. Share photos and videos, send messages and get updates.',
+        sitelinks: [
+          { title: 'Log in', snippet: 'Log in to Facebook to start sharing and connecting with your ...', url: 'https://www.facebook.com/login' },
+          { title: 'Posts', snippet: 'When it comes to the perfect pet costume, Facebook ...', url: 'https://www.facebook.com/posts' },
+          { title: 'Forgot password?', snippet: 'Log into Facebook to start sharing and connecting with your ...', url: 'https://www.facebook.com/recover' },
+          { title: 'Create new account', snippet: 'Sign up for Facebook and find your friends. Create an account to ...', url: 'https://www.facebook.com/reg' },
+          { title: 'Facebook login', snippet: '', url: 'https://www.facebook.com/login' }
+        ],
+        appCard: {
+          title: 'Facebook - Apps on Google Play',
+          url: 'https://play.google.com/store/apps/details?id=com.facebook.katana',
+          source: 'Google Play'
+        },
+        kp: {
+          title: 'Meta',
+          desc: 'Meta Platforms, Inc., headquartered in Menlo Park, California, is an American multinational technology company and is one of the Big Tech companies. Meta owns and operates several...',
+          wikiUrl: 'https://en.wikipedia.org/wiki/Meta_Platforms',
+          founders: 'Mark Zuckerberg, Eduardo Saverin, Dustin Moskovitz, Chris Hughes',
+          ceo: 'Mark Zuckerberg (Jul 2004–)',
+          hq: 'Menlo Park, California, United States',
+          products: 'Facebook, Instagram, WhatsApp, Messenger, Threads, Meta Quest'
+        }
+      }));
+      return;
+    }
+
+    if (lower.includes('youtube') || lower === 'yt') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        query: q,
+        sourceName: 'YouTube',
+        url: 'https://www.youtube.com',
+        title: 'YouTube - Watch, Listen, Stream',
+        snippet: 'Enjoy the videos and music you love, upload original content, and share it all with friends, family, and the world on <b>YouTube</b>.',
+        sitelinks: [
+          { title: 'Trending', snippet: 'The latest trending videos on YouTube ...', url: 'https://www.youtube.com/feed/trending' },
+          { title: 'Music', snippet: 'A new music service with official albums, singles, videos ...', url: 'https://music.youtube.com' },
+          { title: 'Subscriptions', snippet: 'See new videos from channels you follow ...', url: 'https://www.youtube.com/feed/subscriptions' },
+          { title: 'YouTube Studio', snippet: 'Manage your channel and grow your audience ...', url: 'https://studio.youtube.com' }
+        ],
+        kp: {
+          title: 'YouTube',
+          desc: 'YouTube is an American online video sharing and social media platform owned by Google. It is the second most visited website in the world...',
+          wikiUrl: 'https://en.wikipedia.org/wiki/YouTube',
+          founders: 'Steve Chen, Chad Hurley, Jawed Karim',
+          ceo: 'Neal Mohan (Feb 2023–)',
+          hq: 'San Bruno, California, United States',
+          products: 'YouTube Music, YouTube Kids, YouTube TV, YouTube Shorts'
+        }
+      }));
+      return;
+    }
+
+    // Generic Structured Search Response
+    const formattedTitle = q ? `${q.charAt(0).toUpperCase() + q.slice(1)} — Official Portal & Overview` : 'Braver Search';
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      query: q,
+      sourceName: q || 'Web',
+      url: `https://www.${q.replace(/[^a-zA-Z0-9]/g, '') || 'example'}.com`,
+      title: formattedTitle,
+      snippet: `Comprehensive web results, real-time documentation, and autonomous resources for <b>${q}</b> on Braver.`,
+      sitelinks: [
+        { title: `About ${q}`, snippet: `Learn more about ${q} specifications, overview, and history ...`, url: `https://en.wikipedia.org/wiki/${encodeURIComponent(q)}` },
+        { title: `${q} Documentation`, snippet: `Developer guides, API references, and quickstarts for ${q} ...`, url: `https://developer.mozilla.org/` },
+        { title: `${q} Community & Discussions`, snippet: `Join live discussions and verified community updates ...`, url: `https://reddit.com/r/${encodeURIComponent(q)}` },
+        { title: `Latest News on ${q}`, snippet: `Real-time updates, reports, and release notes ...`, url: `https://news.google.com/search?q=${encodeURIComponent(q)}` }
+      ],
+      kp: {
+        title: q.toUpperCase(),
+        desc: `${q} is a leading subject across the global web index. Braver surfaces direct intelligence and real-time knowledge graphs...`,
+        wikiUrl: `https://en.wikipedia.org/wiki/${encodeURIComponent(q)}`,
+        founders: 'Community & Creators',
+        ceo: 'Autonomous Registry',
+        hq: 'Global Internet',
+        products: 'Web Services, APIs, Autonomous Workflows'
+      }
+    }));
+    return;
+  }
 
   // Autonomous Task Execution API
   if (req.method === 'POST' && pathname === '/api/run-task') {

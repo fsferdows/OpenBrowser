@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Search Bar Routing & External Site Access Resolution:
+- Braver Dark Minimal Frontpage, Search Results SERP, and Heretic AI Mode:
+  - `vendor/heretic`: Cloned and pinned `p-e-w/heretic` (commit `3a5c864527935c7677f79bdbe044a700577cabb2`) and authored vendor repository map `CONTEXT/REPO_MAP_heretic.md`.
+  - `packages/agent-core/src/heretic-chat-engine.js`: Implemented refusal-free conversational AI engine based on Heretic directional ablation principles, fronting OmniRoute (primary) and FreeLLMAPI (zero-cost quota guarded fallback) with automatic browser action intent detection.
+  - `packages/agent-core/tests/heretic-chat.test.js`: 4-test unit test suite verifying refusal-free responses, browser action extraction (navigate, search, click), provider transparency, and live fallback handling.
+  - `public/newtab.html`: 100% replica of Google dark slate frontpage branded as **Braver**, featuring pill search bar (`+` icon, microphone, Google Lens, and `✨ AI Mode` pill button), centered "Braver Search" & "I'm Feeling Lucky" buttons, Bangla language link ("Braver offered in: বাংলা"), Bangladesh footer location, and slide-out Heretic AI Mode chat drawer.
+  - `public/search.html`: High-fidelity search results page (SERP) matching Google dark UI with `✨ AI Mode` tab, Facebook organic card with sitelinks and direct navigation, Google Play app card, and complete Meta Knowledge Graph panel with 3-image collage gallery (`meta_vr.jpg`, `meta_desk.jpg`, `meta_apps.jpg`), Wikipedia summary, and structured company metadata.
+  - `scripts/serve-localhost.mjs`: Added image MIME types (`.jpg`, `.jpeg`, `.webp`), `/api/ai/chat` endpoint powered by `HereticChatEngine`, and `/api/search` structured SERP data endpoint.
+  - `public/app.js`: Updated Omnibox and internal routing to navigate to `/search.html?q=...` without proxy interference, allowing search queries like "facebook" to immediately display rich search results.
   - `public/newtab.html`: Fixed search bar dispatching which previously hardcoded `'catalog'` scenario. Input now emits `BRAVE_SEARCH_OR_NAVIGATE` directly to Omnibox destination engine. Updated top visited tiles to navigate real URLs (YouTube, Facebook, Google, FS Ferdows, Wikipedia, Hacker News, GitHub).
   - `public/app.js`: Removed aggressive substring keyword switching (`shop`, `catalog`, `portal`, `form`) in `handleOmniboxSubmit` that hijacked legitimate user search queries and forced `catalog.html`. Updated `TAB_DATA['newtab'].scenario` to `'newtab'`. Added `BRAVE_SEARCH_OR_NAVIGATE` message event handling.
   - `public/`: Added Dual Viewport Mode switcher: "🌐 Web View" (interactive DOM with Shields and REA inspection) and "⚡ Live Chrome" (real-time streaming viewport from Google Chrome via CDP port 9222 with interactive click forwarding).
