@@ -17,7 +17,11 @@ const IGNORED_PATHS = new Set([
   'node_modules',
   'dist',
   'build',
-  '*.zip'
+  'vendor',
+  'OmniRoute-release-v3.8.52',
+  'freellmapi-main',
+  'rea-main',
+  'chromium-main'
 ]);
 
 function scanDirectory(dir, findings = []) {

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Brave Autonomous Browser UI/UX & REA Integration:
+  - `packages/skill-engine/src/rea-adapter.js`: REA (Reverse Engineer Anything) adapter providing deep DOM inspection, WebMCP candidate tool discovery, network tracking observation for Brave Shields, and DOM capture diffing.
+  - `packages/skill-engine/tests/rea-adapter.test.js`: Comprehensive 4-test unit test suite for REA adapter verifying element extraction, WebMCP synthesis, shields observation, and mutation detection.
+  - `public/`: Authentic Brave Browser dark-mode interface featuring horizontal tab strip, omnibox with SSL security badge, Brave Shields lion popover with real-time tracker blocking counters, and the iconic Brave New Tab dashboard (`public/newtab.html`).
+  - `public/app.js`: Autonomous browser controller with smooth visual agent cursor navigation, floating action tooltips, DOM element highlights, English / বাংলা localization, and human-in-the-loop CAPTCHA hand-off resolution.
+  - `scripts/serve-localhost.mjs`: Added `/api/rea/inspect`, `/api/shields/stats`, `/api/shields/toggle`, and `/api/gateway/status` endpoints connecting OmniRoute, FreeLLMAPI, and REA.
 - Interactive Localhost Web Studio:
   - `scripts/serve-localhost.mjs`: Zero-dependency localhost HTTP & REST server providing static hosting and `/api/run-task`, `/api/status`, `/api/skills` endpoints.
   - `public/`: Standalone browser studio interface featuring split-screen browser viewport, persistent agent side-panel, real-time telemetry stream, interactive cursor movement, element bounding box highlights, and full English / Bangla localization.

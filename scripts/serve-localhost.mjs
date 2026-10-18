@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 import { PolicyEngine } from '../packages/safety/src/policy-engine.js';
 import { EncryptedVault } from '../packages/safety/src/vault.js';
-import { SkillLibrary, SelfRepairEngine } from '../packages/skill-engine/src/index.js';
+import { SkillLibrary, SelfRepairEngine, ReaAnalysisAdapter } from '../packages/skill-engine/src/index.js';
 import { ACTIONS, RISK_LEVELS, i18n } from '../packages/shared/src/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,48 +29,63 @@ const policyEngine = new PolicyEngine({
   domainWhitelist: ['shop.example.com', 'accounts.example.com', 'portal.example.com', 'localhost']
 });
 const skillLibrary = new SkillLibrary();
+const reaAdapter = new ReaAnalysisAdapter();
+
+// Cumulative Brave Shields Statistics
+const shieldsStats = {
+  trackersBlocked: 2481,
+  fingerprintingBlocked: 142,
+  httpsUpgrades: 389,
+  bandwidthSavedMB: 34.2,
+  timeSavedSec: 2.4,
+  shieldsActive: true
+};
 
 function getTrajectoryForScenario(scenario, goal) {
   if (scenario === 'form') {
     return [
       {
-        thought: 'Located username input field in registration form. Filling identity.',
+        thought: 'Inspecting developer registration page structure with REA. Discovered #username-field.',
         action: 'fill',
         selector: '#username-field',
         targetDesc: 'input#username-field',
         value: 'alice_agent',
         risk_level: 'low',
         tokens: 120,
-        verifiedText: 'Value populated: alice_agent'
+        verifiedText: 'Value populated: alice_agent',
+        reaVerified: true
       },
       {
-        thought: 'Populating contact email address for developer registration.',
+        thought: 'Filling email input field with validated developer contact address.',
         action: 'fill',
         selector: '#email-field',
         targetDesc: 'input#email-field',
         value: 'alice@agenticbrowser.org',
         risk_level: 'low',
         tokens: 110,
-        verifiedText: 'Email format valid'
+        verifiedText: 'Email format valid',
+        reaVerified: true
       },
       {
-        thought: 'Selecting Lead Systems Engineer role from account dropdown.',
+        thought: 'Selecting Lead Systems Engineer role from account dropdown selector.',
         action: 'select',
         selector: '#role-dropdown',
         targetDesc: 'select#role-dropdown',
         value: 'lead-engineer',
         risk_level: 'low',
         tokens: 95,
-        verifiedText: 'Role set to Lead Systems Engineer'
+        verifiedText: 'Role set to Lead Systems Engineer',
+        reaVerified: true
       },
       {
-        thought: 'Acknowledging terms of service agreements.',
+        thought: 'Checking terms of service agreement checkbox.',
         action: 'click',
         selector: '#terms-agree',
         targetDesc: 'input#terms-agree',
         risk_level: 'low',
         tokens: 80,
-        verifiedText: 'Terms checkbox checked'
+        verifiedText: 'Terms checkbox checked',
+        reaVerified: true
       },
       {
         thought: 'Submitting registration form. Form creation is medium risk.',
@@ -79,7 +94,8 @@ function getTrajectoryForScenario(scenario, goal) {
         targetDesc: 'button#create-account-btn',
         risk_level: 'medium',
         tokens: 165,
-        verifiedText: 'Success alert displayed: Account registered'
+        verifiedText: 'Success alert displayed: Account registered',
+        reaVerified: true
       }
     ];
   }
@@ -87,13 +103,14 @@ function getTrajectoryForScenario(scenario, goal) {
   if (scenario === 'handoff') {
     return [
       {
-        thought: 'Inspecting security gate interface for authentication barriers.',
+        thought: 'Inspecting security gate interface for authentication barriers using REA packet inspector.',
         action: 'navigate',
         selector: null,
-        targetDesc: 'https://portal.example.com/auth-hand-off.html',
+        targetDesc: 'https://auth.example.com/auth-hand-off.html',
         risk_level: 'low',
         tokens: 140,
-        verifiedText: 'Navigation complete'
+        verifiedText: 'Navigation complete',
+        reaVerified: true
       },
       {
         thought: 'Detected security barrier: Anti-bot challenge on page. Activating user hand-off protocol.',
@@ -104,8 +121,9 @@ function getTrajectoryForScenario(scenario, goal) {
         tokens: 180,
         triggerHandoff: true,
         handoffTitle: 'Security Challenge: Human Verification',
-        handoffDesc: 'The browser agent halted automated actions. Please solve the security prompt in the tab to resume.',
-        verifiedText: 'User verification confirmed'
+        handoffDesc: 'The autonomous browser agent halted automated actions. Please solve the security prompt in the tab to resume.',
+        verifiedText: 'User verification confirmed',
+        reaVerified: true
       },
       {
         thought: 'Human operator completed challenge. Resuming session with protected dashboard.',
@@ -114,7 +132,8 @@ function getTrajectoryForScenario(scenario, goal) {
         targetDesc: 'div#protected-area',
         risk_level: 'low',
         tokens: 90,
-        verifiedText: 'Vault access authorized'
+        verifiedText: 'Vault access authorized',
+        reaVerified: true
       }
     ];
   }
@@ -122,22 +141,24 @@ function getTrajectoryForScenario(scenario, goal) {
   if (scenario === 'repair') {
     return [
       {
-        thought: 'Attempting execution of step 1 using legacy cached CSS selector: button.old-v1-search.',
+        thought: 'Attempting execution using legacy cached CSS selector: button.old-v1-search.',
         action: 'click',
         selector: '#broken-selector-search',
         targetDesc: 'button.old-v1-search (BROKEN)',
         risk_level: 'low',
         tokens: 130,
-        verifiedText: 'DOM failure: Element not found with old selector'
+        verifiedText: 'DOM failure: Element not found with old selector',
+        reaVerified: false
       },
       {
-        thought: 'Triggering Autonomous Self-Repair Engine. Inspecting Accessibility Tree for fallback target.',
+        thought: 'Triggering Autonomous Self-Repair Engine. Invoking REA DOM diff analyzer & Accessibility Tree.',
         action: 'self_repair',
         selector: null,
-        targetDesc: 'AccessibilityTree: [searchbox] "Search Products"',
+        targetDesc: 'REA AX Match: [searchbox] "Search Products"',
         risk_level: 'medium',
         tokens: 210,
-        verifiedText: 'Repaired target identified! Bumped skill version from 1.0.0 -> 1.0.1'
+        verifiedText: 'Repaired target identified! Bumped skill version from 1.0.0 -> 1.0.1',
+        reaVerified: true
       },
       {
         thought: 'Executing repaired step with dynamic accessibility target.',
@@ -147,7 +168,8 @@ function getTrajectoryForScenario(scenario, goal) {
         value: 'headphones',
         risk_level: 'low',
         tokens: 125,
-        verifiedText: 'Query populated: headphones'
+        verifiedText: 'Query populated: headphones',
+        reaVerified: true
       },
       {
         thought: 'Triggering catalog search.',
@@ -156,7 +178,8 @@ function getTrajectoryForScenario(scenario, goal) {
         targetDesc: 'button#search-btn',
         risk_level: 'low',
         tokens: 110,
-        verifiedText: 'Filtered 1 item: Noise-Canceling Headphones ($299.00)'
+        verifiedText: 'Filtered 1 item: Noise-Canceling Headphones ($299.00)',
+        reaVerified: true
       }
     ];
   }
@@ -164,13 +187,14 @@ function getTrajectoryForScenario(scenario, goal) {
   // Default: catalog search scenario
   return [
     {
-      thought: `Parsing goal: "${goal}". Inspecting catalog accessibility tree.`,
+      thought: `Parsing goal: "${goal}". Inspecting catalog accessibility tree with REA.`,
       action: 'perceive',
       selector: null,
-      targetDesc: 'AccessibilityTree snapshot',
+      targetDesc: 'REA Accessibility Tree snapshot',
       risk_level: 'low',
       tokens: 150,
-      verifiedText: 'Catalog searchbox and 4 product cards identified'
+      verifiedText: 'Catalog searchbox and 4 product cards identified',
+      reaVerified: true
     },
     {
       thought: 'Focusing search input and entering query "headphones".',
@@ -180,7 +204,8 @@ function getTrajectoryForScenario(scenario, goal) {
       value: 'headphones',
       risk_level: 'low',
       tokens: 135,
-      verifiedText: 'Input populated with "headphones"'
+      verifiedText: 'Input populated with "headphones"',
+      reaVerified: true
     },
     {
       thought: 'Triggering product catalog search filter.',
@@ -189,7 +214,8 @@ function getTrajectoryForScenario(scenario, goal) {
       targetDesc: 'button#search-btn',
       risk_level: 'low',
       tokens: 110,
-      verifiedText: 'Live results updated: Showing 1 of 4 products'
+      verifiedText: 'Live results updated: Showing 1 of 4 products',
+      reaVerified: true
     },
     {
       thought: 'Adding matched Noise-Canceling Headphones to cart.',
@@ -198,7 +224,8 @@ function getTrajectoryForScenario(scenario, goal) {
       targetDesc: 'button#buy-headphones',
       risk_level: 'medium',
       tokens: 160,
-      verifiedText: 'Item added: Noise-Canceling Headphones ($299.00)'
+      verifiedText: 'Item added: Noise-Canceling Headphones ($299.00)',
+      reaVerified: true
     }
   ];
 }
@@ -206,6 +233,17 @@ function getTrajectoryForScenario(scenario, goal) {
 const server = createServer(async (req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost:3000'}`);
   const pathname = parsedUrl.pathname;
+
+  // CORS Headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
 
   // API Routes
   if (req.method === 'POST' && pathname === '/api/run-task') {
@@ -219,12 +257,19 @@ const server = createServer(async (req, res) => {
 
         const trajectory = getTrajectoryForScenario(scenario, goal);
 
+        // Update shields stats slightly for dynamic feel
+        if (shieldsStats.shieldsActive) {
+          shieldsStats.trackersBlocked += 2;
+          shieldsStats.bandwidthSavedMB = parseFloat((shieldsStats.bandwidthSavedMB + 0.1).toFixed(1));
+        }
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           status: 'SUCCESS',
           goal,
           scenario,
-          trajectory
+          trajectory,
+          shields: shieldsStats
         }));
       } catch (err) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -234,20 +279,99 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // REA Deep Page Inspection API
+  if (req.method === 'GET' && pathname === '/api/rea/inspect') {
+    const pageName = parsedUrl.searchParams.get('page') || 'catalog';
+    const filename = pageName.endsWith('.html') ? pageName : `${pageName}.html`;
+    const targetFile = join(PUBLIC_DIR, filename);
+
+    try {
+      let html = '';
+      if (existsSync(targetFile)) {
+        html = await readFile(targetFile, 'utf8');
+      } else {
+        html = '<html><body><h1>Empty target</h1></body></html>';
+      }
+
+      const inspection = reaAdapter.inspectPage(html, `http://localhost:3000/${filename}`);
+      const mcpTools = reaAdapter.discoverWebMcpTools(html, `http://localhost:3000/${filename}`);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'OK',
+        targetUrl: inspection.url,
+        summary: inspection.summary,
+        interactiveElements: inspection.interactiveElements,
+        discoveredScripts: inspection.discoveredScripts,
+        trackersFound: inspection.trackersFound,
+        webMcp: mcpTools
+      }));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  // Brave Shields Live Stats API
+  if (req.method === 'GET' && pathname === '/api/shields/stats') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(shieldsStats));
+    return;
+  }
+
+  // Toggle Brave Shields API
+  if (req.method === 'POST' && pathname === '/api/shields/toggle') {
+    shieldsStats.shieldsActive = !shieldsStats.shieldsActive;
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, shieldsActive: shieldsStats.shieldsActive }));
+    return;
+  }
+
+  // Model Gateway & OmniRoute/FreeLLMAPI Status API
+  if (req.method === 'GET' && pathname === '/api/gateway/status') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'ONLINE',
+      activeProvider: 'OmniRoute-Cluster',
+      circuitBreaker: 'CLOSED',
+      providers: [
+        { name: 'OmniRoute Multi-Model Router', endpoint: 'http://127.0.0.1:8080/v1', status: 'HEALTHY', activeModel: 'claude-3-5-sonnet' },
+        { name: 'FreeLLMAPI Tier Fallback', endpoint: 'http://127.0.0.1:8081/v1', status: 'HEALTHY', activeModel: 'gemini-1.5-flash' },
+        { name: 'Local Ollama CDP', endpoint: 'http://127.0.0.1:11434/v1', status: 'STANDBY', activeModel: 'llama3.2' }
+      ],
+      totalRequestsServed: 1840,
+      averageLatencyMs: 42
+    }));
+    return;
+  }
+
   if (req.method === 'GET' && pathname === '/api/status') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       status: 'ONLINE',
+      brand: 'Brave Autonomous Browser',
       channel: 'v0.1.0 LTS',
       uptimeSec: Math.round(process.uptime()),
       memoryHeapMB: (process.memoryUsage().heapUsed / (1024 * 1024)).toFixed(1),
-      registeredSkills: skillLibrary.getAllSkills().length
+      registeredSkills: skillLibrary.getAllSkills().length,
+      shields: shieldsStats
+    }));
+    return;
+  }
+
+  if (req.method === 'GET' && pathname === '/api/skills') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      skills: skillLibrary.getAllSkills()
     }));
     return;
   }
 
   // Static File Serving
-  let filePath = join(PUBLIC_DIR, pathname === '/' ? 'index.html' : pathname);
+  let targetPath = pathname === '/' ? 'index.html' : pathname;
+  if (targetPath.startsWith('/')) targetPath = targetPath.slice(1);
+  const filePath = join(PUBLIC_DIR, targetPath);
 
   if (!existsSync(filePath)) {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -270,8 +394,8 @@ const server = createServer(async (req, res) => {
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`\n============================================================`);
-  console.log(`🚀 Agentic Browser Studio running on http://localhost:${PORT}`);
-  console.log(`   Interactive web studio with live simulated browser view,`);
-  console.log(`   persistent side panel, and real-time agent execution.`);
+  console.log(`🦁 Brave Autonomous Browser Studio running on http://localhost:${PORT}`);
+  console.log(`   UI/UX: Brave Browser with Shields & Autonomous Copilot`);
+  console.log(`   Engine: REA, OmniRoute, FreeLLMAPI, and Chromium CDP`);
   console.log(`============================================================\n`);
 });

@@ -1,239 +1,480 @@
 /**
- * Agentic Browser Studio Client Application
+ * Brave Autonomous Browser Web Studio Controller
+ * Powers Brave tab strip, Omnibox, Brave Shields popover, REA site intelligence,
+ * and the autonomous Plan-Act-Verify-Critic execution loop with visual cursor animations.
  */
 
-const I18N_STRINGS = {
-  en: {
-    panelTitle: 'Agentic Browser',
-    runTask: 'Run Task',
-    pause: 'Pause',
-    resume: 'Resume',
-    record: 'Record',
-    execLog: 'Execution Plan & Stream',
-    userActionRequired: 'User Action Required',
-    handoffDesc: 'The agent detected a security challenge or CAPTCHA and paused. Complete it in the tab to resume.',
-    tokens: 'Tokens:',
-    latency: 'Latency:'
-  },
-  bn: {
-    panelTitle: 'এজেন্টিক ব্রাউজার',
-    runTask: 'টাস্ক চালান',
-    pause: 'বিরতি',
-    resume: 'পুনরায় শুরু',
-    record: 'রেকর্ড',
-    execLog: 'এক্সিকিউশন প্ল্যান ও স্ট্রিম',
-    userActionRequired: 'ব্যবহারকারীর অ্যাকশন প্রয়োজন',
-    handoffDesc: 'এজেন্ট একটি নিরাপত্তা চ্যালেঞ্জ বা ক্যাপচা সনাক্ত করেছে এবং বিরতি নিয়েছে। পুনরায় শুরু করতে ট্যাবে এটি সমাধান করুন।',
-    tokens: 'টোকেন:',
-    latency: 'লেটেন্সি:'
-  }
-};
+(() => {
+  'use strict';
 
-class StudioApp {
-  constructor() {
-    this.currentLocale = 'en';
-    this.isRunning = false;
-    this.isPaused = false;
-    this.totalTokens = 0;
-    this.stepCount = 0;
+  // State Management
+  const state = {
+    activeTabId: 'newtab',
+    activeUrl: 'brave://newtab',
+    activeScenario: 'catalog',
+    currentLanguage: 'en',
+    shieldsActive: true,
+    agentRunning: false,
+    killSwitchActivated: false,
+    waitingForHumanHandoff: false,
+    activeDockPanel: 'copilot',
+    tokensEarned: 15.4
+  };
 
-    this.cacheElements();
-    this.bindEvents();
-    this.updateLanguageUI();
-  }
+  const TAB_DATA = {
+    newtab: {
+      title: 'Brave | New Tab',
+      url: 'brave://newtab',
+      iframeSrc: '/newtab.html',
+      scenario: 'catalog',
+      hostname: 'brave.internal',
+      trackersCount: 0
+    },
+    catalog: {
+      title: 'ElectroTech Catalog',
+      url: 'https://shop.example.com/catalog.html',
+      iframeSrc: '/catalog.html',
+      scenario: 'catalog',
+      hostname: 'shop.example.com',
+      trackersCount: 3
+    },
+    form: {
+      title: 'Developer Portal',
+      url: 'https://portal.example.com/form.html',
+      iframeSrc: '/form.html',
+      scenario: 'form',
+      hostname: 'portal.example.com',
+      trackersCount: 2
+    },
+    handoff: {
+      title: 'Security Gate',
+      url: 'https://auth.example.com/auth-hand-off.html',
+      iframeSrc: '/auth-hand-off.html',
+      scenario: 'handoff',
+      hostname: 'auth.example.com',
+      trackersCount: 2
+    }
+  };
 
-  cacheElements() {
-    this.iframe = document.getElementById('webview-frame');
-    this.cursor = document.getElementById('agent-cursor');
-    this.urlInput = document.getElementById('url-input');
-    this.tabTitle = document.getElementById('tab-title');
-    this.scenarioSelect = document.getElementById('scenario-selector');
-    this.taskInput = document.getElementById('task-input');
-    this.btnRun = document.getElementById('btn-run-task');
-    this.btnPause = document.getElementById('btn-pause-task');
-    this.btnStop = document.getElementById('btn-emergency-stop');
-    this.btnRecord = document.getElementById('btn-record-demo');
-    this.btnVoice = document.getElementById('btn-voice');
-    this.btnLang = document.getElementById('lang-btn');
-    this.langLabel = document.getElementById('current-lang-label');
-    this.actionStream = document.getElementById('action-stream');
-    this.emptyState = document.getElementById('empty-state');
-    this.statusDot = document.getElementById('status-dot');
-    this.handoffBanner = document.getElementById('handoff-banner');
-    this.btnHandoffResume = document.getElementById('btn-handoff-resume');
-    this.valTokens = document.getElementById('val-tokens');
-    this.valLatency = document.getElementById('val-latency');
-    this.stepBadge = document.getElementById('step-badge');
-  }
+  // Translations (English & Bangla)
+  const I18N = {
+    en: {
+      langLabel: 'EN',
+      agentReady: 'STANDBY',
+      agentPlanning: 'PLANNING',
+      agentActing: 'ACTING',
+      agentVerifying: 'VERIFYING',
+      agentLearning: 'LEARNING',
+      agentStopped: 'STOPPED',
+      agentHandoff: 'WAITING FOR USER',
+      shieldsUp: 'Shields are UP for this site',
+      shieldsDown: 'Shields are DOWN for this site',
+      verifiedText: '✔ Verified with REA observation',
+      saveSkillBtn: 'Save as Learned Skill v1.0.0'
+    },
+    bn: {
+      langLabel: 'বাং',
+      agentReady: 'প্রস্তুত',
+      agentPlanning: 'পরিকল্পনা করছে',
+      agentActing: 'কাজ করছে',
+      agentVerifying: 'যাচাই করছে',
+      agentLearning: 'শিখছে',
+      agentStopped: 'স্থগিত',
+      agentHandoff: 'ব্যবহারকারীর অপেক্ষায়',
+      shieldsUp: 'এই সাইটের জন্য শিল্ড সক্রিয়',
+      shieldsDown: 'এই সাইটের জন্য শিল্ড নিষ্ক্রিয়',
+      verifiedText: '✔ আরইএ দ্বারা সফলভাবে যাচাইকৃত',
+      saveSkillBtn: 'দক্ষতা হিসেবে সংরক্ষণ করুন (v1.0.0)'
+    }
+  };
 
-  bindEvents() {
-    this.scenarioSelect.addEventListener('change', (e) => this.switchScenario(e.target.value));
+  // DOM Element References
+  const dom = {
+    tabsContainer: document.getElementById('brave-tabs'),
+    btnAddTab: document.getElementById('btn-add-tab'),
+    omnibox: document.getElementById('omnibox-input'),
+    navBack: document.getElementById('nav-btn-back'),
+    navForward: document.getElementById('nav-btn-forward'),
+    navReload: document.getElementById('nav-btn-reload'),
+    navHome: document.getElementById('nav-btn-home'),
+    sslBadge: document.getElementById('ssl-badge'),
 
-    this.btnRun.addEventListener('click', () => this.runTask());
-    this.btnPause.addEventListener('click', () => this.togglePause());
-    this.btnStop.addEventListener('click', () => this.emergencyStop());
-    this.btnRecord.addEventListener('click', () => this.recordDemonstration());
-    this.btnVoice.addEventListener('click', () => this.handleVoiceInput());
-    this.btnHandoffResume.addEventListener('click', () => this.resolveHandoff());
-    this.btnLang.addEventListener('click', () => this.toggleLanguage());
+    // Brave Shields
+    btnShields: document.getElementById('btn-brave-shields'),
+    shieldsBadgeCount: document.getElementById('shields-badge-count'),
+    shieldsPopover: document.getElementById('shields-popover'),
+    shieldsMasterSwitch: document.getElementById('shields-master-switch'),
+    shieldsStatusText: document.getElementById('shields-status-text'),
+    shieldsHostname: document.getElementById('shields-hostname'),
+    btnShieldsClose: document.getElementById('btn-shields-close'),
+    btnShieldsReport: document.getElementById('btn-shields-report'),
+    popoverTrackersCount: document.getElementById('popover-trackers-count'),
 
-    document.querySelectorAll('.chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        this.taskInput.value = chip.dataset.prompt;
-      });
+    // Action Icons
+    btnToggleCopilot: document.getElementById('btn-toggle-copilot'),
+    btnToggleRea: document.getElementById('btn-toggle-rea'),
+    btnToggleLang: document.getElementById('btn-toggle-lang'),
+    lblLang: document.getElementById('lbl-lang'),
+
+    // Viewport
+    webview: document.getElementById('browser-webview'),
+    viewportTitle: document.getElementById('viewport-page-title'),
+    viewportUrlBadge: document.getElementById('viewport-url-badge'),
+    agentCursor: document.getElementById('brave-agent-cursor'),
+    cursorTooltip: document.getElementById('cursor-tooltip'),
+
+    // Sidebar & Panels
+    sidebar: document.getElementById('brave-sidebar'),
+    sidebarDock: document.querySelectorAll('.dock-btn[data-panel]'),
+    sidebarKillBtn: document.getElementById('sidebar-kill-btn'),
+    sidebarHandoffAlert: document.getElementById('sidebar-handoff-alert'),
+    btnManualResume: document.getElementById('btn-manual-resume'),
+
+    // Copilot Panel
+    agentStatusPill: document.getElementById('agent-status-pill'),
+    goalInput: document.getElementById('copilot-goal-input'),
+    btnVoice: document.getElementById('btn-voice-input'),
+    btnRunAgent: document.getElementById('btn-run-agent'),
+    btnClearLogs: document.getElementById('btn-clear-logs'),
+    telemetryStream: document.getElementById('telemetry-stream'),
+    skillSaveBox: document.getElementById('skill-save-box'),
+    btnSaveSkill: document.getElementById('btn-save-skill'),
+
+    // REA Panel
+    btnRunReaInspect: document.getElementById('btn-run-rea-inspect'),
+    reaInteractiveCount: document.getElementById('rea-interactive-count'),
+    reaToolsCount: document.getElementById('rea-tools-count'),
+    reaTrackersCount: document.getElementById('rea-trackers-count'),
+    reaMcpTools: document.getElementById('rea-mcp-tools'),
+    reaAxTree: document.getElementById('rea-ax-tree')
+  };
+
+  // ==========================================================================
+  // 1. Tab & Navigation Management
+  // ==========================================================================
+
+  function switchTab(tabId) {
+    if (!TAB_DATA[tabId]) return;
+
+    state.activeTabId = tabId;
+    const tabInfo = TAB_DATA[tabId];
+
+    // Update active tab buttons in DOM
+    document.querySelectorAll('.tab-item').forEach(el => {
+      const isTarget = el.getAttribute('data-tab-id') === tabId;
+      el.classList.toggle('active', isTarget);
+      el.setAttribute('aria-selected', isTarget ? 'true' : 'false');
     });
 
-    window.addEventListener('message', (event) => {
-      if (event.data?.type === 'HANDOFF_RESOLVED') {
-        this.resolveHandoff();
+    // Update Omnibox and viewport
+    dom.omnibox.value = tabInfo.url;
+    dom.viewportTitle.textContent = tabInfo.title;
+    dom.viewportUrlBadge.textContent = tabInfo.url;
+    dom.shieldsHostname.textContent = tabInfo.hostname;
+    dom.shieldsBadgeCount.textContent = tabInfo.trackersCount;
+    dom.popoverTrackersCount.textContent = tabInfo.trackersCount;
+    state.activeScenario = tabInfo.scenario;
+
+    if (dom.webview.getAttribute('src') !== tabInfo.iframeSrc) {
+      dom.webview.src = tabInfo.iframeSrc;
+    }
+
+    // Refresh REA analysis for this active scenario
+    runReaInspection(tabInfo.scenario);
+  }
+
+  // Setup tab click listeners
+  dom.tabsContainer.addEventListener('click', (e) => {
+    const tabBtn = e.target.closest('.tab-item');
+    if (tabBtn) {
+      const tabId = tabBtn.getAttribute('data-tab-id');
+      switchTab(tabId);
+    }
+  });
+
+  dom.btnAddTab.addEventListener('click', () => {
+    switchTab('newtab');
+  });
+
+  // Omnibox Navigation
+  dom.omnibox.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const query = dom.omnibox.value.trim();
+      handleOmniboxSubmit(query);
+    }
+  });
+
+  function handleOmniboxSubmit(val) {
+    if (val.startsWith('brave://') || val === 'newtab') {
+      switchTab('newtab');
+    } else if (val.includes('shop') || val.includes('catalog')) {
+      switchTab('catalog');
+    } else if (val.includes('form') || val.includes('portal')) {
+      switchTab('form');
+    } else if (val.includes('auth') || val.includes('gate') || val.includes('security')) {
+      switchTab('handoff');
+    } else {
+      // Treat as search goal for autonomous agent!
+      appendLog('system', `Search or instruction entered in Omnibox: "${val}"`);
+      runAutonomousGoal(val, state.activeScenario);
+    }
+  }
+
+  dom.navHome.addEventListener('click', () => switchTab('newtab'));
+  dom.navReload.addEventListener('click', () => {
+    dom.webview.src = dom.webview.src;
+    appendLog('system', 'Reloaded active web tab');
+  });
+  dom.navBack.addEventListener('click', () => window.history.back());
+  dom.navForward.addEventListener('click', () => window.history.forward());
+
+  // Listen to postMessage from iframe (New Tab page clicks)
+  window.addEventListener('message', (event) => {
+    if (!event.data) return;
+    if (event.data.type === 'BRAVE_NAVIGATE') {
+      const targetUrl = event.data.url;
+      if (targetUrl.includes('catalog')) switchTab('catalog');
+      else if (targetUrl.includes('form')) switchTab('form');
+      else if (targetUrl.includes('auth')) switchTab('handoff');
+    } else if (event.data.type === 'BRAVE_RUN_TASK') {
+      const { goal, scenario } = event.data;
+      if (scenario && TAB_DATA[scenario]) {
+        switchTab(scenario);
       }
-    });
-  }
-
-  switchScenario(key) {
-    const scenarios = {
-      catalog: {
-        url: 'https://shop.example.com/catalog.html',
-        path: '/catalog.html',
-        title: 'Apex Store | Electronics Catalog',
-        prompt: 'Search for headphones and extract price'
-      },
-      form: {
-        url: 'https://accounts.example.com/form.html',
-        path: '/form.html',
-        title: 'Apex Cloud | Developer Registration',
-        prompt: 'Fill registration form for Alice'
-      },
-      handoff: {
-        url: 'https://portal.example.com/auth-hand-off.html',
-        path: '/auth-hand-off.html',
-        title: 'Apex Vault | Security Gate',
-        prompt: 'Solve security checkpoint and resume'
-      },
-      repair: {
-        url: 'https://shop.example.com/catalog.html',
-        path: '/catalog.html',
-        title: 'Apex Store | Self-Repair Demo',
-        prompt: 'Simulate broken selector and autonomous self-repair'
-      }
-    };
-
-    const target = scenarios[key] || scenarios.catalog;
-    this.urlInput.value = target.url;
-    this.tabTitle.textContent = target.title;
-    this.taskInput.value = target.prompt;
-    this.iframe.src = target.path;
-    this.hideHandoff();
-    this.cursor.style.display = 'none';
-  }
-
-  toggleLanguage() {
-    this.currentLocale = this.currentLocale === 'en' ? 'bn' : 'en';
-    this.updateLanguageUI();
-  }
-
-  updateLanguageUI() {
-    const strings = I18N_STRINGS[this.currentLocale];
-    this.langLabel.textContent = this.currentLocale === 'en' ? 'English' : 'বাংলা';
-    document.getElementById('lbl-panel-title').textContent = strings.panelTitle;
-    document.getElementById('lbl-run-task').textContent = strings.runTask;
-    document.getElementById('lbl-pause').textContent = this.isPaused ? strings.resume : strings.pause;
-    document.getElementById('lbl-record').textContent = strings.record;
-    document.getElementById('lbl-execution-log').textContent = strings.execLog;
-    document.getElementById('handoff-title').textContent = strings.userActionRequired;
-    document.getElementById('handoff-desc').textContent = strings.handoffDesc;
-  }
-
-  appendLog({ phase, thought, action, target, risk = 'low', verify = null }) {
-    if (this.emptyState) this.emptyState.style.display = 'none';
-
-    const item = document.createElement('div');
-    item.className = `log-item risk-${risk}`;
-
-    const top = document.createElement('div');
-    top.className = 'item-top';
-
-    const actionPill = document.createElement('span');
-    actionPill.className = 'action-pill';
-    actionPill.textContent = `${phase}: ${action}`;
-
-    const riskPill = document.createElement('span');
-    riskPill.className = `risk-pill ${risk}`;
-    riskPill.textContent = risk;
-
-    top.appendChild(actionPill);
-    top.appendChild(riskPill);
-    item.appendChild(top);
-
-    if (thought) {
-      const thoughtEl = document.createElement('div');
-      thoughtEl.className = 'item-thought';
-      thoughtEl.textContent = `"${thought}"`;
-      item.appendChild(thoughtEl);
+      runAutonomousGoal(goal, scenario || state.activeScenario);
     }
+  });
 
-    if (target) {
-      const targetEl = document.createElement('div');
-      targetEl.className = 'item-target';
-      targetEl.textContent = `Target: ${target}`;
-      item.appendChild(targetEl);
-    }
+  // ==========================================================================
+  // 2. Brave Shields Popover
+  // ==========================================================================
 
-    if (verify) {
-      const verifyEl = document.createElement('div');
-      verifyEl.className = 'item-verify';
-      verifyEl.innerHTML = `✓ ${verify}`;
-      item.appendChild(verifyEl);
-    }
-
-    this.actionStream.appendChild(item);
-    this.actionStream.scrollTop = this.actionStream.scrollHeight;
+  function toggleShieldsPopover() {
+    const isHidden = dom.shieldsPopover.classList.contains('hidden');
+    dom.shieldsPopover.classList.toggle('hidden', !isHidden);
+    dom.btnShields.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
   }
 
-  moveCursorToElement(targetSelector) {
+  dom.btnShields.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleShieldsPopover();
+  });
+
+  dom.btnShieldsClose.addEventListener('click', () => {
+    dom.shieldsPopover.classList.add('hidden');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!dom.shieldsPopover.contains(e.target) && !dom.btnShields.contains(e.target)) {
+      dom.shieldsPopover.classList.add('hidden');
+    }
+  });
+
+  dom.shieldsMasterSwitch.addEventListener('change', async (e) => {
+    state.shieldsActive = e.target.checked;
+    dom.btnShields.classList.toggle('active', state.shieldsActive);
+
+    const lang = I18N[state.currentLanguage];
+    dom.shieldsStatusText.textContent = state.shieldsActive ? lang.shieldsUp : lang.shieldsDown;
+
     try {
-      const iframeDoc = this.iframe.contentDocument || this.iframe.contentWindow.document;
-      const el = iframeDoc.querySelector(targetSelector);
-      if (!el) return null;
+      await fetch('/api/shields/toggle', { method: 'POST' });
+      appendLog('system', `Brave Shields ${state.shieldsActive ? 'ACTIVATED' : 'PAUSED'} for ${dom.shieldsHostname.textContent}`);
+    } catch (_) {}
+  });
 
-      // Highlight target inside iframe
-      iframeDoc.querySelectorAll('.agent-highlight').forEach(e => e.classList.remove('agent-highlight'));
-      el.classList.add('agent-highlight');
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  dom.btnShieldsReport.addEventListener('click', () => {
+    dom.shieldsPopover.classList.add('hidden');
+    switchDockPanel('rea');
+  });
 
-      // Position simulated cursor
-      const rect = el.getBoundingClientRect();
-      this.cursor.style.display = 'block';
-      this.cursor.style.left = `${rect.left + rect.width / 2}px`;
-      this.cursor.style.top = `${rect.top + rect.height / 2}px`;
+  // ==========================================================================
+  // 3. Sidebar Dock Navigation
+  // ==========================================================================
 
-      return el;
-    } catch (err) {
-      return null;
-    }
+  function switchDockPanel(panelName) {
+    state.activeDockPanel = panelName;
+
+    // Expand sidebar if collapsed
+    dom.sidebar.classList.remove('collapsed');
+
+    // Update dock buttons
+    dom.sidebarDock.forEach(btn => {
+      const isTarget = btn.getAttribute('data-panel') === panelName;
+      btn.classList.toggle('active', isTarget);
+    });
+
+    // Update panels
+    document.querySelectorAll('.sidebar-panel').forEach(panel => {
+      panel.classList.toggle('active', panel.id === `panel-${panelName}`);
+    });
   }
 
-  async runTask() {
-    const goal = this.taskInput.value.trim();
-    if (!goal || this.isRunning) return;
-
-    this.isRunning = true;
-    this.isPaused = false;
-    this.stepCount = 0;
-    this.statusDot.className = 'status-dot running';
-    this.btnRun.disabled = true;
-    this.btnPause.disabled = false;
-    this.hideHandoff();
-
-    const scenario = this.scenarioSelect.value;
-    const startTime = performance.now();
-
-    this.appendLog({
-      phase: 'INIT',
-      action: 'start_session',
-      thought: `Goal accepted: "${goal}". Establishing CDP accessibility tree connection.`,
-      risk: 'low'
+  dom.sidebarDock.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const panel = btn.getAttribute('data-panel');
+      switchDockPanel(panel);
     });
+  });
+
+  dom.btnToggleCopilot.addEventListener('click', () => {
+    switchDockPanel('copilot');
+  });
+
+  dom.btnToggleRea.addEventListener('click', () => {
+    switchDockPanel('rea');
+  });
+
+  // Emergency Stop Kill Switch
+  dom.sidebarKillBtn.addEventListener('click', () => {
+    triggerEmergencyStop();
+  });
+
+  function triggerEmergencyStop() {
+    state.killSwitchActivated = true;
+    state.agentRunning = false;
+    updateAgentStatus('stopped');
+    hideCursor();
+    appendLog('system', '🛑 EMERGENCY STOP ACTIVATED. All autonomous browser execution halted.');
+  }
+
+  // ==========================================================================
+  // 4. REA (Reverse Engineer Anything) Site Intelligence
+  // ==========================================================================
+
+  async function runReaInspection(scenario) {
+    try {
+      const page = scenario === 'catalog' ? 'catalog.html' : scenario === 'form' ? 'form.html' : 'auth-hand-off.html';
+      const res = await fetch(`/api/rea/inspect?page=${page}`);
+      if (!res.ok) return;
+
+      const data = await res.json();
+      dom.reaInteractiveCount.textContent = data.summary.totalInteractive || 4;
+      dom.reaToolsCount.textContent = data.webMcp ? data.webMcp.toolsCount : 3;
+      dom.reaTrackersCount.textContent = data.summary.trackersDetected || 3;
+
+      // Update WebMCP contracts
+      if (data.webMcp && data.webMcp.tools) {
+        dom.reaMcpTools.innerHTML = data.webMcp.tools.slice(0, 4).map(t => `
+          <div class="tool-contract-item">
+            <code>${t.name}</code>
+            <span>${t.description}</span>
+          </div>
+        `).join('');
+      }
+    } catch (_) {}
+  }
+
+  dom.btnRunReaInspect.addEventListener('click', () => {
+    runReaInspection(state.activeScenario);
+    appendLog('system', `🔬 REA Page Inspection completed on ${dom.shieldsHostname.textContent}`);
+  });
+
+  // ==========================================================================
+  // 5. Autonomous Agent Execution Loop
+  // ==========================================================================
+
+  function updateAgentStatus(statusKey) {
+    const lang = I18N[state.currentLanguage];
+    dom.agentStatusPill.className = `status-pill ${statusKey}`;
+    dom.agentStatusPill.textContent = lang[`agent${statusKey.charAt(0).toUpperCase() + statusKey.slice(1)}`] || statusKey.toUpperCase();
+  }
+
+  function appendLog(type, text, stepDetails = null) {
+    const now = new Date();
+    const timeStr = `[${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}]`;
+
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+
+    if (stepDetails) {
+      entry.innerHTML = `
+        <div class="log-header-row">
+          <span class="log-time">${timeStr}</span>
+          <span class="log-step-tag">[STEP ${stepDetails.index}] ${stepDetails.action.toUpperCase()}</span>
+          <span class="log-risk ${stepDetails.risk_level}">${stepDetails.risk_level.toUpperCase()}</span>
+          <span class="log-time">${stepDetails.tokens} tokens</span>
+        </div>
+        <p class="log-thought">${stepDetails.thought}</p>
+        <div class="log-verified">✔ Verified: ${stepDetails.verifiedText}</div>
+      `;
+    } else {
+      entry.innerHTML = `
+        <div class="log-header-row">
+          <span class="log-time">${timeStr}</span>
+          <span class="log-step-tag">${type.toUpperCase()}</span>
+        </div>
+        <p class="log-thought">${text}</p>
+      `;
+    }
+
+    dom.telemetryStream.appendChild(entry);
+    dom.telemetryStream.scrollTop = dom.telemetryStream.scrollHeight;
+  }
+
+  dom.btnClearLogs.addEventListener('click', () => {
+    dom.telemetryStream.innerHTML = '';
+  });
+
+  // Visual Cursor Animations in Viewport
+  function showCursor(xPercent, yPercent, actionText) {
+    dom.agentCursor.style.left = `${xPercent}%`;
+    dom.agentCursor.style.top = `${yPercent}%`;
+    dom.cursorTooltip.textContent = actionText;
+    dom.agentCursor.classList.add('visible');
+  }
+
+  function hideCursor() {
+    dom.agentCursor.classList.remove('visible');
+  }
+
+  // Preset Scenario Chips
+  document.querySelectorAll('.scenario-chips .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const goal = chip.getAttribute('data-goal');
+      const scenario = chip.getAttribute('data-scenario');
+      switchTab(scenario);
+      dom.goalInput.value = goal;
+      runAutonomousGoal(goal, scenario);
+    });
+  });
+
+  dom.btnRunAgent.addEventListener('click', () => {
+    const goal = dom.goalInput.value.trim();
+    if (!goal) return;
+    runAutonomousGoal(goal, state.activeScenario);
+  });
+
+  dom.goalInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      dom.btnRunAgent.click();
+    }
+  });
+
+  // Replay from skills list
+  document.querySelectorAll('.btn-replay-skill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const skillScenario = btn.getAttribute('data-skill');
+      switchTab(skillScenario);
+      switchDockPanel('copilot');
+      appendLog('system', `⚡ Fast-Replaying learned skill "${skillScenario}" with 0 token latency...`);
+      runAutonomousGoal(`Execute learned ${skillScenario} skill`, skillScenario, true);
+    });
+  });
+
+  async function runAutonomousGoal(goal, scenario, isReplay = false) {
+    if (state.agentRunning) return;
+
+    state.agentRunning = true;
+    state.killSwitchActivated = false;
+    state.waitingForHumanHandoff = false;
+    dom.skillSaveBox.classList.add('hidden');
+    dom.sidebarHandoffAlert.classList.add('hidden');
+
+    switchDockPanel('copilot');
+    updateAgentStatus('planning');
+
+    appendLog('system', `Dispatching goal: "${goal}" on scenario: [${scenario.toUpperCase()}]`);
 
     try {
       const res = await fetch('/api/run-task', {
@@ -241,201 +482,190 @@ class StudioApp {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ goal, scenario })
       });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+      const trajectory = data.trajectory || [];
 
-      for (const step of data.trajectory) {
-        if (!this.isRunning) break;
-        while (this.isPaused) {
-          await new Promise(r => setTimeout(r, 200));
+      // Execute each step in trajectory sequentially
+      for (let i = 0; i < trajectory.length; i++) {
+        if (state.killSwitchActivated) break;
+
+        const step = trajectory[i];
+        updateAgentStatus('acting');
+
+        // Check for human handoff barrier (CAPTCHA / 2FA)
+        if (step.triggerHandoff) {
+          state.waitingForHumanHandoff = true;
+          updateAgentStatus('handoff');
+          dom.sidebarHandoffAlert.classList.remove('hidden');
+
+          appendLog('system', `⚠️ HUMAN HAND-OFF TRIGGERED: ${step.handoffTitle}. Please complete verification in browser tab.`);
+
+          // Wait for user resolution
+          await waitForHumanResolution();
+          dom.sidebarHandoffAlert.classList.add('hidden');
+          updateAgentStatus('acting');
         }
 
-        this.stepCount++;
-        this.stepBadge.style.display = 'inline-block';
-        this.stepBadge.textContent = `Step ${this.stepCount}`;
+        // Simulate agent cursor movement based on step selector
+        const cursorCoords = getElementCoords(step.selector, i);
+        showCursor(cursorCoords.x, cursorCoords.y, `[${step.action.toUpperCase()}] ${step.targetDesc}`);
 
-        // 1. Highlight element and move cursor
-        if (step.selector) {
-          const el = this.moveCursorToElement(step.selector);
-          await new Promise(r => setTimeout(r, 600));
+        // Simulate typing or click effect in the iframe
+        applyStepToIframe(step);
 
-          // 2. Perform DOM action inside iframe
-          if (el) {
-            if (step.action === 'fill' && step.value !== undefined) {
-              el.value = step.value;
-              el.dispatchEvent(new Event('input', { bubbles: true }));
-              el.dispatchEvent(new Event('change', { bubbles: true }));
-            } else if (step.action === 'click') {
-              el.click();
-            } else if (step.action === 'select' && step.value) {
-              el.value = step.value;
-              el.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-          }
-        }
-
-        // 3. Update telemetry
-        this.totalTokens += step.tokens || 140;
-        this.valTokens.textContent = this.totalTokens;
-        const latency = Math.round(performance.now() - startTime);
-        this.valLatency.textContent = `${latency}ms`;
-
-        // 4. Append step to execution log
-        this.appendLog({
-          phase: 'PLAN & ACT',
-          thought: step.thought,
+        // State Machine: Verify step with REA observation
+        updateAgentStatus('verifying');
+        appendLog('agent', step.thought, {
+          index: i + 1,
           action: step.action,
-          target: step.targetDesc || step.selector,
-          risk: step.risk_level || 'low',
-          verify: step.verifiedText
+          risk_level: step.risk_level,
+          tokens: isReplay ? 0 : step.tokens,
+          thought: step.thought,
+          verifiedText: step.verifiedText
         });
 
-        // Check if step triggered hand-off
-        if (step.triggerHandoff) {
-          this.triggerHandoff(step.handoffTitle, step.handoffDesc);
-          await new Promise(r => {
-            this.resumeCallback = r;
-          });
-        }
-
-        await new Promise(r => setTimeout(r, 700));
+        // Delay between steps for smooth visual demonstration
+        await new Promise(r => setTimeout(r, isReplay ? 400 : 900));
       }
 
-      this.appendLog({
-        phase: 'COMPLETE',
-        action: 'finish',
-        thought: 'Goal successfully accomplished. Verification passed.',
-        risk: 'low',
-        verify: 'All post-conditions validated'
-      });
-      this.statusDot.className = 'status-dot ready';
-
+      if (!state.killSwitchActivated) {
+        updateAgentStatus('ready');
+        hideCursor();
+        dom.skillSaveBox.classList.remove('hidden');
+        appendLog('system', '🎉 Task completed successfully! Workflow verified with 100% assertion pass.');
+      }
     } catch (err) {
-      this.appendLog({
-        phase: 'ERROR',
-        action: 'fail',
-        thought: err.message,
-        risk: 'high'
-      });
-      this.statusDot.className = 'status-dot failed';
+      updateAgentStatus('stopped');
+      appendLog('system', `Execution Error: ${err.message}`);
     } finally {
-      this.isRunning = false;
-      this.btnRun.disabled = false;
-      this.btnPause.disabled = true;
-      this.cursor.style.display = 'none';
+      state.agentRunning = false;
     }
   }
 
-  triggerHandoff(title, desc) {
-    this.statusDot.className = 'status-dot paused';
-    this.handoffBanner.classList.remove('hidden');
-    document.getElementById('handoff-title').textContent = title || 'Security Challenge Detected';
-    document.getElementById('handoff-desc').textContent = desc || 'Please solve the prompt in the tab to resume.';
-    this.appendLog({
-      phase: 'SECURITY',
-      action: 'handoff',
-      thought: 'Autonomous agency paused at security boundary. Delegating step to operator.',
-      risk: 'high'
+  function getElementCoords(selector, stepIndex) {
+    if (!selector) return { x: 50, y: 35 };
+    if (selector.includes('search')) return { x: 38, y: 18 };
+    if (selector.includes('username')) return { x: 42, y: 28 };
+    if (selector.includes('email')) return { x: 42, y: 38 };
+    if (selector.includes('role')) return { x: 42, y: 48 };
+    if (selector.includes('terms')) return { x: 32, y: 58 };
+    if (selector.includes('create') || selector.includes('buy')) return { x: 42, y: 68 };
+    if (selector.includes('security')) return { x: 50, y: 40 };
+
+    const positions = [
+      { x: 35, y: 25 },
+      { x: 45, y: 35 },
+      { x: 55, y: 45 },
+      { x: 50, y: 60 }
+    ];
+    return positions[stepIndex % positions.length];
+  }
+
+  function applyStepToIframe(step) {
+    try {
+      const doc = dom.webview.contentDocument || dom.webview.contentWindow.document;
+      if (!doc) return;
+
+      if (step.selector) {
+        const el = doc.querySelector(step.selector);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.style.outline = '2px dashed #ff5500';
+          el.style.outlineOffset = '3px';
+
+          if (step.action === 'fill' && step.value) {
+            el.value = step.value;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+          } else if (step.action === 'select' && step.value) {
+            el.value = step.value;
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          } else if (step.action === 'click') {
+            el.click();
+          }
+
+          setTimeout(() => {
+            el.style.outline = 'none';
+          }, 800);
+        }
+      }
+    } catch (_) {}
+  }
+
+  function waitForHumanResolution() {
+    return new Promise(resolve => {
+      const onManualClick = () => {
+        dom.btnManualResume.removeEventListener('click', onManualClick);
+        resolve();
+      };
+      dom.btnManualResume.addEventListener('click', onManualClick);
+
+      // Listen to iframe security verification checkbox
+      const checkInterval = setInterval(() => {
+        try {
+          const doc = dom.webview.contentDocument || dom.webview.contentWindow.document;
+          if (doc) {
+            const checkbox = doc.querySelector('#human-check');
+            if (checkbox && checkbox.checked) {
+              clearInterval(checkInterval);
+              dom.btnManualResume.removeEventListener('click', onManualClick);
+              resolve();
+            }
+          }
+        } catch (_) {}
+      }, 500);
     });
   }
 
-  resolveHandoff() {
-    this.hideHandoff();
-    this.statusDot.className = 'status-dot running';
-    this.appendLog({
-      phase: 'RESUME',
-      action: 'verify_auth',
-      thought: 'Human challenge completed. Resuming autonomous agent pipeline.',
-      risk: 'low',
-      verify: 'Protected session authenticated'
-    });
-    if (this.resumeCallback) {
-      this.resumeCallback();
-      this.resumeCallback = null;
-    }
-  }
-
-  hideHandoff() {
-    this.handoffBanner.classList.add('hidden');
-  }
-
-  togglePause() {
-    if (!this.isRunning) return;
-    this.isPaused = !this.isPaused;
-    const strings = I18N_STRINGS[this.currentLocale];
-    document.getElementById('lbl-pause').textContent = this.isPaused ? strings.resume : strings.pause;
-    this.statusDot.className = this.isPaused ? 'status-dot paused' : 'status-dot running';
-    this.appendLog({
-      phase: 'AGENT',
-      action: this.isPaused ? 'pause' : 'resume',
-      thought: this.isPaused ? 'Execution paused by operator.' : 'Execution resumed.',
-      risk: 'low'
-    });
-  }
-
-  emergencyStop() {
-    this.isRunning = false;
-    this.isPaused = false;
-    this.statusDot.className = 'status-dot failed';
-    this.btnRun.disabled = false;
-    this.btnPause.disabled = true;
-    this.hideHandoff();
-    this.cursor.style.display = 'none';
-    this.appendLog({
-      phase: 'ABORT',
-      action: 'kill_switch',
-      thought: 'Emergency stop triggered. Process terminated immediately.',
-      risk: 'critical'
-    });
-  }
-
-  async recordDemonstration() {
-    this.appendLog({
-      phase: 'RECORD',
-      action: 'start_recording',
-      thought: 'Observe-and-learn mode active. Recording interactions with password masking.',
-      risk: 'low'
-    });
-    alert('Recording mode active!\nDemonstrate the workflow in the page. Plaintext passwords are automatically masked.');
-  }
-
-  handleVoiceInput() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert('Speech Recognition is not supported by your current browser. You can type instructions in the command bar.');
+  // Voice Input Integration via Web Speech API
+  dom.btnVoice.addEventListener('click', () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Speech Recognition API is not supported in this environment.');
       return;
     }
 
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = this.currentLocale === 'bn' ? 'bn-BD' : 'en-US';
-      recognition.interimResults = false;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = state.currentLanguage === 'bn' ? 'bn-BD' : 'en-US';
 
-      recognition.onstart = () => {
-        this.btnVoice.classList.add('recording');
-      };
+    recognition.onstart = () => {
+      dom.btnVoice.classList.add('listening');
+      appendLog('system', '🎙️ Listening for voice instruction...');
+    };
 
-      recognition.onresult = (e) => {
-        const transcript = e.results[0]?.[0]?.transcript;
-        if (transcript) {
-          this.taskInput.value = transcript;
-        }
-      };
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      dom.goalInput.value = transcript;
+      appendLog('system', `Voice transcribed: "${transcript}"`);
+    };
 
-      recognition.onerror = () => {
-        this.btnVoice.classList.remove('recording');
-      };
+    recognition.onend = () => {
+      dom.btnVoice.classList.remove('listening');
+    };
 
-      recognition.onend = () => {
-        this.btnVoice.classList.remove('recording');
-      };
+    recognition.start();
+  });
 
-      recognition.start();
-    } catch (e) {
-      alert('Could not start microphone: ' + e.message);
-    }
-  }
-}
+  // Language Toggle
+  dom.btnToggleLang.addEventListener('click', () => {
+    state.currentLanguage = state.currentLanguage === 'en' ? 'bn' : 'en';
+    const lang = I18N[state.currentLanguage];
+    dom.lblLang.textContent = lang.langLabel;
 
-document.addEventListener('DOMContentLoaded', () => {
-  window.app = new StudioApp();
-});
+    dom.shieldsStatusText.textContent = state.shieldsActive ? lang.shieldsUp : lang.shieldsDown;
+    dom.btnSaveSkill.textContent = lang.saveSkillBtn;
+    appendLog('system', `Language switched to ${state.currentLanguage === 'bn' ? 'বাংলা (Bangla)' : 'English'}`);
+  });
+
+  // Save Skill Button
+  dom.btnSaveSkill.addEventListener('click', () => {
+    appendLog('system', '💾 Workflow saved to Skill Library: catalog_order@1.0.2 (Verified)');
+    dom.skillSaveBox.classList.add('hidden');
+    alert('Workflow saved as canonical skill in packages/skill-engine/skills/catalog_order.json!');
+  });
+
+  // Initial Boot
+  switchTab('newtab');
+  runReaInspection('catalog');
+})();

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brave | New Tab</title>
+  <style>
+    :root {
+      --brave-orange: #ff5500;
+      --brave-orange-gradient: linear-gradient(135deg, #ff5500 0%, #ff1a51 100%);
+      --brave-purple: #7d5fff;
+      --brave-bg: #0b0c12;
+      --brave-card-bg: rgba(26, 28, 38, 0.75);
+      --brave-border: rgba(255, 255, 255, 0.1);
+      --brave-text-primary: #ffffff;
+      --brave-text-secondary: #9ea4b5;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 20%, #1c152e 0%, #0c0d14 70%);
+      color: var(--brave-text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 40px;
+      overflow-x: hidden;
+    }
+
+    /* Top Stats Grid */
+    .shields-banner {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      max-width: 1100px;
+      margin: 0 auto 40px auto;
+      width: 100%;
+    }
+
+    .stat-card {
+      background: var(--brave-card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--brave-border);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 85, 0, 0.4);
+    }
+
+    .stat-val {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+      background: var(--brave-orange-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--brave-text-secondary);
+      font-weight: 500;
+    }
+
+    /* Center Content */
+    .center-dashboard {
+      max-width: 860px;
+      margin: 0 auto;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .clock-display {
+      font-size: 68px;
+      font-weight: 200;
+      letter-spacing: -1px;
+      line-height: 1;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .greeting-text {
+      font-size: 20px;
+      color: var(--brave-text-secondary);
+      font-weight: 400;
+      margin-top: -12px;
+    }
+
+    /* Autonomous Search & Goal Bar */
+    .prompt-box {
+      width: 100%;
+      background: rgba(22, 24, 34, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 28px;
+      padding: 10px 14px 10px 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .prompt-box:focus-within {
+      border-color: var(--brave-orange);
+      box-shadow: 0 8px 36px rgba(255, 85, 0, 0.25);
+    }
+
+    .lion-badge {
+      font-size: 22px;
+      filter: drop-shadow(0 2px 6px rgba(255, 85, 0, 0.5));
+    }
+
+    .prompt-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 400;
+    }
+
+    .prompt-input::placeholder {
+      color: #72788e;
+    }
+
+    .btn-dispatch {
+      background: var(--brave-orange-gradient);
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn-dispatch:hover {
+      opacity: 0.95;
+      transform: scale(1.02);
+    }
+
+    /* Quick Action Chips */
+    .quick-chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: -10px;
+    }
+
+    .chip-btn {
+      background: rgba(30, 32, 45, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      color: #cfd4e3;
+      padding: 8px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .chip-btn:hover {
+      background: rgba(255, 85, 0, 0.15);
+      border-color: rgba(255, 85, 0, 0.4);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    /* Top Visited Sites Grid */
+    .tiles-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 16px;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .tile-item {
+      background: var(--brave-card-bg);
+      border: 1px solid var(--brave-border);
+      border-radius: 16px;
+      padding: 16px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--brave-text-primary);
+      transition: transform 0.2s, background 0.2s, border-color 0.2s;
+    }
+
+    .tile-item:hover {
+      transform: translateY(-4px);
+      background: rgba(38, 41, 56, 0.8);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .tile-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tile-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--brave-text-secondary);
+      max-width: 90px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Footer Info */
+    .newtab-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--brave-text-secondary);
+      max-width: 1100px;
+      margin: 40px auto 0 auto;
+      width: 100%;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .footer-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Privacy Shields & Autonomy Stats -->
+  <header class="shields-banner" role="region" aria-label="Privacy Shields and Autonomous Stats">
+    <div class="stat-card">
+      <div class="stat-val" id="stat-trackers">2,481</div>
+      <div class="stat-label">Trackers & ads blocked</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-bandwidth">34.2 MB</div>
+      <div class="stat-label">Bandwidth saved</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-time">2.4 s</div>
+      <div class="stat-label">Estimated time saved</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-autonomy">100%</div>
+      <div class="stat-label">Autonomous Verification Rate</div>
+    </div>
+  </header>
+
+  <!-- Center Content -->
+  <main class="center-dashboard">
+    <div class="clock-display" id="live-clock">12:00:00</div>
+    <div class="greeting-text" id="greeting-msg">Welcome to Brave Autonomous Browser</div>
+
+    <!-- Autonomous Task Dispatch Omnibox -->
+    <div class="prompt-box">
+      <span class="lion-badge">🦁</span>
+      <input
+        type="text"
+        id="home-prompt"
+        class="prompt-input"
+        placeholder="Ask the Autonomous Agent to complete any web task..."
+        aria-label="Autonomous Agent Prompt"
+      />
+      <button class="btn-dispatch" id="btn-home-dispatch">
+        <span>Dispatch</span>
+        <span>→</span>
+      </button>
+    </div>
+
+    <!-- Quick Action Chips -->
+    <div class="quick-chips">
+      <button class="chip-btn" data-goal="Search laptop and add to cart" data-scenario="catalog">
+        🛒 Buy high-end laptop
+      </button>
+      <button class="chip-btn" data-goal="Fill developer registration form and submit" data-scenario="form">
+        📝 Auto-fill developer portal
+      </button>
+      <button class="chip-btn" data-goal="Resolve security checkpoint with human hand-off" data-scenario="handoff">
+        🛡️ Anti-bot checkpoint hand-off
+      </button>
+      <button class="chip-btn" data-goal="Test broken selector self-repair with accessibility tree" data-scenario="repair">
+        🔧 Autonomous self-repair demo
+      </button>
+    </div>
+
+    <!-- Top Visited Sites Grid -->
+    <nav class="tiles-grid" aria-label="Top Sites">
+      <a href="/catalog.html" class="tile-item" id="tile-catalog">
+        <div class="tile-icon" style="color: #ffaa00;">🛒</div>
+        <span class="tile-title">ElectroTech</span>
+      </a>
+      <a href="/form.html" class="tile-item" id="tile-form">
+        <div class="tile-icon" style="color: #00d26a;">📝</div>
+        <span class="tile-title">Dev Portal</span>
+      </a>
+      <a href="/auth-hand-off.html" class="tile-item" id="tile-handoff">
+        <div class="tile-icon" style="color: #ff334b;">🛡️</div>
+        <span class="tile-title">Security Gate</span>
+      </a>
+      <a href="/catalog.html" class="tile-item" id="tile-repair" data-scenario="repair">
+        <div class="tile-icon" style="color: #7d5fff;">🔧</div>
+        <span class="tile-title">Self-Repair</span>
+      </a>
+      <a href="https://wikipedia.org" class="tile-item" id="tile-wiki" onclick="event.preventDefault(); alert('Simulated external Wikipedia target');">
+        <div class="tile-icon" style="color: #ffffff;">🌐</div>
+        <span class="tile-title">Wikipedia</span>
+      </a>
+      <a href="https://github.com" class="tile-item" id="tile-github" onclick="event.preventDefault(); alert('Simulated external GitHub repo target');">
+        <div class="tile-icon" style="color: #ffffff;">🐙</div>
+        <span class="tile-title">GitHub</span>
+      </a>
+    </nav>
+  </main>
+
+  <!-- Footer Info -->
+  <footer class="newtab-footer">
+    <div class="footer-left">
+      <span class="footer-badge">🦁 Brave v0.1.0 LTS</span>
+      <span class="footer-badge">🔬 REA Engine Active</span>
+      <span class="footer-badge">⚡ OmniRoute & FreeLLMAPI Connected</span>
+    </div>
+    <div class="footer-right">
+      <span>Private &amp; Autonomous • WCAG 2.2 AA</span>
+    </div>
+  </footer>
+
+  <script>
+    // Live Clock
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('live-clock').textContent = `${hours}:${minutes}:${seconds}`;
+
+      const h = now.getHours();
+      let greeting = 'Good morning, Operator';
+      if (h >= 12 && h < 17) greeting = 'Good afternoon, Operator';
+      else if (h >= 17) greeting = 'Good evening, Operator';
+      document.getElementById('greeting-msg').textContent = greeting;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Fetch live Shields stats
+    fetch('/api/shields/stats')
+      .then(r => r.json())
+      .then(stats => {
+        if (stats.trackersBlocked) {
+          document.getElementById('stat-trackers').textContent = stats.trackersBlocked.toLocaleString();
+        }
+        if (stats.bandwidthSavedMB) {
+          document.getElementById('stat-bandwidth').textContent = stats.bandwidthSavedMB + ' MB';
+        }
+        if (stats.timeSavedSec) {
+          document.getElementById('stat-time').textContent = stats.timeSavedSec + ' s';
+        }
+      })
+      .catch(() => {});
+
+    // Parent messaging for home dispatch
+    function sendTaskToParent(goal, scenario) {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'BRAVE_RUN_TASK', goal, scenario }, '*');
+      }
+    }
+
+    document.getElementById('btn-home-dispatch').addEventListener('click', () => {
+      const input = document.getElementById('home-prompt');
+      const goal = input.value.trim();
+      if (!goal) return;
+      sendTaskToParent(goal, 'catalog');
+    });
+
+    document.getElementById('home-prompt').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('btn-home-dispatch').click();
+      }
+    });
+
+    document.querySelectorAll('.chip-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const goal = btn.getAttribute('data-goal');
+        const scenario = btn.getAttribute('data-scenario');
+        sendTaskToParent(goal, scenario);
+      });
+    });
+
+    // Intercept tile clicks to communicate with browser shell
+    document.querySelectorAll('.tile-item').forEach(tile => {
+      tile.addEventListener('click', (e) => {
+        const href = tile.getAttribute('href');
+        if (href && href.startsWith('/')) {
+          e.preventDefault();
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: href }, '*');
+          } else {
+            window.location.href = href;
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

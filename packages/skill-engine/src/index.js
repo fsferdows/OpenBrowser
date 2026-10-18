@@ -3,3 +3,4 @@ export { SkillRunner } from './skill-runner.js';
 export { SkillRecorder } from './skill-recorder.js';
 export { SelfRepairEngine } from './self-repair.js';
 export { SkillMigrator } from './skill-migrator.js';
+export { ReaAnalysisAdapter } from './rea-adapter.js';
