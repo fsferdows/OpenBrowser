@@ -12,9 +12,9 @@
     <!-- Window Controls & Tab Bar -->
     <div class="window-tab-bar">
       <div class="traffic-lights" aria-label="Window Controls">
-        <span class="light close" title="Close"></span>
-        <span class="light minimize" title="Minimize"></span>
-        <span class="light maximize" title="Maximize"></span>
+        <span class="light close" title="Close" id="mac-close-btn"></span>
+        <span class="light minimize" title="Minimize" id="mac-min-btn"></span>
+        <span class="light maximize" title="Maximize" id="mac-max-btn"></span>
       </div>
 
       <!-- Horizontal Brave Tabs -->
@@ -22,28 +22,32 @@
         <button class="tab-item active" role="tab" aria-selected="true" data-tab-id="newtab" data-url="/newtab.html">
           <span class="tab-icon">🦁</span>
           <span class="tab-title">Brave | New Tab</span>
+          <span class="tab-audio-icon hidden" title="Playing Audio">🔊</span>
           <span class="tab-close" title="Close Tab">×</span>
         </button>
         <button class="tab-item" role="tab" aria-selected="false" data-tab-id="catalog" data-url="/catalog.html">
           <span class="tab-icon">🛒</span>
           <span class="tab-title">ElectroTech Catalog</span>
+          <span class="tab-audio-icon hidden" title="Playing Audio">🔊</span>
           <span class="tab-close" title="Close Tab">×</span>
         </button>
         <button class="tab-item" role="tab" aria-selected="false" data-tab-id="form" data-url="/form.html">
           <span class="tab-icon">📝</span>
           <span class="tab-title">Developer Portal</span>
+          <span class="tab-audio-icon hidden" title="Playing Audio">🔊</span>
           <span class="tab-close" title="Close Tab">×</span>
         </button>
         <button class="tab-item" role="tab" aria-selected="false" data-tab-id="handoff" data-url="/auth-hand-off.html">
           <span class="tab-icon">🛡️</span>
           <span class="tab-title">Security Gate</span>
+          <span class="tab-audio-icon hidden" title="Playing Audio">🔊</span>
           <span class="tab-close" title="Close Tab">×</span>
         </button>
         <button class="tab-add-btn" id="btn-add-tab" title="Open New Tab" aria-label="New Tab">+</button>
       </nav>
 
       <div class="window-extra-actions">
-        <span class="version-tag">v0.1.0 LTS</span>
+        <span class="version-tag">🦁 Brave v0.1.0 LTS</span>
       </div>
     </div>
 
@@ -57,27 +61,50 @@
       </div>
 
       <!-- Brave Smart Omnibox -->
-      <div class="omnibox-container">
-        <div class="security-badge" id="ssl-badge" title="Connection is Secure">
-          <span class="lock-icon">🔒</span>
-          <span class="cert-text">Secure</span>
+      <div class="omnibox-wrapper">
+        <div class="omnibox-container" id="omnibox-box">
+          <div class="security-badge" id="ssl-badge" title="Connection is Secure (Click for Certificate & Permissions)">
+            <span class="lock-icon">🔒</span>
+            <span class="cert-text">Secure</span>
+          </div>
+          <input
+            type="text"
+            id="omnibox-input"
+            class="omnibox-input"
+            value="brave://newtab"
+            spellcheck="false"
+            aria-label="Search or enter web address"
+            autocomplete="off"
+          />
+          <div class="omnibox-right-actions">
+            <button class="omnibox-btn" id="btn-bookmark" title="Bookmark This Tab">⭐</button>
+            
+            <!-- Brave Shields Lion Button -->
+            <button class="shields-lion-btn active" id="btn-brave-shields" title="Brave Shields" aria-label="Brave Shields Controls" aria-expanded="false">
+              <span class="lion-face">🦁</span>
+              <span class="shields-counter-badge" id="shields-badge-count">3</span>
+            </button>
+          </div>
         </div>
-        <input
-          type="text"
-          id="omnibox-input"
-          class="omnibox-input"
-          value="brave://newtab"
-          spellcheck="false"
-          aria-label="Search or enter web address"
-        />
-        <div class="omnibox-right-actions">
-          <button class="omnibox-btn" id="btn-bookmark" title="Bookmark This Tab">⭐</button>
-          
-          <!-- Brave Shields Lion Button -->
-          <button class="shields-lion-btn active" id="btn-brave-shields" title="Brave Shields" aria-label="Brave Shields Controls" aria-expanded="false">
-            <span class="lion-face">🦁</span>
-            <span class="shields-counter-badge" id="shields-badge-count">3</span>
-          </button>
+
+        <!-- Brave Search Autocomplete Suggestions -->
+        <div class="search-autocomplete hidden" id="search-autocomplete">
+          <div class="autocomplete-item search-action" id="autocomplete-search-item">
+            <span class="auto-icon">🦁</span>
+            <span class="auto-label">Search Brave for "<strong id="autocomplete-query">...</strong>"</span>
+          </div>
+          <div class="autocomplete-item site-action" data-url="/catalog.html">
+            <span class="auto-icon">🛒</span>
+            <span class="auto-label">ElectroTech Electronics Store — shop.example.com</span>
+          </div>
+          <div class="autocomplete-item site-action" data-url="/form.html">
+            <span class="auto-icon">📝</span>
+            <span class="auto-label">Developer Cloud Registration — portal.example.com</span>
+          </div>
+          <div class="autocomplete-item site-action" data-url="/auth-hand-off.html">
+            <span class="auto-icon">🛡️</span>
+            <span class="auto-label">Security Gate Verification — auth.example.com</span>
+          </div>
         </div>
       </div>
 
@@ -95,13 +122,230 @@
           <span class="btn-icon">🌐</span>
           <span class="btn-text" id="lbl-lang">EN</span>
         </button>
-        <button class="action-btn bat-rewards" id="btn-rewards" title="Brave Autonomous Credits">
+        <button class="action-btn bat-rewards" id="btn-rewards" title="Brave Autonomous Rewards &amp; Credits">
           <span class="btn-icon">🔺</span>
-          <span class="btn-text">15.4</span>
+          <span class="btn-text" id="lbl-bat-val">15.4</span>
+        </button>
+        <button class="toolbar-btn menu-btn" id="btn-brave-menu" title="Customize and control Brave">
+          <span>⋮</span>
         </button>
       </div>
     </div>
+
+    <!-- Brave Bookmarks Bar -->
+    <div class="bookmarks-bar" id="bookmarks-bar" role="toolbar" aria-label="Bookmarks">
+      <button class="bookmark-chip" data-url="/catalog.html">🛒 ElectroTech</button>
+      <button class="bookmark-chip" data-url="/form.html">📝 Developer Portal</button>
+      <button class="bookmark-chip" data-url="/auth-hand-off.html">🛡️ Security Gate</button>
+      <button class="bookmark-chip" data-url="/catalog.html" data-scenario="repair">🔧 Self-Repair Demo</button>
+      <div class="bookmark-separator"></div>
+      <button class="bookmark-chip external" onclick="alert('Navigating simulated external link');">🌐 Wikipedia</button>
+      <button class="bookmark-chip external" onclick="alert('Navigating simulated external link');">🐙 GitHub</button>
+    </div>
   </header>
+
+  <!-- Brave SSL Certificate Details Popover -->
+  <aside class="ssl-popover hidden" id="ssl-popover" role="dialog" aria-label="Security Certificate Information">
+    <div class="ssl-popover-header">
+      <div class="ssl-status-title">
+        <span class="lock-circle">🔒</span>
+        <div>
+          <h4>Connection is secure</h4>
+          <p id="ssl-popover-host">shop.example.com</p>
+        </div>
+      </div>
+    </div>
+    <div class="ssl-popover-body">
+      <div class="ssl-info-row">
+        <span>Protocol:</span>
+        <strong>TLS 1.3 (Modern Chromium Cipher)</strong>
+      </div>
+      <div class="ssl-info-row">
+        <span>Cipher:</span>
+        <strong>AES_256_GCM (256-bit Secret Encrypted)</strong>
+      </div>
+      <div class="ssl-info-row">
+        <span>Certificate Authority:</span>
+        <strong>Let's Encrypt / Brave Trust Authority</strong>
+      </div>
+      <div class="ssl-info-row">
+        <span>Cookies in use:</span>
+        <strong>2 cookies (Strict Partitioning Active)</strong>
+      </div>
+    </div>
+    <div class="ssl-popover-footer">
+      <button class="btn-shields-secondary" id="btn-ssl-close">Close</button>
+    </div>
+  </aside>
+
+  <!-- Brave Rewards Popover Dropdown -->
+  <aside class="rewards-popover hidden" id="rewards-popover" role="dialog" aria-label="Brave Rewards Panel">
+    <div class="rewards-popover-header">
+      <span class="bat-icon-lg">🔺</span>
+      <div>
+        <h3>Brave Rewards</h3>
+        <p>Autonomous Agent Economy</p>
+      </div>
+    </div>
+    <div class="rewards-body">
+      <div class="rewards-balance-card">
+        <span class="rewards-card-label">Estimated Current Earnings</span>
+        <div class="rewards-balance"><span id="rewards-bat-display">15.4</span> BAT</div>
+        <span class="rewards-usd">≈ $4.62 USD</span>
+      </div>
+      <div class="rewards-row">
+        <span>Autonomous Tasks Completed:</span>
+        <strong>34 tasks</strong>
+      </div>
+      <div class="rewards-row">
+        <span>Trackers &amp; Ads Neutralized:</span>
+        <strong>2,481 items</strong>
+      </div>
+      <div class="rewards-row">
+        <span>FreeLLMAPI Quota Saved:</span>
+        <strong>$12.80</strong>
+      </div>
+    </div>
+    <div class="rewards-footer">
+      <button class="btn-shields-secondary" id="btn-rewards-close">Done</button>
+    </div>
+  </aside>
+
+  <!-- Brave Hamburger Menu Dropdown -->
+  <aside class="brave-menu-dropdown hidden" id="brave-menu" role="menu" aria-label="Brave Browser Menu">
+    <div class="menu-item" id="menu-new-tab"><span>🦁 New Tab</span><kbd>Ctrl+T</kbd></div>
+    <div class="menu-item" id="menu-new-window"><span>🪟 New Window</span><kbd>Ctrl+N</kbd></div>
+    <div class="menu-item" id="menu-tor-window"><span>🧅 New Private Window with Tor</span><kbd>Ctrl+Shift+N</kbd></div>
+    <div class="menu-divider"></div>
+    <div class="menu-item" id="menu-shields"><span>🦁 Brave Shields</span><span>Settings</span></div>
+    <div class="menu-item" id="menu-rewards-open"><span>🔺 Brave Rewards</span><span>15.4 BAT</span></div>
+    <div class="menu-item" id="menu-leo-open"><span>🦁✨ Brave Leo / Autonomous Agent</span><span>Sidebar</span></div>
+    <div class="menu-divider"></div>
+    <div class="menu-item" id="menu-history-open"><span>🕒 History</span><kbd>Ctrl+H</kbd></div>
+    <div class="menu-item" id="menu-bookmarks-open"><span>⭐ Bookmarks</span><kbd>Ctrl+B</kbd></div>
+    <div class="menu-divider"></div>
+    <div class="menu-item" id="menu-settings-open"><span>⚙️ Settings</span><span>brave://settings</span></div>
+    <div class="menu-item" id="menu-about-open"><span>ℹ️ About Brave</span><span>v0.1.0 LTS</span></div>
+  </aside>
+
+  <!-- Brave Settings Modal (`brave://settings`) -->
+  <div class="settings-modal-backdrop hidden" id="settings-modal" role="dialog" aria-modal="true" aria-label="Brave Browser Settings">
+    <div class="settings-modal-dialog">
+      <header class="settings-modal-header">
+        <div class="settings-title-group">
+          <span class="settings-logo">🦁</span>
+          <h3>Brave Settings</h3>
+        </div>
+        <button class="settings-close-btn" id="btn-close-settings">×</button>
+      </header>
+      <div class="settings-modal-body">
+        <nav class="settings-tabs-nav">
+          <button class="set-nav-btn active" data-sec="shields">🛡️ Shields</button>
+          <button class="set-nav-btn" data-sec="autonomy">🤖 Autonomous AI</button>
+          <button class="set-nav-btn" data-sec="gateway">⚙️ Model Gateway</button>
+          <button class="set-nav-btn" data-sec="appearance">🎨 Appearance</button>
+        </nav>
+        <div class="settings-sec-content">
+          <!-- Shields Section -->
+          <div class="settings-panel active" id="sec-shields">
+            <h4>Brave Shields Defaults</h4>
+            <div class="setting-toggle-row">
+              <div>
+                <strong>Trackers &amp; ads blocking</strong>
+                <p>Blocks invasive trackers, beacons, and ads across all sites</p>
+              </div>
+              <span class="badge-active">Aggressive</span>
+            </div>
+            <div class="setting-toggle-row">
+              <div>
+                <strong>Upgrade connections to HTTPS</strong>
+                <p>Automatically upgrades HTTP connections to encrypted HTTPS</p>
+              </div>
+              <span class="badge-active">Enabled</span>
+            </div>
+            <div class="setting-toggle-row">
+              <div>
+                <strong>Block fingerprinting</strong>
+                <p>Protects your device hardware and canvas identity from tracking</p>
+              </div>
+              <span class="badge-active">Standard</span>
+            </div>
+          </div>
+
+          <!-- Autonomy Section -->
+          <div class="settings-panel" id="sec-autonomy">
+            <h4>Autonomous Agent Configuration</h4>
+            <div class="setting-toggle-row">
+              <div>
+                <strong>Autonomous Self-Repair Engine</strong>
+                <p>Automatically heals broken selectors when sites update their DOM</p>
+              </div>
+              <span class="badge-active">Active (100% Pass)</span>
+            </div>
+            <div class="setting-toggle-row">
+              <div>
+                <strong>Human-in-the-Loop Hand-off Policy</strong>
+                <p>Halts automated execution for CAPTCHAs, 2FA, and payments</p>
+              </div>
+              <span class="badge-active">Strict Enforcement</span>
+            </div>
+            <div class="setting-toggle-row">
+              <div>
+                <strong>Skill Zero-Replanning Fast Replay</strong>
+                <p>Replays saved skills in &lt;10ms with 0 token overhead</p>
+              </div>
+              <span class="badge-active">Enabled</span>
+            </div>
+          </div>
+
+          <!-- Model Gateway Section -->
+          <div class="settings-panel" id="sec-gateway">
+            <h4>Model Gateway &amp; Provider Chain</h4>
+            <div class="setting-toggle-row">
+              <div>
+                <strong>Primary Provider Router</strong>
+                <p>OmniRoute Multi-Model Cluster (http://127.0.0.1:8080/v1)</p>
+              </div>
+              <span class="badge-active">Connected</span>
+            </div>
+            <div class="setting-toggle-row">
+              <div>
+                <strong>Zero-Cost Tier Fallback</strong>
+                <p>FreeLLMAPI Quota Guard (http://127.0.0.1:8081/v1)</p>
+              </div>
+              <span class="badge-active">Ready</span>
+            </div>
+            <div class="setting-toggle-row">
+              <div>
+                <strong>Circuit Breaker</strong>
+                <p>Automatic failure detection and provider rollover</p>
+              </div>
+              <span class="badge-active">CLOSED (Healthy)</span>
+            </div>
+          </div>
+
+          <!-- Appearance Section -->
+          <div class="settings-panel" id="sec-appearance">
+            <h4>Browser Appearance &amp; Language</h4>
+            <div class="setting-toggle-row">
+              <div>
+                <strong>Theme</strong>
+                <p>Signature Brave Dark Slate &amp; Fire Orange</p>
+              </div>
+              <span class="badge-active">Dark Slate (Default)</span>
+            </div>
+            <div class="setting-toggle-row">
+              <div>
+                <strong>Language</strong>
+                <p>English &amp; বাংলা (Bangla) First Localization</p>
+              </div>
+              <span class="badge-active">EN / BN Dual-Stack</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Brave Shields Popover Dropdown -->
   <aside class="shields-popover hidden" id="shields-popover" role="dialog" aria-label="Brave Shields Panel">
@@ -147,6 +391,32 @@
       </div>
     </div>
 
+    <!-- Advanced Controls Collapsible -->
+    <div class="shields-advanced-controls">
+      <button class="btn-toggle-advanced" id="btn-toggle-advanced">
+        <span>Advanced Controls</span>
+        <span id="advanced-arrow">▾</span>
+      </button>
+      <div class="advanced-body" id="advanced-controls-body">
+        <div class="adv-row">
+          <span>Block cross-site trackers:</span>
+          <strong>Aggressive</strong>
+        </div>
+        <div class="adv-row">
+          <span>Upgrade connections to HTTPS:</span>
+          <strong>Always</strong>
+        </div>
+        <div class="adv-row">
+          <span>Block scripts (JavaScript):</span>
+          <strong id="lbl-script-blocking">Allowed</strong>
+        </div>
+        <div class="adv-row">
+          <span>Fingerprinting protection:</span>
+          <strong>Strict</strong>
+        </div>
+      </div>
+    </div>
+
     <div class="shields-trackers-list">
       <h4>Blocked Trackers on Page:</h4>
       <ul id="blocked-trackers-items">
@@ -173,7 +443,7 @@
           <span class="viewport-url-badge" id="viewport-url-badge">brave://newtab</span>
         </div>
         <div class="cdp-telemetry-badge">
-          <span>CDP Protocol Connected</span>
+          <span>Chromium CDP Basement Connected</span>
           <span>•</span>
           <span>REA Observer Listening</span>
         </div>
@@ -242,7 +512,7 @@
                 type="text"
                 id="copilot-goal-input"
                 class="goal-input"
-                placeholder="Describe a goal to execute autonomously..."
+                placeholder="Describe any task to execute autonomously..."
                 aria-label="Describe goal"
               />
               <button class="mic-btn" id="btn-voice-input" title="Voice Input (Speech API)" aria-label="Voice Input">🎙️</button>
@@ -275,7 +545,7 @@
             <div class="log-stream-container" id="telemetry-stream" role="log" aria-live="polite">
               <div class="log-entry system">
                 <span class="log-time">[00:00:00]</span>
-                <span class="log-text">🦁 Brave Autonomous Agent initialized. Ready for task instructions.</span>
+                <span class="log-text">🦁 Brave Autonomous Agent initialized. Basement: Chromium CDP. Router: OmniRoute + FreeLLMAPI.</span>
               </div>
             </div>
           </div>
@@ -302,7 +572,7 @@
 
             <div class="rea-stat-cards">
               <div class="rea-card">
-                <span class="rea-val" id="rea-interactive-count">4</span>
+                <span class="rea-val" id="rea-interactive-count">5</span>
                 <span class="rea-label">Interactive Targets</span>
               </div>
               <div class="rea-card">
@@ -407,16 +677,20 @@ AccessibilityTree:
                 <strong>OmniRoute Multi-Model Cluster</strong>
               </div>
               <div class="gateway-row">
+                <span>Zero-Cost Fallback:</span>
+                <strong>FreeLLMAPI Tier Active</strong>
+              </div>
+              <div class="gateway-row">
                 <span>Circuit Breaker:</span>
                 <span class="badge-healthy">CLOSED (Healthy)</span>
               </div>
               <div class="gateway-row">
                 <span>Average Step Latency:</span>
-                <strong>42 ms</strong>
+                <strong>38 ms</strong>
               </div>
               <div class="gateway-row">
                 <span>Cumulative Cost:</span>
-                <strong>$0.00000 (FreeLLMAPI Tier)</strong>
+                <strong>$0.00000 (FreeLLMAPI Quota Guarded)</strong>
               </div>
             </div>
 

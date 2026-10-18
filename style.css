@@ -1406,3 +1406,445 @@ input:checked + .slider:before {
 .provider-tag.live { background: rgba(255, 85, 0, 0.2); color: var(--brave-orange); }
 .provider-tag.fallback { background: rgba(125, 95, 255, 0.2); color: var(--brave-purple); }
 .provider-tag.local { background: rgba(255, 255, 255, 0.1); color: var(--text-muted); }
+
+/* ==========================================================================
+   8. Authentic Brave Browser Replica Extensions:
+      Bookmarks Bar, SSL Popover, Autocomplete, Menu, Rewards, & Settings
+   ========================================================================== */
+
+/* Bookmarks Bar */
+.bookmarks-bar {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  gap: 8px;
+  background-color: #12141d;
+  border-bottom: 1px solid var(--border-subtle);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.bookmarks-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.bookmark-chip {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.bookmark-chip:hover {
+  background: var(--bg-hover);
+  color: #fff;
+}
+
+.bookmark-separator {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 4px;
+}
+
+/* Tab Audio Icon */
+.tab-audio-icon {
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0.8;
+  margin-left: -2px;
+}
+.tab-audio-icon.hidden { display: none; }
+.tab-audio-icon:hover { opacity: 1; transform: scale(1.1); }
+
+/* Omnibox Wrapper & Search Autocomplete */
+.omnibox-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.search-autocomplete {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  right: 0;
+  background: var(--bg-toolbar);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  box-shadow: var(--shadow-popover);
+  padding: 6px 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-autocomplete.hidden { display: none !important; }
+
+.autocomplete-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.autocomplete-item:hover {
+  background: rgba(255, 85, 0, 0.15);
+  color: #fff;
+}
+
+.autocomplete-item .auto-icon {
+  font-size: 14px;
+}
+
+.autocomplete-item.search-action strong {
+  color: var(--brave-orange);
+}
+
+/* SSL Certificate Details Popover */
+.ssl-popover {
+  position: absolute;
+  top: 86px;
+  left: 140px;
+  width: 320px;
+  background: var(--bg-toolbar);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  box-shadow: var(--shadow-popover);
+  padding: 16px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ssl-popover.hidden { display: none !important; }
+
+.ssl-popover-header {
+  display: flex;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.ssl-status-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ssl-status-title h4 {
+  font-size: 13px;
+  color: var(--brave-green);
+}
+
+.ssl-status-title p {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.ssl-popover-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.ssl-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ssl-info-row span { color: var(--text-muted); }
+.ssl-info-row strong { color: #fff; }
+
+/* Brave Rewards Popover */
+.rewards-popover {
+  position: absolute;
+  top: 86px;
+  right: 50px;
+  width: 300px;
+  background: var(--bg-toolbar);
+  border: 1px solid var(--border-card);
+  border-radius: 14px;
+  box-shadow: var(--shadow-popover);
+  padding: 18px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rewards-popover.hidden { display: none !important; }
+
+.rewards-popover-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.bat-icon-lg { font-size: 24px; color: var(--brave-purple); }
+.rewards-popover-header h3 { font-size: 15px; color: #fff; }
+.rewards-popover-header p { font-size: 11px; color: var(--text-muted); }
+
+.rewards-balance-card {
+  background: rgba(125, 95, 255, 0.12);
+  border: 1px solid rgba(125, 95, 255, 0.3);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.rewards-card-label { font-size: 11px; color: var(--text-secondary); }
+.rewards-balance { font-size: 26px; font-weight: 800; color: #fff; margin: 4px 0; }
+.rewards-usd { font-size: 11px; color: var(--brave-purple); }
+
+.rewards-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.rewards-row {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-secondary);
+}
+
+.rewards-row strong { color: #fff; }
+
+/* Brave Hamburger Menu Dropdown */
+.brave-menu-dropdown {
+  position: absolute;
+  top: 86px;
+  right: 12px;
+  width: 250px;
+  background: var(--bg-toolbar);
+  border: 1px solid var(--border-card);
+  border-radius: 10px;
+  box-shadow: var(--shadow-popover);
+  padding: 6px 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.brave-menu-dropdown.hidden { display: none !important; }
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.menu-item:hover {
+  background: rgba(255, 85, 0, 0.15);
+  color: #fff;
+}
+
+.menu-item kbd {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.menu-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 4px 0;
+}
+
+/* Shields Advanced Controls */
+.shields-advanced-controls {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.btn-toggle-advanced {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.advanced-body {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.advanced-body.hidden { display: none !important; }
+
+.adv-row {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-secondary);
+}
+
+.adv-row strong { color: var(--brave-orange); }
+
+/* Settings Modal */
+.settings-modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-modal-backdrop.hidden { display: none !important; }
+
+.settings-modal-dialog {
+  width: 680px;
+  max-width: 90vw;
+  background: var(--bg-toolbar);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  box-shadow: var(--shadow-popover);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 85vh;
+}
+
+.settings-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-logo { font-size: 24px; }
+.settings-modal-header h3 { font-size: 17px; font-weight: 700; color: #fff; }
+
+.settings-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 20px;
+  cursor: pointer;
+}
+.settings-close-btn:hover { color: #fff; }
+
+.settings-modal-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.settings-tabs-nav {
+  width: 180px;
+  background: #11121a;
+  border-right: 1px solid var(--border-subtle);
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.set-nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.set-nav-btn:hover {
+  background: var(--bg-hover);
+  color: #fff;
+}
+
+.set-nav-btn.active {
+  background: rgba(255, 85, 0, 0.15);
+  color: var(--brave-orange);
+  font-weight: 700;
+}
+
+.settings-sec-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.settings-panel {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-panel.active {
+  display: flex;
+}
+
+.settings-panel h4 {
+  font-size: 14px;
+  color: #fff;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 8px;
+}
+
+.setting-toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.setting-toggle-row strong { font-size: 13px; color: #fff; display: block; }
+.setting-toggle-row p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+.badge-active {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brave-orange);
+  background: rgba(255, 85, 0, 0.15);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
