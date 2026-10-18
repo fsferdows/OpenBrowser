@@ -1,72 +1,138 @@
+<div align="center">
+
 # 🦁 OpenBrowser
 
-> **The Production Autonomous AI Agentic Browser for Hackers & Power Users**  
-> *Engineered by **FS Ferdows** (`@fsferdows`)*
+### The Autonomous AI Agentic Browser for Hackers & Power Users
 
-[![CI Status](https://img.shields.io/badge/CI-Passing-brightgreen?style=flat-square)](https://github.com/fsferdows/OpenBrowser)
-[![Tests](https://img.shields.io/badge/Tests-196%20Passing-success?style=flat-square)](https://github.com/fsferdows/OpenBrowser)
-[![Chromium CDP](https://img.shields.io/badge/Engine-Chromium%20CDP-blue?style=flat-square)](https://github.com/fsferdows/OpenBrowser)
-[![AI Engine](https://img.shields.io/badge/AI-Heretic%20%2B%20OmniRoute-orange?style=flat-square)](https://github.com/fsferdows/OpenBrowser)
-[![Developer](https://img.shields.io/badge/Developer-FS%20Ferdows-red?style=flat-square)](https://github.com/fsferdows)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](./LICENSE)
+*Engineered by **[FS Ferdows](https://github.com/fsferdows)***
 
----
+<p align="center">
+  <a href="https://github.com/fsferdows/OpenBrowser/stargazers"><img src="https://img.shields.io/github/stars/fsferdows/OpenBrowser?style=for-the-badge&color=ff5722&logo=star" alt="Stars"></a>
+  <a href="https://github.com/fsferdows/OpenBrowser/network/members"><img src="https://img.shields.io/github/forks/fsferdows/OpenBrowser?style=for-the-badge&color=2196f3&logo=git" alt="Forks"></a>
+  <a href="https://github.com/fsferdows/OpenBrowser/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue?style=for-the-badge" alt="License"></a>
+  <a href="https://github.com/fsferdows/OpenBrowser"><img src="https://img.shields.io/badge/Engine-Chromium_CDP_9222-green?style=for-the-badge&logo=googlechrome" alt="Chromium CDP"></a>
+  <a href="https://github.com/fsferdows/OpenBrowser"><img src="https://img.shields.io/badge/AI_Engine-Heretic_Refusal--Free-red?style=for-the-badge&logo=openai" alt="Heretic Engine"></a>
+  <a href="https://github.com/fsferdows/OpenBrowser"><img src="https://img.shields.io/badge/Tests-196_Passing-success?style=for-the-badge" alt="Tests"></a>
+</p>
 
-## 🎬 Video Demonstration
-
-Watch **OpenBrowser** executing autonomous goals, live search, and Chromium CDP screen streaming:
-
-**Direct Video File**: [`1.mp4`](./1.mp4) (Included in repository)
-
-https://github.com/fsferdows/OpenBrowser/raw/main/1.mp4
+<p align="center">
+  <b>Stop switching between ChatGPT, Chrome tabs, and terminal scripts.</b><br>
+  OpenBrowser brings the entire autonomous browser workstation directly onto <code>http://localhost:3000</code>.
+</p>
 
 ---
 
-## ⚡ Overview
+### 🎥 Watch OpenBrowser in Action
 
-**OpenBrowser** is an autonomous AI agentic web browser engineered from the ground up for hackers, researchers, and power users. Instead of switching between multiple browsers, terminal tools, and chat interfaces, **OpenBrowser brings the entire web workstation onto `http://localhost:3000`**.
+[![OpenBrowser Demo Video Preview](./docs/assets/hero-preview.jpg)](./1.mp4)
 
-Describe a goal once. OpenBrowser's autonomous agent perceives the page, plans the trajectory, executes actions directly through the Chromium DevTools Protocol (CDP), learns the workflow, compiles it into a versioned skill, and automatically repairs broken selectors when web pages mutate.
-
----
-
-## 🚀 Core Capabilities
-
-### 1. Embedded Chromium Engine & CDP Live Stream
-- Direct duplex JSON-RPC WebSocket connection to Chromium on port `9222`.
-- Real-time visual canvas streaming directly inside the browser viewport.
-- Synthetic mouse click, keyboard entry, and scroll wheel forwarding with low latency.
-- Full support for complex client-side Single-Page Applications (YouTube, Facebook, Google, Twitter/X) with zero blank screens.
-
-### 2. Heretic Refusal-Free AI Mode
-- Powered by `p-e-w/heretic` logic integrated with **OmniRoute** and **FreeLLMAPI**.
-- Direct, unaligned, and comprehensive responses for technical queries, security assessments, and autonomous browser navigation.
-- Multi-category search engine integration covering **AI Mode, Web, Images, Videos, News, and Hacker Forums**.
-
-### 3. HackSuite Pentesting & Recon Workstation
-- Built-in HTTP Repeater and Request Tamperer bypassing CORS for manual security auditing.
-- Attack Surface Analyzer detecting input vectors, forms, cookie flags, and CSP vulnerabilities.
-- Cryptographic & Encoding Suite: Base64, URL encoding, Hex, and JWT header/payload claim decoder.
-- Curated vulnerability payload library for XSS, SQLi, SSRF, Command Injection, and Path Traversal testing.
-
-### 4. REA Reverse Engineering & Anti-Fingerprinting Engine
-- Real-time DOM inspection and interactive element discovery.
-- Automated tracker and ad blocking with Brave Shields privacy tally.
-- Synthesizes semantic WebMCP tool contracts dynamically from live web pages.
-
-### 5. Self-Repairing Autonomous Skill Engine
-- Records user demonstrations with automatic password/credential masking.
-- Compiles workflows into canonical 16-field versioned skills (`.skill.json`).
-- Autonomously detects broken selectors on site layout changes and self-repairs using accessibility tree heuristics.
-
-### 6. Security, Safety & Privacy
-- OWASP Top 10 for LLM Applications defense with active Prompt Injection Firewall.
-- AES-256-GCM encrypted credential vault with process-wide secret scrubbing.
-- Policy engine enforcing mandatory confirmation before executing high-risk operations (payments, deletions, resets).
+> 📹 **High-Definition Demo**: [`1.mp4`](./1.mp4) (Included in repo — click to watch autonomous task execution, live SERP, and real-time Chromium CDP streaming).
 
 ---
 
-## 🏗️ System Architecture
+</div>
+
+## 💡 Why OpenBrowser?
+
+Web browsers were designed in 2008 for human clicks. AI web agents today are trapped inside clumsy Python terminal wrappers, fragile Playwright scripts, and expensive commercial LLM paywalls.
+
+**OpenBrowser completely redefines the browser experience:**
+
+1. **⚡ 100% In-Browser Workstation (`localhost:3000`)**: Full Chromium engine running under the hood with real-time CDP streaming, mouse click forwarding, keyboard typing, and scroll wheel synchronization.
+2. **🔓 Unaligned, Refusal-Free AI Mode**: Powered by the **Heretic Engine** + **OmniRoute** + **FreeLLMAPI**. No preachy refusal guardrails for security analysis, penetration testing, deep research, or autonomous web navigation.
+3. **🛠️ Built-in HackSuite**: Native HTTP Repeater (CORS-bypassed), Attack Surface Analyzer, JWT/Hex/Base64 Decoder, and Penetration Testing Payloads right inside your bookmarks bar.
+4. **🧠 Self-Healing Skill Engine**: Perform a workflow once. OpenBrowser records it, compiles it into a 16-field versioned skill, and **automatically repairs broken CSS/accessibility selectors** when websites change their layout.
+5. **🆓 Zero-Cost & Local Freedom**: Native multi-provider failover across FreeLLMAPI, local Ollama, and commercial endpoints via OmniRoute.
+
+---
+
+## 📸 Screenshots
+
+| 🦁 **Refusal-Free New Tab & Omnibox** | 🔍 **Live Search & Knowledge Graph** |
+| :---: | :---: |
+| ![OpenBrowser New Tab](./docs/assets/hero-preview.jpg) | ![OpenBrowser Search](./docs/assets/search-preview.jpg) |
+| *Minimal Google Dark UI with Refusal-Free AI Mode* | *Multi-category SERP (AI Mode, Web, Images, Videos, News)* |
+
+---
+
+## 🥊 Feature Comparison
+
+| Feature | Regular Browsers (Chrome / Brave) | Script Agents (Browser-Use / AutoGPT) | 🦁 **OpenBrowser** |
+| :--- | :---: | :---: | :---: |
+| **User Interface** | Standard Manual UI | None (Headless CLI only) | **Full Interactive Localhost Webstation** |
+| **AI Task Execution** | ❌ None | ⚠️ Requires API Keys & Terminal | **⚡ 1-Click Autonomous Agent** |
+| **Model Routing** | ❌ Vendor Locked | ⚠️ Single Provider | **🔄 OmniRoute + FreeLLMAPI Zero-Cost** |
+| **AI Alignment** | Standard Restrictions | Dependent on API | **🔓 Heretic Refusal-Free SecOps Engine** |
+| **Self-Repairing Selectors**| ❌ None | ❌ Scripts break on DOM change | **🛡️ Heuristic Accessibility Tree Repair** |
+| **Security Workstation** | ❌ DevTools only | ❌ None | **⚡ HackSuite HTTP Repeater & Payloads** |
+| **SPAs (YouTube, Facebook)**| Native | ⚠️ Frequent Bot-Blocks | **🟢 Real-Time Headless CDP Streaming** |
+| **In-Browser Authentication**| Native | ❌ Fails on 2FA/CAPTCHA | **🔑 Native Viewport Input Forwarding** |
+
+---
+
+## 🚀 Quick Start (60 Seconds)
+
+### 1. Prerequisites
+- **Node.js** >= 20.0.0
+- **npm** >= 9.0.0
+- **Google Chrome** or **Chromium** installed
+
+### 2. One-Line Clone & Install
+
+```bash
+git clone https://github.com/fsferdows/OpenBrowser.git
+cd OpenBrowser
+npm install
+```
+
+### 3. Run Test Suite (196 Passing Tests)
+
+```bash
+npm test
+```
+
+### 4. Launch OpenBrowser
+
+```bash
+# Terminal 1: Launch the headless Chromium CDP engine
+npm run browser:chrome
+
+# Terminal 2: Start OpenBrowser Studio
+npm start
+```
+
+👉 Open **[`http://localhost:3000`](http://localhost:3000)** in your browser!
+
+---
+
+## 🕹️ Guided Tour of Capabilities
+
+### 1. Refusal-Free AI Mode (Heretic Engine)
+Type any goal or query into the search bar or Omnibox:
+```text
+agent: extract all API endpoints from example.com and analyze security headers
+```
+OpenBrowser's agent perceives the DOM, plans the trajectory, executes actions, and returns an unrefused, structured audit.
+
+### 2. HackSuite Pentesting Suite
+Click the **`⚡ HackSuite`** button in the top navigation bar to open:
+- **HTTP Repeater**: Send raw `GET`, `POST`, `PUT`, `DELETE` requests directly from your browser with complete CORS bypass.
+- **Attack Surface Scanner**: Instantly discover forms, password inputs, missing CSP headers, and third-party tracking scripts.
+- **Crypto & Encoding Tool**: Decode Base64, URL-encoded strings, Hex, and parse JWT token payloads on the fly.
+- **Payload Arsenal**: 1-click injection payloads for XSS, SQLi, SSRF, Command Injection, and Directory Traversal.
+
+### 3. Real-Time Chromium CDP Live Stream
+Switch between **`🌐 Web View`** (lightweight proxy with Brave Shields tracker blocking) and **`⚡ Live Chrome`** (high-fidelity Chromium DevTools Protocol screen stream).
+- Click into any input field on the canvas to focus.
+- Type credentials, queries, and shortcuts directly from your physical keyboard.
+- Scroll smoothly using your mouse wheel.
+
+### 4. Embedded In-Browser Sign In
+Click **`🔑 Sign In`** to authenticate your Google, YouTube, Facebook, GitHub, or X accounts directly inside the OpenBrowser viewport. All session cookies and credentials persist locally in your isolated profile.
+
+---
+
+## 🏗️ Architecture
 
 ```mermaid
 graph TD
@@ -86,63 +152,50 @@ graph TD
 
 ---
 
-## 🛠️ Quick Start
+## 🛡️ Security, Privacy & Compliance
 
-### Prerequisites
-- **Node.js** >= 20.0.0
-- **npm** >= 9.0.0
-- **Google Chrome** or **Chromium** installed
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/fsferdows/OpenBrowser.git
-cd OpenBrowser
-
-# Install dependencies
-npm install
-
-# Run the complete test suite (196 tests across 33 suites)
-npm test
-```
-
-### Running OpenBrowser
-
-```bash
-# 1. Start the Chromium background engine with CDP
-npm run browser:chrome
-
-# 2. In a separate terminal or background, start OpenBrowser
-npm start
-```
-
-Now open **`http://localhost:3000`** in your browser!
+- **OWASP Top 10 for LLM Applications**: Active Prompt Injection Firewall, XML boundary isolation, and canary token leak defense.
+- **Zero Secret Exfiltration**: AES-256-GCM encrypted credential vault with process-wide secret scrubbing across all telemetry.
+- **Strict Human-in-the-Loop Policy**: Financial transactions, credential updates, and destructive operations mandate user approval.
+- **WCAG 2.2 AA & Multi-Language**: Shipped with native English (`en`) and Bangla (`bn`) localization with high-contrast accessibility controls.
 
 ---
 
-## 👨‍💻 Developer & Maintainer
+## 🗺️ Roadmap
 
-- **Lead Developer**: **FS Ferdows**
-- **GitHub**: [@fsferdows](https://github.com/fsferdows)
-- **Email**: `fsferdows@icloud.com`
-- **Repository**: [https://github.com/fsferdows/OpenBrowser](https://github.com/fsferdows/OpenBrowser)
+- [x] Chromium CDP WebSocket Duplex Integration (Port 9222)
+- [x] Heretic Refusal-Free Intelligence with OmniRoute & FreeLLMAPI
+- [x] HackSuite Security Pentesting Workstation (Repeater, Decoder, Analyzer)
+- [x] In-Browser Headless Authentication with Keyboard/Scroll Forwarding
+- [x] Dynamic Live Search Engine (DuckDuckGo + Wikipedia REST API)
+- [ ] Multi-Agent Parallel Swarm Execution
+- [ ] WebAssembly Network Interceptor & Packet Analyzer
+- [ ] Export learned skills directly to autonomous GitHub Actions workflows
 
 ---
 
-## 📋 Production Standards & Compliance
+## 👨‍💻 Developer & Visionary
 
-| Dimension | Specification | Status |
-| :--- | :--- | :--- |
-| **Test Suite** | 196 tests across 33 test suites passing synchronously | ✅ Verified |
-| **Security Baseline** | OWASP ASVS L2 & OWASP Top 10 for LLM Applications | ✅ Enforced |
-| **LLM Eval Harness** | 32 golden task evaluation suite with >=85% success gate | ✅ Passed |
-| **Accessibility** | WCAG 2.2 AA compliant UI design and high-contrast controls | ✅ Verified |
-| **i18n** | Full English (`en`) and Bangla (`bn`) internationalization | ✅ Shipped |
-| **Latency SLO** | Step dispatch p95 < 100ms; cold start < 500ms | ✅ Monitored |
+**OpenBrowser** is created and maintained by:
+
+<p align="left">
+  <b>FS Ferdows</b><br>
+  <i>Remote Senior Design Engineer & AI Architect</i><br>
+  GitHub: <a href="https://github.com/fsferdows">@fsferdows</a><br>
+  Portfolio: <a href="https://www.fsferdows.com">fsferdows.com</a><br>
+  Contact: <a href="mailto:fsferdows@icloud.com">fsferdows@icloud.com</a>
+</p>
+
+---
+
+## ⭐ Star History
+
+If you love the concept of an autonomous, refusal-free browser workstation, give us a star on GitHub!
+
+[![Star History Chart](https://api.star-history.com/svg?repos=fsferdows/OpenBrowser&type=Date)](https://star-history.com/#fsferdows/OpenBrowser&Date)
 
 ---
 
 ## 📄 License
 
-Licensed under the Apache License, Version 2.0. See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) for vendor license disclosures.
+Licensed under the **Apache License, Version 2.0**. See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) for third-party disclosures.
