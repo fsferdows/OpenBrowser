@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+- Interactive Localhost Web Studio:
+  - `scripts/serve-localhost.mjs`: Zero-dependency localhost HTTP & REST server providing static hosting and `/api/run-task`, `/api/status`, `/api/skills` endpoints.
+  - `public/`: Standalone browser studio interface featuring split-screen browser viewport, persistent agent side-panel, real-time telemetry stream, interactive cursor movement, element bounding box highlights, and full English / Bangla localization.
+  - Mock Sandbox Scenarios: Product catalog search (`public/catalog.html`), user registration form (`public/form.html`), and anti-bot CAPTCHA hand-off resolution checkpoint (`public/auth-hand-off.html`).
 - Phase 8 (Continuous Sustainment):
   - `packages/skill-engine/src/skill-migrator.js`: Automated backwards-compatibility engine migrating legacy skill schema versions (`v0.8`, `v0.9`) to canonical `1.0.0` specification.
   - Transparent skill migration during registration in `SkillLibrary.registerSkill`.
