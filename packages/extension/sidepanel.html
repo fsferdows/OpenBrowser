@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agentic Browser Side Panel</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <header class="panel-header" role="banner">
+    <div class="brand">
+      <span class="status-indicator ready" id="status-dot" aria-hidden="true"></span>
+      <h1 class="panel-title">Agentic Browser</h1>
+    </div>
+    <div class="header-actions">
+      <button id="kill-switch-btn" class="btn btn-danger" aria-label="Emergency Stop Agent">Stop</button>
+    </div>
+  </header>
+
+  <main class="panel-content" role="main">
+    <!-- Hand-off Banner -->
+    <section id="handoff-banner" class="handoff-alert hidden" role="alert" aria-live="assertive">
+      <div class="handoff-icon" aria-hidden="true">⚠️</div>
+      <div class="handoff-body">
+        <h2 class="handoff-title" id="handoff-title">User Action Required</h2>
+        <p class="handoff-message" id="handoff-desc">Please complete the CAPTCHA or security prompt on the page. The agent will automatically resume.</p>
+        <button id="handoff-resume-btn" class="btn btn-secondary">I Have Completed It</button>
+      </div>
+    </section>
+
+    <!-- Command Palette Bar -->
+    <section class="command-bar" aria-label="Agent Command Input">
+      <form id="task-form" class="task-form">
+        <label for="task-input" class="visually-hidden">Describe task to perform</label>
+        <div class="input-wrapper">
+          <input 
+            type="text" 
+            id="task-input" 
+            name="task" 
+            placeholder="Describe what to do on this page..." 
+            autocomplete="off" 
+            required 
+          />
+          <button type="button" id="voice-btn" class="btn-icon" aria-label="Toggle Voice Input" title="Voice Input">
+            🎤
+          </button>
+        </div>
+        <div class="form-actions">
+          <button type="submit" id="run-task-btn" class="btn btn-primary">Run Task</button>
+          <button type="button" id="pause-btn" class="btn btn-outline" disabled>Pause</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Execution Plan & Log Stream -->
+    <section class="execution-section" aria-label="Task Execution Stream">
+      <h2 class="section-title">Execution Log</h2>
+      <div id="action-stream" class="action-stream" role="log" aria-live="polite" aria-relevant="additions">
+        <div class="empty-state" id="empty-state">
+          No task running. State a goal above to begin.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="panel-footer" role="contentinfo">
+    <div class="footer-info">
+      <span id="token-counter">Tokens: 0</span>
+      <span id="latency-counter">Latency: 0ms</span>
+    </div>
+  </footer>
+
+  <script src="sidepanel.js" type="module"></script>
+</body>
+</html>

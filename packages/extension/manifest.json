@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Agentic Browser Shell",
+  "version": "0.1.0",
+  "description": "Persistent side panel, command bar, and automation controller for Agentic Browser",
+  "permissions": [
+    "sidePanel",
+    "activeTab",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "Open Agentic Browser Side Panel"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+B",
+        "mac": "Command+Shift+B"
+      },
+      "description": "Toggle Agentic Browser Side Panel"
+    }
+  }
+}

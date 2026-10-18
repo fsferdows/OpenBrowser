@@ -1,0 +1,10 @@
+{
+  "name": "@agentic-browser/extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Manifest V3 persistent side panel and command bar for Agentic Browser",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}
