@@ -1226,35 +1226,34 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // Google Chrome Native Authentication Window API
-  if ((req.method === 'POST' || req.method === 'GET') && pathname === '/api/chrome/login-window') {
+  // Google Chrome In-Browser Embedded Authentication API (Never opens external window)
+  if ((req.method === 'POST' || req.method === 'GET') && (pathname === '/api/chrome/login-window' || pathname === '/api/chrome/login')) {
     try {
       const targetUrl = parsedUrl.searchParams.get('url') || 'https://accounts.google.com/signin';
-      const chromeBin = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-      const userDataDir = process.env.TMPDIR ? `${process.env.TMPDIR}/chrome-cdp-agent-profile` : '/tmp/chrome-cdp-agent-profile';
 
       const isConnected = await chromiumClient.isCdpConnected();
-      if (isConnected) {
-        const targets = await chromiumClient.listTargets();
-        const pageTarget = targets.find(t => t.type === 'page');
-        if (pageTarget) {
-          await chromiumClient.navigateTarget(pageTarget.id, targetUrl);
-        }
-        spawn('open', ['-a', 'Google Chrome'], { stdio: 'ignore' }).unref();
-      } else {
+      if (!isConnected) {
         const scriptPath = join(__dirname, 'scripts', 'launch-chrome-cdp.sh');
         const child = spawn('bash', [scriptPath, targetUrl], {
           detached: true,
           stdio: 'ignore'
         });
         child.unref();
+        await new Promise(r => setTimeout(r, 1200));
+      }
+
+      const targets = await chromiumClient.listTargets();
+      const pageTarget = targets.find(t => t.type === 'page');
+      if (pageTarget) {
+        await chromiumClient.navigateTarget(pageTarget.id, targetUrl);
       }
 
       res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
       res.end(JSON.stringify({
         success: true,
         targetUrl,
-        message: 'Google Chrome Login Window launched! Log in with Google, YouTube, Facebook, or GitHub. Your session cookies and credentials immediately sync into Braver.'
+        mode: 'embedded',
+        message: 'Account sign-in loaded directly inside Braver. Click into input fields and type your credentials.'
       }));
     } catch (err) {
       res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });

@@ -24,6 +24,7 @@ echo "🚀 Launching Google Chrome on CDP port ${PORT}..."
 mkdir -p "$USER_DATA_DIR"
 
 exec "$CHROME_BIN" \
+  --headless=new \
   --remote-debugging-port="${PORT}" \
   --remote-debugging-address=127.0.0.1 \
   --user-data-dir="$USER_DATA_DIR" \
@@ -31,4 +32,8 @@ exec "$CHROME_BIN" \
   --no-default-browser-check \
   --disable-background-networking \
   --disable-sync \
+  --disable-gpu \
+  --disable-blink-features=AutomationControlled \
+  --user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36" \
+  --window-size=1280,800 \
   "${1:-about:blank}"
