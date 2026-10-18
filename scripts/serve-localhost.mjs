@@ -397,6 +397,165 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // REA Live Web Inspection API (Real-Time External URL Analysis)
+  if (req.method === 'GET' && pathname === '/api/rea/live-inspect') {
+    const targetUrl = parsedUrl.searchParams.get('url');
+    if (!targetUrl) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing url query parameter' }));
+      return;
+    }
+
+    try {
+      let finalUrl = targetUrl;
+      if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+        finalUrl = `https://${finalUrl}`;
+      }
+
+      const fetchRes = await fetch(finalUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Brave/124.0.0.0'
+        }
+      });
+      const html = await fetchRes.text();
+      const inspection = reaAdapter.inspectPage(html, finalUrl);
+      const mcpTools = reaAdapter.discoverWebMcpTools(html, finalUrl);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'OK',
+        targetUrl: finalUrl,
+        summary: inspection.summary,
+        interactiveElements: inspection.interactiveElements,
+        discoveredScripts: inspection.discoveredScripts,
+        trackersFound: inspection.trackersFound,
+        webMcp: mcpTools
+      }));
+    } catch (err) {
+      res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: `Live fetch failed: ${err.message}` }));
+    }
+    return;
+  }
+
+  // Live Web Proxy API: Enables rendering any external website inside the Brave Studio iframe
+  // by stripping frame-ancestors/x-frame-options and injecting base href and telemetry hooks
+  if (req.method === 'GET' && pathname === '/api/proxy') {
+    const targetUrl = parsedUrl.searchParams.get('url');
+    if (!targetUrl) {
+      res.writeHead(400, { 'Content-Type': 'text/plain' });
+      res.end('Missing url parameter');
+      return;
+    }
+
+    try {
+      let finalUrl = targetUrl;
+      if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+        finalUrl = `https://${finalUrl}`;
+      }
+
+      const fetchRes = await fetch(finalUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Brave/124.0.0.0',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        }
+      });
+
+      const contentType = fetchRes.headers.get('content-type') || 'text/html';
+
+      if (contentType.includes('text/html')) {
+        let html = await fetchRes.text();
+
+        const baseHref = `<base href="${finalUrl}">`;
+        const bridgeScript = `
+<script>
+  window.__BRAVE_PROXY_URL__ = ${JSON.stringify(finalUrl)};
+  window.addEventListener('DOMContentLoaded', () => {
+    try {
+      window.parent.postMessage({
+        type: 'BRAVE_LIVE_PAGE_LOADED',
+        url: window.__BRAVE_PROXY_URL__,
+        title: document.title,
+        elementCount: document.querySelectorAll('*').length
+      }, '*');
+    } catch (_) {}
+  });
+</script>
+`;
+        if (html.includes('<head>')) {
+          html = html.replace('<head>', `<head>${baseHref}${bridgeScript}`);
+        } else {
+          html = `${baseHref}${bridgeScript}${html}`;
+        }
+
+        res.writeHead(200, {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end(html);
+      } else {
+        const buffer = await fetchRes.arrayBuffer();
+        res.writeHead(200, {
+          'Content-Type': contentType,
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end(Buffer.from(buffer));
+      }
+    } catch (err) {
+      res.writeHead(502, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(`<html><body style="font-family:sans-serif;background:#0f172a;color:#f8fafc;padding:40px;">
+        <h2>🦁 Brave Shield Gateway: Unable to proxy live URL</h2>
+        <p style="color:#ef4444;">${err.message}</p>
+        <p style="color:#94a3b8;">Target: <code>${targetUrl}</code></p>
+      </body></html>`);
+    }
+    return;
+  }
+
+  // Real-Time Server-Sent Events (SSE) Telemetry Stream
+  if (req.method === 'GET' && pathname === '/api/stream') {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*'
+    });
+
+    const sendEvent = async () => {
+      try {
+        const isConnected = await chromiumClient.isCdpConnected();
+        const targets = await chromiumClient.listTargets();
+        const payload = {
+          timestamp: Date.now(),
+          cdp: {
+            connected: isConnected,
+            host: `${chromiumClient.host}:${chromiumClient.port}`,
+            targetsCount: targets.length,
+            targets: targets.map(t => ({ id: t.id, title: t.title, url: t.url, type: t.type }))
+          },
+          memory: {
+            heapUsedMB: (process.memoryUsage().heapUsed / (1024 * 1024)).toFixed(1),
+            rssMB: (process.memoryUsage().rss / (1024 * 1024)).toFixed(1)
+          },
+          shields: shieldsStats,
+          system: {
+            uptimeSec: Math.round(process.uptime()),
+            status: 'ONLINE'
+          }
+        };
+        res.write(`data: ${JSON.stringify(payload)}\n\n`);
+      } catch (_) {}
+    };
+
+    sendEvent();
+    const interval = setInterval(sendEvent, 1000);
+
+    req.on('close', () => {
+      clearInterval(interval);
+    });
+    return;
+  }
+
   // Brave Shields Live Stats API
   if (req.method === 'GET' && pathname === '/api/shields/stats') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -415,10 +574,12 @@ const server = createServer(async (req, res) => {
   // Chromium Targets API (Chromium Basement)
   if (req.method === 'GET' && pathname === '/api/chromium/targets') {
     try {
+      const isConnected = await chromiumClient.isCdpConnected();
       const targets = await chromiumClient.listTargets();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
-        status: 'CONNECTED',
+        status: isConnected ? 'CONNECTED' : 'SIMULATED_FALLBACK',
+        cdpConnected: isConnected,
         basement: 'Chromium CDP Engine',
         host: '127.0.0.1:9222',
         targets

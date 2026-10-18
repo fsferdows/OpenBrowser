@@ -22,6 +22,21 @@ export class ChromiumCdpClient {
   }
 
   /**
+   * Checks whether the live CDP port is responsive.
+   */
+  async isCdpConnected() {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 500);
+      const res = await this.fetchFn(this.getEndpointUrl('/json/version'), { signal: controller.signal });
+      clearTimeout(timer);
+      return res.ok;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /**
    * Discovers active Chromium browser targets.
    * Attempts live CDP /json/list first, falling back to simulated targets.
    */

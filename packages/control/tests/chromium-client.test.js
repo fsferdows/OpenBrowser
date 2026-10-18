@@ -31,4 +31,16 @@ describe('Chromium CDP Client Tests', () => {
     assert.strictEqual(typeRes.typed, true);
     assert.strictEqual(typeRes.textLength, 16);
   });
+
+  it('checks live CDP connection status reliably', async () => {
+    // When port 9222 is closed/offline, returns false cleanly without unhandled rejection
+    const isLive = await client.isCdpConnected();
+    assert.strictEqual(typeof isLive, 'boolean');
+
+    // With a responsive mock fetch function, returns true
+    const mockClient = new ChromiumCdpClient({
+      fetchFn: async () => ({ ok: true, json: async () => ({ Browser: 'Brave/124.0.0.0' }) })
+    });
+    assert.strictEqual(await mockClient.isCdpConnected(), true);
+  });
 });
