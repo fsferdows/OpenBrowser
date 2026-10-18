@@ -439,8 +439,15 @@
     state.activeScenario = 'live';
 
     dom.omnibox.value = targetUrl;
-    dom.viewportTitle.textContent = `Live: ${targetUrl}`;
+    dom.viewportTitle.textContent = `Connecting to ${targetUrl}...`;
     dom.viewportUrlBadge.textContent = targetUrl;
+
+    // Trigger visual progress bar
+    const progressBar = document.getElementById('webview-progress-bar');
+    if (progressBar) {
+      progressBar.classList.remove('hidden', 'done');
+      progressBar.classList.add('loading');
+    }
 
     try {
       const parsed = new URL(targetUrl);
@@ -621,12 +628,43 @@
         switchTab(scenario);
       }
       runAutonomousGoal(goal, scenario || state.activeScenario);
+    } else if (event.data.type === 'BRAVE_SWITCH_MODE') {
+      setViewportMode(event.data.mode || 'cdp');
+      appendLog('system', `⚡ Viewport mode automatically switched to ${event.data.mode?.toUpperCase() || 'CDP'}`);
     } else if (event.data.type === 'BRAVE_LIVE_PAGE_LOADED') {
       appendLog('system', `Live DOM Stream: "${event.data.title || 'Web Target'}" loaded (${event.data.elementCount} elements)`);
       if (event.data.title) {
         dom.viewportTitle.textContent = event.data.title;
       }
     }
+  });
+
+  // Webview lifecycle listeners for smooth navigation progress feedback
+  dom.webview.addEventListener('load', () => {
+    const progressBar = document.getElementById('webview-progress-bar');
+    if (progressBar) {
+      progressBar.classList.remove('loading');
+      progressBar.classList.add('done');
+      setTimeout(() => progressBar.classList.add('hidden'), 500);
+    }
+    try {
+      const doc = dom.webview.contentDocument || dom.webview.contentWindow?.document;
+      if (doc && doc.title && !doc.title.includes('Navigation Connection') && !doc.title.includes('502')) {
+        dom.viewportTitle.textContent = doc.title;
+        const activeTabTitle = document.querySelector('.tab-item.active .tab-title');
+        if (activeTabTitle) activeTabTitle.textContent = doc.title;
+      }
+    } catch (_) {}
+  });
+
+  dom.webview.addEventListener('error', () => {
+    const progressBar = document.getElementById('webview-progress-bar');
+    if (progressBar) {
+      progressBar.classList.remove('loading');
+      progressBar.classList.add('done');
+      setTimeout(() => progressBar.classList.add('hidden'), 500);
+    }
+    appendLog('system', `⚠️ Connection error on live viewport. Suggesting Live Chrome CDP fallback.`);
   });
 
   // ==========================================================================
