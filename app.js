@@ -148,6 +148,14 @@
     btnToggleRea: document.getElementById('btn-toggle-rea'),
     btnToggleLang: document.getElementById('btn-toggle-lang'),
     lblLang: document.getElementById('lbl-lang'),
+    btnCdpStatus: document.getElementById('btn-cdp-status'),
+    cdpStatusDot: document.getElementById('cdp-status-dot'),
+    cdpStatusText: document.getElementById('cdp-status-text'),
+    cdpPopover: document.getElementById('cdp-popover'),
+    btnCdpClose: document.getElementById('btn-cdp-close'),
+    cdpPopoverStatus: document.getElementById('cdp-popover-status'),
+    cdpPopoverTargetCount: document.getElementById('cdp-popover-target-count'),
+    cdpTargetsList: document.getElementById('cdp-targets-list'),
 
     // Viewport
     webview: document.getElementById('browser-webview'),
@@ -186,6 +194,7 @@
   function closeAllPopovers() {
     dom.shieldsPopover.classList.add('hidden');
     dom.sslPopover.classList.add('hidden');
+    if (dom.cdpPopover) dom.cdpPopover.classList.add('hidden');
     dom.rewardsPopover.classList.add('hidden');
     dom.braveMenu.classList.add('hidden');
     dom.searchAutocomplete.classList.add('hidden');
@@ -289,6 +298,32 @@
     }
   });
 
+  function navigateLiveUrl(rawUrl) {
+    let targetUrl = rawUrl.trim();
+    if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+      targetUrl = `https://${targetUrl}`;
+    }
+
+    dom.omnibox.value = targetUrl;
+    dom.viewportTitle.textContent = `Live: ${targetUrl}`;
+    dom.viewportUrlBadge.textContent = targetUrl;
+
+    try {
+      const parsed = new URL(targetUrl);
+      dom.shieldsHostname.textContent = parsed.hostname;
+      dom.sslPopoverHost.textContent = parsed.hostname;
+    } catch (_) {
+      dom.shieldsHostname.textContent = targetUrl;
+    }
+
+    // Load via live web proxy
+    dom.webview.src = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+    appendLog('system', `🌐 Navigating to live web destination via proxy: ${targetUrl}`);
+
+    // Run REA live audit on external URL
+    runReaLiveInspection(targetUrl);
+  }
+
   function handleOmniboxSubmit(val) {
     if (val.startsWith('brave://settings')) {
       openSettingsModal();
@@ -300,6 +335,8 @@
       switchTab('form');
     } else if (val.includes('auth') || val.includes('gate') || val.includes('security')) {
       switchTab('handoff');
+    } else if (val.startsWith('http://') || val.startsWith('https://') || val.startsWith('www.') || val.includes('.com') || val.includes('.org') || val.includes('.net') || val.includes('.io') || val.includes('.edu')) {
+      navigateLiveUrl(val);
     } else {
       // Treat as automated instruction for the autonomous agent!
       appendLog('system', `Search / goal dispatched via Omnibox: "${val}"`);
@@ -317,20 +354,26 @@
 
   // Bookmarks Bar Click Handling
   dom.bookmarksBar.addEventListener('click', (e) => {
-    const chip = e.target.closest('.bookmark-chip:not(.external)');
-    if (chip) {
-      const url = chip.getAttribute('data-url');
-      const scenario = chip.getAttribute('data-scenario');
-      if (scenario === 'repair') {
-        switchTab('catalog');
-        runAutonomousGoal('Demonstrate autonomous self-repair on broken selector', 'repair');
-      } else if (url.includes('catalog')) {
-        switchTab('catalog');
-      } else if (url.includes('form')) {
-        switchTab('form');
-      } else if (url.includes('auth')) {
-        switchTab('handoff');
-      }
+    const chip = e.target.closest('.bookmark-chip');
+    if (!chip) return;
+
+    if (chip.getAttribute('data-live') === 'true') {
+      const liveUrl = chip.getAttribute('data-url');
+      navigateLiveUrl(liveUrl);
+      return;
+    }
+
+    const url = chip.getAttribute('data-url');
+    const scenario = chip.getAttribute('data-scenario');
+    if (scenario === 'repair') {
+      switchTab('catalog');
+      runAutonomousGoal('Demonstrate autonomous self-repair on broken selector', 'repair');
+    } else if (url && url.includes('catalog')) {
+      switchTab('catalog');
+    } else if (url && url.includes('form')) {
+      switchTab('form');
+    } else if (url && url.includes('auth')) {
+      switchTab('handoff');
     }
   });
 
@@ -348,6 +391,11 @@
         switchTab(scenario);
       }
       runAutonomousGoal(goal, scenario || state.activeScenario);
+    } else if (event.data.type === 'BRAVE_LIVE_PAGE_LOADED') {
+      appendLog('system', `Live DOM Stream: "${event.data.title || 'Web Target'}" loaded (${event.data.elementCount} elements)`);
+      if (event.data.title) {
+        dom.viewportTitle.textContent = event.data.title;
+      }
     }
   });
 
@@ -364,6 +412,21 @@
 
   dom.btnSslClose.addEventListener('click', () => {
     dom.sslPopover.classList.add('hidden');
+  });
+
+  // ==========================================================================
+  // 2b. Chromium CDP Status Popover
+  // ==========================================================================
+
+  dom.btnCdpStatus.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isHidden = dom.cdpPopover.classList.contains('hidden');
+    closeAllPopovers();
+    dom.cdpPopover.classList.toggle('hidden', !isHidden);
+  });
+
+  dom.btnCdpClose.addEventListener('click', () => {
+    dom.cdpPopover.classList.add('hidden');
   });
 
   // ==========================================================================
@@ -571,8 +634,39 @@
     } catch (_) {}
   }
 
+  async function runReaLiveInspection(targetUrl) {
+    try {
+      appendLog('system', `🔬 REA initiating live element and beacon audit on: ${targetUrl}`);
+      const res = await fetch(`/api/rea/live-inspect?url=${encodeURIComponent(targetUrl)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+
+      dom.reaInteractiveCount.textContent = data.summary.totalInteractive || 0;
+      dom.reaToolsCount.textContent = data.webMcp ? data.webMcp.toolsCount : 0;
+      dom.reaTrackersCount.textContent = data.summary.trackersDetected || 0;
+      dom.shieldsBadgeCount.textContent = data.summary.trackersDetected || 0;
+      dom.popoverTrackersCount.textContent = data.summary.trackersDetected || 0;
+
+      if (data.webMcp && data.webMcp.tools) {
+        dom.reaMcpTools.innerHTML = data.webMcp.tools.slice(0, 4).map(t => `
+          <div class="tool-contract-item">
+            <code>${t.name}</code>
+            <span>${t.description}</span>
+          </div>
+        `).join('');
+      }
+      appendLog('system', `✔ REA Live Audit: Discovered ${data.summary.totalInteractive} interactive elements, ${data.summary.trackersDetected} tracking beacons.`);
+    } catch (err) {
+      appendLog('system', `REA live inspection error: ${err.message}`);
+    }
+  }
+
   dom.btnRunReaInspect.addEventListener('click', () => {
-    runReaInspection(state.activeScenario);
+    if (dom.omnibox.value.startsWith('http://') || dom.omnibox.value.startsWith('https://')) {
+      runReaLiveInspection(dom.omnibox.value);
+    } else {
+      runReaInspection(state.activeScenario);
+    }
     appendLog('system', `🔬 REA Page Inspection completed on ${dom.shieldsHostname.textContent}`);
   });
 
@@ -873,7 +967,58 @@
     alert('Workflow saved as canonical skill in packages/skill-engine/skills/catalog_order.json!');
   });
 
+  // ==========================================================================
+  // Real-Time Server-Sent Events (SSE) Stream
+  // ==========================================================================
+  function initRealtimeStream() {
+    try {
+      const eventSource = new EventSource('/api/stream');
+
+      eventSource.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+
+          // 1. Update CDP Basement Status
+          if (payload.cdp && dom.btnCdpStatus) {
+            const isConnected = payload.cdp.connected;
+            dom.btnCdpStatus.className = `action-btn cdp-badge ${isConnected ? 'connected' : 'simulated'}`;
+            dom.cdpStatusDot.textContent = isConnected ? '🟢' : '⚪';
+            dom.cdpStatusText.textContent = isConnected ? 'CDP: Live (9222)' : 'CDP: Simulated';
+
+            if (dom.cdpPopoverStatus) {
+              dom.cdpPopoverStatus.textContent = isConnected ? 'Connected to Chromium/Brave CDP' : 'Simulated Fallback (Port 9222 Closed)';
+              dom.cdpPopoverStatus.style.color = isConnected ? '#4ade80' : '#f59e0b';
+            }
+
+            if (dom.cdpPopoverTargetCount) {
+              dom.cdpPopoverTargetCount.textContent = `${payload.cdp.targetsCount} Active Target(s)`;
+            }
+
+            if (payload.cdp.targets && dom.cdpTargetsList) {
+              dom.cdpTargetsList.innerHTML = payload.cdp.targets.map(t => `
+                <div style="padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                  <span style="color: #38bdf8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;">${t.title || 'Tab'}</span>
+                  <span style="color: #94a3b8; font-size: 10px;">${(t.id || '').slice(0, 10)}</span>
+                </div>
+              `).join('');
+            }
+          }
+
+          // 2. Update Shields Stats & Rewards
+          if (payload.shields && dom.lblBatVal) {
+            dom.lblBatVal.textContent = (payload.shields.trackersBlocked * 0.005 + 15.4).toFixed(1);
+          }
+        } catch (_) {}
+      };
+
+      eventSource.onerror = () => {
+        // SSE automatically handles reconnect
+      };
+    } catch (_) {}
+  }
+
   // Initial Boot
   switchTab('newtab');
   runReaInspection('catalog');
+  initRealtimeStream();
 })();

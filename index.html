@@ -122,6 +122,12 @@
           <span class="btn-icon">🌐</span>
           <span class="btn-text" id="lbl-lang">EN</span>
         </button>
+        <!-- Chromium CDP Status Badge -->
+        <button class="action-btn cdp-badge simulated" id="btn-cdp-status" title="Chromium CDP Remote Debugging Basement (Port 9222)">
+          <span class="btn-icon" id="cdp-status-dot">⚪</span>
+          <span class="btn-text" id="cdp-status-text">CDP: Simulated</span>
+        </button>
+
         <button class="action-btn bat-rewards" id="btn-rewards" title="Brave Autonomous Rewards &amp; Credits">
           <span class="btn-icon">🔺</span>
           <span class="btn-text" id="lbl-bat-val">15.4</span>
@@ -139,8 +145,8 @@
       <button class="bookmark-chip" data-url="/auth-hand-off.html">🛡️ Security Gate</button>
       <button class="bookmark-chip" data-url="/catalog.html" data-scenario="repair">🔧 Self-Repair Demo</button>
       <div class="bookmark-separator"></div>
-      <button class="bookmark-chip external" onclick="alert('Navigating simulated external link');">🌐 Wikipedia</button>
-      <button class="bookmark-chip external" onclick="alert('Navigating simulated external link');">🐙 GitHub</button>
+      <button class="bookmark-chip live-web" data-url="https://news.ycombinator.com" data-live="true">📰 Hacker News (Live)</button>
+      <button class="bookmark-chip live-web" data-url="https://en.wikipedia.org/wiki/Brave_(web_browser)" data-live="true">🌐 Wikipedia (Live)</button>
     </div>
   </header>
 
@@ -175,6 +181,43 @@
     </div>
     <div class="ssl-popover-footer">
       <button class="btn-shields-secondary" id="btn-ssl-close">Close</button>
+    </div>
+  </aside>
+
+  <!-- Brave CDP Protocol & Basement Status Popover -->
+  <aside class="ssl-popover hidden" id="cdp-popover" role="dialog" aria-label="Chromium CDP Remote Debugging Connection">
+    <div class="ssl-popover-header">
+      <div class="ssl-status-title">
+        <span class="lock-circle" id="cdp-popover-icon">⚙️</span>
+        <div>
+          <h4 id="cdp-popover-title">CDP Browser Basement</h4>
+          <p id="cdp-popover-subtitle">127.0.0.1:9222</p>
+        </div>
+      </div>
+    </div>
+    <div class="ssl-popover-body">
+      <div class="ssl-info-row">
+        <span>Connection Status:</span>
+        <strong id="cdp-popover-status">Simulated Fallback (Port 9222 Closed)</strong>
+      </div>
+      <div class="ssl-info-row">
+        <span>Real-Time Push Stream:</span>
+        <strong id="cdp-popover-stream" style="color: #4ade80;">Active (Server-Sent Events)</strong>
+      </div>
+      <div class="ssl-info-row">
+        <span>Active Browser Targets:</span>
+        <strong id="cdp-popover-target-count">4 Targets</strong>
+      </div>
+      <div class="cdp-targets-scroll" id="cdp-targets-list" style="margin-top: 8px; max-height: 120px; overflow-y: auto; font-family: monospace; font-size: 11px; background: rgba(0,0,0,0.25); padding: 6px; border-radius: 6px;">
+        <!-- Targets injected dynamically -->
+      </div>
+      <div style="margin-top: 10px; padding: 8px; background: rgba(255, 85, 0, 0.08); border: 1px solid rgba(255, 85, 0, 0.25); border-radius: 6px; font-size: 11px; line-height: 1.4;">
+        <span style="color: #ff5500; font-weight: bold;">To attach real Brave Browser:</span><br>
+        Run in terminal: <code style="color: #fff; background: rgba(0,0,0,0.4); padding: 2px 4px; border-radius: 3px;">npm run browser:brave</code>
+      </div>
+    </div>
+    <div class="ssl-popover-footer">
+      <button class="btn-shields-secondary" id="btn-cdp-close">Close</button>
     </div>
   </aside>
 
