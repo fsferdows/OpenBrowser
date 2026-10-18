@@ -104,72 +104,84 @@ export class AgentStateMachine {
 
     let stepCount = 0;
 
-    while (this.state === AGENT_STATES.RUNNING && stepCount < this.maxSteps) {
-      stepCount++;
+    try {
+      while (this.state === AGENT_STATES.RUNNING && stepCount < this.maxSteps) {
+        stepCount++;
 
-      // 1. Perception
-      const observation = await this.controlDriver.getObservation();
+        // 1. Perception
+        const observation = await this.controlDriver.getObservation();
 
-      // 2. Planning (Gateway inference or deterministic test plan)
-      let planStep;
-      if (mockPlan && mockPlan[stepCount - 1]) {
-        planStep = mockPlan[stepCount - 1];
-      } else {
-        const prompt = [
-          { role: 'system', content: 'You are an autonomous web browser agent. Respond with valid JSON matching gateway schema.' },
-          { role: 'user', content: `Goal: ${goal}\nCurrent Observation:\n${observation.summary}` }
-        ];
-        const gatewayRes = await this.gatewayClient.requestStep(prompt);
-        planStep = gatewayRes.result;
+        // 2. Planning (Gateway inference or deterministic test plan)
+        let planStep;
+        if (mockPlan && mockPlan[stepCount - 1]) {
+          planStep = mockPlan[stepCount - 1];
+        } else {
+          const prompt = [
+            { role: 'system', content: 'You are an autonomous web browser agent. Respond with valid JSON matching gateway schema.' },
+            { role: 'user', content: `Goal: ${goal}\nCurrent Observation:\n${observation.summary}` }
+          ];
+          const gatewayRes = await this.gatewayClient.requestStep(prompt);
+          planStep = gatewayRes.result;
+        }
+
+        // Check for completion action
+        if (planStep.action === ACTIONS.FINISH) {
+          this._setState(AGENT_STATES.COMPLETED);
+          this.onLog('SUCCESS', `Task completed: ${planStep.thought || 'Goal satisfied.'}`);
+          return {
+            status: AGENT_STATES.COMPLETED,
+            totalSteps: stepCount,
+            checkpoints: this.checkpointManager.getCheckpoints()
+          };
+        }
+
+        // 3. Critic Loop Detection
+        const criticCheck = this._criticEvaluate(planStep.action, planStep.target);
+        if (criticCheck.hasLoop) {
+          this._setState(AGENT_STATES.FAILED);
+          this.onLog('CRITIC_FAIL', criticCheck.reason);
+          return {
+            status: AGENT_STATES.FAILED,
+            error: criticCheck.reason,
+            totalSteps: stepCount
+          };
+        }
+
+        // 4. Policy & Confirmation Check
+        if (planStep.risk_level === RISK_LEVELS.CRITICAL || planStep.risk_level === RISK_LEVELS.HIGH) {
+          this.onLog('POLICY', `High-risk action "${planStep.action}" requires operator confirmation.`);
+        }
+
+        // 5. Execution
+        const execResult = await this.controlDriver.executeAction(planStep);
+        this.trajectoryHistory.push(planStep);
+
+        // 6. Verification
+        const postObservation = await this.controlDriver.getObservation();
+        const verified = this._verifyCondition(planStep.expect, postObservation);
+
+        // 7. Checkpoint Commitment
+        this.checkpointManager.saveCheckpoint({
+          action: planStep.action,
+          target: planStep.target,
+          value: planStep.value,
+          observationSummary: postObservation.summary,
+          verifierPassed: verified,
+          riskLevel: planStep.risk_level
+        });
+
+        this.onLog('STEP', `Step ${stepCount} [${planStep.action}]: ${planStep.expected_outcome || 'executed'}`);
       }
-
-      // Check for completion action
-      if (planStep.action === ACTIONS.FINISH) {
-        this._setState(AGENT_STATES.COMPLETED);
-        this.onLog('SUCCESS', `Task completed: ${planStep.thought || 'Goal satisfied.'}`);
-        return {
-          status: AGENT_STATES.COMPLETED,
-          totalSteps: stepCount,
-          checkpoints: this.checkpointManager.getCheckpoints()
-        };
-      }
-
-      // 3. Critic Loop Detection
-      const criticCheck = this._criticEvaluate(planStep.action, planStep.target);
-      if (criticCheck.hasLoop) {
-        this._setState(AGENT_STATES.FAILED);
-        this.onLog('CRITIC_FAIL', criticCheck.reason);
-        return {
-          status: AGENT_STATES.FAILED,
-          error: criticCheck.reason,
-          totalSteps: stepCount
-        };
-      }
-
-      // 4. Policy & Confirmation Check
-      if (planStep.risk_level === RISK_LEVELS.CRITICAL || planStep.risk_level === RISK_LEVELS.HIGH) {
-        this.onLog('POLICY', `High-risk action "${planStep.action}" requires operator confirmation.`);
-      }
-
-      // 5. Execution
-      const execResult = await this.controlDriver.executeAction(planStep);
-      this.trajectoryHistory.push(planStep);
-
-      // 6. Verification
-      const postObservation = await this.controlDriver.getObservation();
-      const verified = this._verifyCondition(planStep.expect, postObservation);
-
-      // 7. Checkpoint Commitment
-      this.checkpointManager.saveCheckpoint({
-        action: planStep.action,
-        target: planStep.target,
-        value: planStep.value,
-        observationSummary: postObservation.summary,
-        verifierPassed: verified,
-        riskLevel: planStep.risk_level
-      });
-
-      this.onLog('STEP', `Step ${stepCount} [${planStep.action}]: ${planStep.expected_outcome || 'executed'}`);
+    } catch (err) {
+      this._setState(AGENT_STATES.FAILED);
+      this.onLog('FAULT', `Runtime fault during task execution: ${err.message}`);
+      return {
+        status: AGENT_STATES.FAILED,
+        error: err.message,
+        faultType: err.name || 'RuntimeFault',
+        totalSteps: stepCount,
+        checkpoints: this.checkpointManager.getCheckpoints()
+      };
     }
 
     if (stepCount >= this.maxSteps && this.state === AGENT_STATES.RUNNING) {

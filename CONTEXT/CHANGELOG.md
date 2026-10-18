@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Phase 8 (Continuous Sustainment):
+  - `packages/skill-engine/src/skill-migrator.js`: Automated backwards-compatibility engine migrating legacy skill schema versions (`v0.8`, `v0.9`) to canonical `1.0.0` specification.
+  - Transparent skill migration during registration in `SkillLibrary.registerSkill`.
+  - Dedicated regression migration test suite (`packages/skill-engine/tests/migration.test.js`).
+  - Monthly Chromium security rebase procedures and failure triage workflows in `docs/RUNBOOKS.md`.
+  - Phase report: `PHASE_REPORT_8.md`.
+  - Comprehensive final release document: `FINAL_REPORT.md`.
+- Phase 7 (Hardening, Chaos Testing, and Release Engineering):
+  - `packages/safety/tests/fuzz.test.js`: 35-test property-based fuzz testing suite covering skill schema, gateway output, i18n interpolation, prompt injection firewall, and encrypted vault against prototype pollution, malformed unicode, and oversized payloads.
+  - `packages/agent-core/tests/chaos.test.js`: 5-test chaos engineering suite simulating mid-flight CDP connection drops, browser tab crashes, DOM element detachments, gateway 429 exhaustion, and step budget timeouts.
+  - `packages/release`: Release management engine implementing `LTS`, `Stable`, and `Beta` channels, staged rollout cohort distribution (5%, 25%, 50%, 100%), installer checksum verification, and automatic rollback triggers (regression > 1.0% in first 2 hours).
+  - `scripts/verify-slo-budgets.mjs`: Automated CI budget verification for cold start (< 500ms), step latency (< 100ms), memory overhead (< 150MB), task success rate (>= 95%), and crash-free session rate (>= 99.5%).
+  - Complete production documentation suite: `README.md`, `docs/USER_GUIDE.md`, `docs/DEVELOPER_GUIDE.md`, `docs/SKILL_AUTHORING_GUIDE.md`, `docs/RUNBOOKS.md`, `docs/DEPRECATION_POLICY.md`, `docs/SUPPORT.md`, `docs/CONTRIBUTING.md`, `docs/CODE_OF_CONDUCT.md`.
+  - Architecture Decision Record `CONTEXT/DECISIONS/ADR-0008-hardening-fuzzing-and-release-engineering.md`.
+  - Phase report: `PHASE_REPORT_7.md`.
 - Phase 6 (Automation, Scheduling, and UX):
   - `packages/scheduler`: Concurrency-bounded job scheduler supporting interval and cron execution, exponential backoff retries, and simulated 24-hour unattended test verification.
   - `packages/shared/src/i18n`: Externalized localization engine shipping English (`en`) and Bangla (`bn`) first with parameter interpolation and RTL text readiness.

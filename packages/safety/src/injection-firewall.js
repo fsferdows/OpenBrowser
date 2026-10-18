@@ -57,6 +57,7 @@ export class PromptInjectionFirewall {
    */
   verifyOutputIntegrity(modelOutputText) {
     if (!this.currentCanary) return { clean: true };
+    if (typeof modelOutputText !== 'string') return { clean: true };
 
     if (modelOutputText.includes(this.currentCanary)) {
       return {

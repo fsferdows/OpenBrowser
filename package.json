@@ -13,7 +13,8 @@
     "security:scan": "node scripts/scan-secrets.mjs",
     "licenses:audit": "node scripts/audit-licenses.mjs",
     "sbom:generate": "node scripts/generate-sbom.mjs",
-    "ci": "npm run security:scan && npm run licenses:audit && npm run lint && npm run test"
+    "slo:verify": "node scripts/verify-slo-budgets.mjs",
+    "ci": "npm run security:scan && npm run licenses:audit && npm run lint && npm run slo:verify && npm run test"
   },
   "engines": {
     "node": ">=20.0.0",

@@ -14,6 +14,10 @@ export class EncryptedVault {
    * Encrypts and stores a credential in the vault.
    */
   setSecret(key, plaintextValue) {
+    if (typeof key !== 'string' || !key || typeof plaintextValue !== 'string') {
+      throw new TypeError('Vault key and plaintextValue must be non-empty strings.');
+    }
+
     const iv = randomBytes(12);
     const cipher = createCipheriv('aes-256-gcm', this.key, iv);
 
@@ -36,6 +40,7 @@ export class EncryptedVault {
    * Retrieves and decrypts a credential in memory for direct CDP field dispatch.
    */
   getSecret(key) {
+    if (typeof key !== 'string' || !key) return null;
     const record = this.entries.get(key);
     if (!record) return null;
 
@@ -52,6 +57,7 @@ export class EncryptedVault {
   }
 
   deleteSecret(key) {
+    if (typeof key !== 'string' || !key) return false;
     const existed = this.entries.delete(key);
     if (existed) {
       this.logAuditEvent('VAULT_DELETE', `Deleted secret for key: ${key}`);

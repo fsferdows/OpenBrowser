@@ -38,6 +38,10 @@ export class ValidationError extends Error {
  * Validates that an object satisfies required fields and types according to the skill specification.
  */
 export function validateSkill(skill) {
+  if (!skill || typeof skill !== 'object' || Array.isArray(skill)) {
+    throw new ValidationError('Skill must be a non-null object.');
+  }
+
   const required = [
     'id', 'name', 'description', 'version', 'schema_version',
     'parameters', 'triggers', 'domains_allowed', 'steps',
@@ -45,16 +49,16 @@ export function validateSkill(skill) {
     'provenance', 'signature', 'changelog'
   ];
 
-  const missing = required.filter(field => !(field in skill));
+  const missing = required.filter(field => !Object.prototype.hasOwnProperty.call(skill, field));
   if (missing.length > 0) {
     throw new ValidationError(`Skill is missing required fields: ${missing.join(', ')}`, missing);
   }
 
-  if (!/^[a-z0-9-]+$/.test(skill.id)) {
+  if (typeof skill.id !== 'string' || !/^[a-z0-9-]+$/.test(skill.id)) {
     throw new ValidationError(`Invalid skill ID format: ${skill.id}. Must be lowercase alphanumeric with hyphens.`);
   }
 
-  if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)/.test(skill.version)) {
+  if (typeof skill.version !== 'string' || !/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(skill.version)) {
     throw new ValidationError(`Invalid semver version: ${skill.version}`);
   }
 
@@ -64,6 +68,9 @@ export function validateSkill(skill) {
 
   for (let i = 0; i < skill.steps.length; i++) {
     const step = skill.steps[i];
+    if (!step || typeof step !== 'object' || Array.isArray(step)) {
+      throw new ValidationError(`Step at index ${i} must be a valid non-null object.`);
+    }
     if (!step.id || !step.action || !step.target || !step.expect || !step.on_fail) {
       throw new ValidationError(`Step at index ${i} is missing required fields (id, action, target, expect, on_fail).`);
     }
@@ -76,8 +83,12 @@ export function validateSkill(skill) {
  * Validates model gateway structured step response.
  */
 export function validateGatewayResponse(response) {
+  if (!response || typeof response !== 'object' || Array.isArray(response)) {
+    throw new ValidationError('Gateway response must be a non-null object.');
+  }
+
   const required = ['thought', 'action', 'target', 'expected_outcome', 'risk_level'];
-  const missing = required.filter(field => !(field in response));
+  const missing = required.filter(field => !Object.prototype.hasOwnProperty.call(response, field));
   if (missing.length > 0) {
     throw new ValidationError(`Gateway response missing required fields: ${missing.join(', ')}`, missing);
   }
@@ -92,3 +103,4 @@ export function validateGatewayResponse(response) {
 
   return true;
 }
+

@@ -1,4 +1,5 @@
 import { validateSkill, ValidationError } from '@agentic-browser/shared';
+import { SkillMigrator } from './skill-migrator.js';
 
 export class SkillLibrary {
   constructor() {
@@ -6,8 +7,9 @@ export class SkillLibrary {
   }
 
   registerSkill(skill) {
-    validateSkill(skill);
-    this.skills.set(skill.id, JSON.parse(JSON.stringify(skill)));
+    const canonicalSkill = SkillMigrator.migrate(skill);
+    validateSkill(canonicalSkill);
+    this.skills.set(canonicalSkill.id, JSON.parse(JSON.stringify(canonicalSkill)));
     return true;
   }
 

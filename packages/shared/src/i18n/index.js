@@ -39,21 +39,37 @@ export class I18nManager {
    * Example: t('token_count', { count: 125 }) -> "Tokens: 125"
    */
   t(key, params = {}) {
+    if (typeof key !== 'string') {
+      return String(key ?? '');
+    }
+
+    const safeParams = (params && typeof params === 'object') ? params : {};
     const localeData = this.locales.get(this.currentLocale);
-    let str = localeData?.strings?.[key];
+    let str = undefined;
+
+    if (localeData && localeData.strings && Object.prototype.hasOwnProperty.call(localeData.strings, key)) {
+      str = localeData.strings[key];
+    }
 
     // Fallback to English if missing in current locale
     if (!str && this.currentLocale !== 'en') {
-      str = this.locales.get('en')?.strings?.[key];
+      const enData = this.locales.get('en');
+      if (enData && enData.strings && Object.prototype.hasOwnProperty.call(enData.strings, key)) {
+        str = enData.strings[key];
+      }
     }
 
     if (!str) {
       return key;
     }
 
-    // Interpolate {paramName}
+    // Interpolate {paramName} safely
     return str.replace(/\{(\w+)\}/g, (_, paramName) => {
-      return params[paramName] !== undefined ? String(params[paramName]) : `{${paramName}}`;
+      if (Object.prototype.hasOwnProperty.call(safeParams, paramName)) {
+        const val = safeParams[paramName];
+        return val !== undefined && val !== null ? String(val) : '';
+      }
+      return `{${paramName}}`;
     });
   }
 }
