@@ -10,7 +10,7 @@ import { PolicyEngine } from '../packages/safety/src/policy-engine.js';
 import { EncryptedVault } from '../packages/safety/src/vault.js';
 import { SkillLibrary, SelfRepairEngine, ReaAnalysisAdapter } from '../packages/skill-engine/src/index.js';
 import { GatewayClient } from '../packages/gateway/src/index.js';
-import { ChromiumCdpClient, TargetResolver, AccessibilityTree, resolveOmniboxDestination, TOP_SITE_MAP } from '../packages/control/src/index.js';
+import { ChromiumCdpClient, TargetResolver, AccessibilityTree, resolveOmniboxDestination, normalizeGoogleUrl, TOP_SITE_MAP } from '../packages/control/src/index.js';
 import { ACTIONS, RISK_LEVELS, i18n } from '../packages/shared/src/index.js';
 import { HereticChatEngine } from '../packages/agent-core/src/heretic-chat-engine.js';
 import { analyzeSecurityPosture } from '../packages/agent-core/src/hacksuite-utils.js';
@@ -840,7 +840,7 @@ const server = createServer(async (req, res) => {
 
   // Live Web Proxy API: Enables rendering any external website inside the Brave Studio iframe
   // by stripping frame-ancestors/x-frame-options and injecting base href and telemetry hooks
-  if (req.method === 'GET' && pathname === '/api/proxy') {
+  if ((req.method === 'GET' || req.method === 'HEAD') && pathname === '/api/proxy') {
     const rawTarget = parsedUrl.searchParams.get('url');
     if (!rawTarget) {
       res.writeHead(400, { 'Content-Type': 'text/plain' });
@@ -849,8 +849,11 @@ const server = createServer(async (req, res) => {
     }
 
     try {
-      const destination = resolveOmniboxDestination(rawTarget);
+      const destination = resolveOmniboxDestination(rawTarget, { embeddable: true });
       let finalUrl = destination.url || rawTarget;
+      if (finalUrl.includes('google.com') || finalUrl.toLowerCase() === 'google') {
+        finalUrl = normalizeGoogleUrl(finalUrl);
+      }
       if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
         finalUrl = `https://${finalUrl}`;
       }

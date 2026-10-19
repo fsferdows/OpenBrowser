@@ -1202,13 +1202,96 @@
       border-radius: 12px;
       border: 1px solid #303134;
     }
+
+    .google-live-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(66, 133, 244, 0.15);
+      border: 1px solid rgba(66, 133, 244, 0.35);
+      color: #8ab4f8;
+      border-radius: 14px;
+      padding: 3px 9px;
+      font-size: 11.5px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    .google-live-btn:hover {
+      background: rgba(66, 133, 244, 0.28);
+      color: #ffffff;
+      border-color: #4285f4;
+    }
+
+    /* Responsive SERP styles */
+    @media (max-width: 992px) {
+      .serp-header {
+        padding: 12px 16px 0 16px;
+      }
+      .header-top-row {
+        gap: 16px;
+        margin-bottom: 12px;
+      }
+      .serp-container {
+        flex-direction: column;
+        padding: 16px;
+        gap: 20px;
+      }
+      .knowledge-column {
+        width: 100% !important;
+        max-width: 100% !important;
+        order: -1;
+      }
+      .results-column {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header-top-row {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .brand-logo {
+        font-size: 22px;
+      }
+      .search-bar-wrapper {
+        order: 3;
+        width: 100%;
+        max-width: 100%;
+      }
+      .header-user-actions {
+        margin-left: auto;
+      }
+      .serp-tabs {
+        overflow-x: auto;
+        white-space: nowrap;
+        gap: 12px;
+        padding-bottom: 8px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .serp-tabs::-webkit-scrollbar {
+        display: none;
+      }
+      .serp-container {
+        padding: 12px 10px;
+      }
+      .images-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+      }
+      .ai-chat-drawer {
+        width: 100% !important;
+      }
+    }
   </style>
 </head>
 <body>
   <!-- SERP Header -->
   <header class="serp-header">
     <div class="header-top-row">
-      <a href="/newtab.html" class="brand-logo" title="Braver Home">
+      <a href="newtab.html" class="brand-logo" title="Braver Home">
         <span class="lion">🦁</span>
         <span>Braver</span>
       </a>
@@ -1223,6 +1306,9 @@
             aria-label="Search"
           />
           <div class="search-icons">
+            <button type="button" class="google-live-btn" id="btn-google-live" title="Search directly on Google Live (igu=1 embeddable)">
+              <span>🟢 Google Live</span>
+            </button>
             <button type="button" class="icon-btn" id="btn-clear-serp" title="Clear search">
               <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
             </button>
@@ -1377,12 +1463,29 @@
   </aside>
 
   <script>
+    function normalizeGoogleUrl(raw) {
+      if (!raw) return raw;
+      try {
+        const url = new URL(raw, window.location.origin);
+        const host = url.hostname.toLowerCase();
+        const isGoogle = host === 'google.com' || host === 'www.google.com' || host.endsWith('.google.com');
+        if (!isGoogle) return raw;
+        if (!url.searchParams.has('igu')) {
+          url.searchParams.set('igu', '1');
+        }
+        return url.toString();
+      } catch {
+        return raw;
+      }
+    }
+
     // Universal URL Navigation
     function navigateToUrl(targetUrl) {
+      const finalUrl = normalizeGoogleUrl(targetUrl);
       if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: targetUrl }, '*');
+        window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: finalUrl }, '*');
       } else {
-        window.location.href = targetUrl;
+        window.location.href = finalUrl;
       }
     }
 
@@ -1635,7 +1738,7 @@
           imagesGrid.innerHTML = data.images.map(img => `
             <div class="image-card" onclick="navigateToUrl('${img.url}')">
               <div class="img-wrapper">
-                <img src="${img.src}" alt="${img.title}" loading="lazy" onerror="this.src='/assets/meta_desk.jpg'" />
+                <img src="${img.src}" alt="${img.title}" loading="lazy" onerror="this.src='assets/meta_desk.jpg'" />
                 <span class="img-dims">${img.dimensions || 'HD'}</span>
               </div>
               <div class="img-meta">
@@ -1767,6 +1870,15 @@
     // Initialize search data
     loadSearchData();
 
+    // Google Live Quick Button
+    document.getElementById('btn-google-live')?.addEventListener('click', () => {
+      const val = document.getElementById('serp-input').value.trim();
+      const googleUrl = val 
+        ? `https://www.google.com/search?igu=1&q=${encodeURIComponent(val)}`
+        : 'https://www.google.com/webhp?igu=1';
+      navigateToUrl(googleUrl);
+    });
+
     // Form submit handler: Direct navigation for URLs and live search for queries
     document.getElementById('serp-search-form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -1779,6 +1891,10 @@
       }
       if (/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?$/.test(val)) {
         navigateToUrl(`https://${val}`);
+        return;
+      }
+      if (/^google(\.com)?$/i.test(val)) {
+        navigateToUrl('https://www.google.com/webhp?igu=1');
         return;
       }
       window.location.search = `?q=${encodeURIComponent(val)}`;

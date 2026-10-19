@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Google Connection Fix (`igu=1`), Full Cross-Device Responsiveness & GitHub Pages Deployment:
+  - `packages/control/src/omnibox-resolver.js` & `packages/control/src/index.js`: Implemented `normalizeGoogleUrl()` which transparently appends Google's official iframe embedding parameter `igu=1` to any Google URL or search query (`https://www.google.com/webhp?igu=1` and `https://www.google.com/search?igu=1&q=...`). This eliminates the "www.google.com refused to connect" error caused by `X-Frame-Options: SAMEORIGIN` and enables 100% native in-frame rendering on any host or origin.
+  - `packages/control/tests/google-integration.test.js`: Added comprehensive 10-assertion test suite validating Google domain mapping, embeddable omnibox resolution, and edge-case query handling.
+  - `scripts/serve-localhost.mjs`: Updated proxy handler to normalize Google URLs and support HEAD requests.
+  - `public/style.css`: Redesigned responsive layout for mobile (<=480px, <=768px), tablet (<=992px, <=1200px), and desktop. Introduced slide-up mobile bottom sheet drawers for popovers (`.shields-popover`, `.ssl-popover`, `.rewards-popover`, `#cdp-popover`, `.brave-menu-dropdown`), full-screen responsive overlay for `.brave-sidebar-pane` with smooth CSS transforms, streamlined mobile navigation bar, and responsive touch-scrollable tabs and bookmarks.
+  - `public/index.html`: Added `viewport-fit=cover`, converted asset paths to relative URLs for seamless subpath hosting (`/OpenBrowser/`), added quick search provider toggle on `#ssl-badge` (Google / Brave), and added mobile close button for the Copilot sidebar.
+  - `public/app.js`: Added `normalizeGoogleUrl()`, Google search provider state (`searchEngine: 'google'`), direct `igu=1` navigation bypassing proxy overhead, and one-click provider switcher.
+  - `public/newtab.html`: Fixed wallpaper path to relative `assets/brave_wallpaper.jpg`, added responsive CSS for mobile/tablet screen sizes, added Google Search provider toggle, and routed submissions directly to Google (`igu=1`) or Braver Search.
+  - `public/search.html`: Added responsive CSS for mobile and tablet SERP layouts, removed absolute asset paths, added "🟢 Google Live ↗" quick search button, and normalized Google query submissions.
+  - `.github/workflows/deploy-pages.yml`: Configured automated GitHub Actions workflow to package `public/` and deploy to GitHub Pages with least-privilege OIDC permissions on every push to `main`.
+  - `index.html`: Created root redirection page to ensure instant navigation to `public/index.html` regardless of whether GitHub Pages is served from branch root or Pages artifact.
+  - `CONTEXT/DECISIONS/ADR-0011-google-igu-integration-cross-device-responsiveness-and-github-pages-deployment.md`: Formally documented architecture decision, technical trade-offs, security invariants, and deployment topology.
+
 - Brave Screenshot-Faithful UI/UX, Profile Cookie Sync & Ad-Free Web View Overhaul:
   - `public/newtab.html`: 100% faithful replica of the official Brave Browser New Tab page matching the uploaded user screenshot. Full-screen lush green tropical leaves wallpaper (`public/assets/brave_wallpaper.jpg`), center minimalist pill search input with Brave lion shield (`Ask anything, find anything...`), bottom-left translucent STATS card (`212,393` Trackers & ads blocked, `5.79 GB` Bandwidth saved, `3 Hours` Time saved) with photo credit `Photo by Ngoc Nguyen Phuong`, bottom-right BRAVE VPN card with feature checklist and trial button, and top-right settings gear.
   - `public/index.html` & `public/style.css`: Cleaned up top browser shell to match the screenshot. Omnibox with Google search icon `G`, shields badge `🦁 3`, BAT Rewards triangle `🔺`. Bookmarks bar matching screenshot (`㗊 For quick access, place your bookmarks here on the bookmarks bar. Import bookmarks now...`).

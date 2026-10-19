@@ -123,12 +123,17 @@
       "id": "phase8-task11",
       "description": "Brave New Tab page matching uploaded user screenshot (lush green leaves wallpaper, centered minimalist search pill, floating STATS card with 212k blocked trackers, and BRAVE VPN widget), default collapsed sidebar for full-screen clean browser view, real macOS Brave and Chrome session cookie sync (/api/chrome/sync-profile), ad-free YouTube experience in Web View, and restored natural mouse cursor in Live Chrome.",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task12",
+      "description": "Fix Google 'refused to connect' error via igu=1 iframe embed normalization, implement full cross-device responsive UI layout (desktop, tablet, mobile), add one-click Google Search provider toggle, and enable automated GitHub Pages deployment.",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
     "OQ-001: Host filesystem capacity is 475MB free; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Verify user acceptance on real authenticated accounts and test workflow recording in the updated New Tab view.",
+  "next_action": "Verify live GitHub Pages deployment URL and monitor real-world autonomous user task execution across mobile and desktop clients.",
   "last_commit": "HEAD"
 }

@@ -73,27 +73,40 @@ export function resolveOmniboxDestination(rawInput, options = {}) {
   // 5. Top site shortcuts (case-insensitive)
   const normalizedKey = input.toLowerCase();
   if (TOP_SITE_MAP[normalizedKey]) {
+    const rawUrl = TOP_SITE_MAP[normalizedKey];
+    const finalUrl = (options.embeddable && normalizedKey.includes('google'))
+      ? normalizeGoogleUrl(rawUrl)
+      : rawUrl;
     return {
       type: 'direct_site',
-      url: TOP_SITE_MAP[normalizedKey],
+      url: finalUrl,
       siteName: normalizedKey
     };
   }
 
   // 6. Domains with TLDs
   if (TLD_REGEX.test(input) && !input.includes(' ')) {
+    const rawDomain = `https://${input}`;
+    const finalDomain = options.embeddable && input.toLowerCase().includes('google.')
+      ? normalizeGoogleUrl(rawDomain)
+      : rawDomain;
     return {
       type: 'domain',
-      url: `https://${input}`
+      url: finalDomain
     };
   }
 
   // 7. Default: Web Search via Brave Search (or configured provider)
   const searchEngine = options.searchEngine || 'brave';
   const encodedQuery = encodeURIComponent(input);
-  const searchUrl = searchEngine === 'google'
-    ? `https://www.google.com/search?q=${encodedQuery}`
-    : `https://search.brave.com/search?q=${encodedQuery}`;
+  let searchUrl;
+  if (searchEngine === 'google') {
+    searchUrl = options.embeddable
+      ? `https://www.google.com/search?igu=1&q=${encodedQuery}`
+      : `https://www.google.com/search?q=${encodedQuery}`;
+  } else {
+    searchUrl = `https://search.brave.com/search?q=${encodedQuery}`;
+  }
 
   return {
     type: 'search',
@@ -102,3 +115,38 @@ export function resolveOmniboxDestination(rawInput, options = {}) {
     query: input
   };
 }
+
+/**
+ * Normalizes Google URLs to include the igu=1 iframe embed parameter.
+ * This prevents "www.google.com refused to connect" error by instructing Google
+ * not to emit X-Frame-Options: SAMEORIGIN.
+ * @param {string} rawUrl 
+ * @returns {string}
+ */
+export function normalizeGoogleUrl(rawUrl) {
+  if (!rawUrl) return rawUrl;
+  const str = rawUrl.trim();
+  const lower = str.toLowerCase();
+  if (lower === 'google' || lower === 'google.com' || lower === 'www.google.com' ||
+      lower === 'https://google.com' || lower === 'https://www.google.com' ||
+      lower === 'http://google.com' || lower === 'http://www.google.com' ||
+      lower === 'https://www.google.com/' || lower === 'https://google.com/') {
+    return 'https://www.google.com/webhp?igu=1';
+  }
+
+  try {
+    const parsed = new URL(str.startsWith('http://') || str.startsWith('https://') ? str : `https://${str}`);
+    if (parsed.hostname === 'google.com' || parsed.hostname === 'www.google.com' || parsed.hostname.endsWith('.google.com')) {
+      if (parsed.pathname === '/' || parsed.pathname === '' || parsed.pathname === '/webhp') {
+        return 'https://www.google.com/webhp?igu=1';
+      }
+      if (!parsed.searchParams.has('igu')) {
+        parsed.searchParams.set('igu', '1');
+      }
+      return parsed.toString();
+    }
+  } catch (_) {}
+
+  return str;
+}
+
