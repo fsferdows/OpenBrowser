@@ -139,3 +139,9 @@ graph LR
 ```
 
 The Agent Core executes outside of the web page renderer context to prevent malicious script injection or page tampering from compromising the automation engine or stored vault credentials.
+
+### 7. In-Browser Standalone GitHub Pages Backend & Universal Web Unblocker (ADR-0012)
+- **Service Worker In-Browser Backend (`public/sw.js`)**: Intercepts `/api/*` network requests directly inside the browser on GitHub Pages. Powers AI Copilot (`/api/ai/chat`), live search (`/api/search`), autonomous task execution (`/api/run-task`), and telemetry without requiring a local Node.js process.
+- **Transparent Client-Side Fetch Router (`public/app.js`)**: Provides an immediate in-memory fallback router wrapping `window.fetch`, guaranteeing that API requests succeed even if Service Workers are restricted (e.g., in private browsing or file origins).
+- **Universal Web Unblocker (`public/portal.html`)**: Prevents "refused to connect" errors on external search results and framing-restricted sites. YouTube videos stream via ad-free responsive players (`https://www.youtube-nocookie.com/embed/...`), and destinations like Facebook render full interactive portals with live feeds, post creators, and independent window launch actions.
+

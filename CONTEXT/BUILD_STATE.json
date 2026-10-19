@@ -133,12 +133,17 @@
       "id": "phase8-task13",
       "description": "Direct Google Search integration across omnibox, New Tab search bar, autocomplete, and SERP forwarding with igu=1; client-side refusal-free Braver AI copilot engine with deep technical breakdown; client-side autonomous agent trajectory synthesis with animated cursor and human handoff; and non-blocking toast notifications replacing browser alert popups.",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task14",
+      "description": "In-browser autonomous backend engine running via Service Worker (sw.js) and transparent client-side fetch router, eliminating localhost requirements on GitHub Pages; and universal web unblocker providing active interactive experiences for YouTube, Facebook, and search results without frame connection refusal errors (ADR-0012).",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
     "OQ-001: Host filesystem capacity is 475MB free; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Deploy updated public assets to gh-pages and verify direct Google search, Braver AI, and autonomous agent execution live on GitHub Pages.",
+  "next_action": "Push in-browser backend engine and universal web unblocker to main and deploy to gh-pages; verify standalone execution on GitHub Pages without localhost.",
   "last_commit": "HEAD"
 }

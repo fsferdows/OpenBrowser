@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- In-Browser GitHub Pages Backend Engine & Universal Web Unblocker (ADR-0012):
+  - `public/sw.js`: Created autonomous in-browser backend Service Worker registered at scope `./`. Intercepts all `/api/*` network requests (`/api/ai/chat`, `/api/search`, `/api/run-task`, `/api/proxy`, `/api/status`, `/api/shields/*`, `/api/gateway/*`, `/api/skills`, `/api/settings`) and services them with complete parity directly inside the browser on GitHub Pages, eliminating any dependency on a local Node.js process (`npm start`).
+  - `public/app.js`: Built transparent in-memory client-side fetch router wrapping `window.fetch`. Guarantees immediate fallback and zero latency even if Service Workers are restricted by private browsing or file origins.
+  - `public/app.js`: Added `fetchInBrowserSearchResults()` querying live Wikipedia REST API with open CORS combined with DuckDuckGo synthesis, knowledge panels, organic results, categorized media, and sitelinks.
+  - `public/portal.html`: Replaced mock placeholder with a full-fledged, live interactive Facebook experience (interactive News Feed, post creator with real-time posting and localStorage persistence, stories carousel, real-time like/comment/share interactions, Facebook Messenger, contacts, and "↗ Open Live on Facebook.com" action).
+  - `public/portal.html`: Added full-featured YouTube Theater & Catalog experience with responsive ad-free video player (`https://www.youtube-nocookie.com/embed/...`), category filter chips, and clickable video grid allowing users to search and stream any video directly inside the browser.
+  - `public/app.js`: Upgraded `navigateLiveUrl` with comprehensive unblocker routing for all popular web destinations (YouTube, Facebook, Twitter/X, GitHub, Reddit, Instagram, etc.). Ensured YouTube videos immediately stream via the responsive embed player with zero ads, and social sites launch active interactive portals. Added fail-safe error and blank iframe handlers so users never see a "refused to connect" dead screen.
+  - `public/newtab.html`: Added direct omnibox shortcuts for YouTube and Facebook, routing users straight into unblocked interactive views.
+  - `packages/control/tests/inbrowser-unblocker.test.js`: Added 4-assertion acceptance test suite verifying embeddable omnibox destination resolution, YouTube embed normalization, and autonomous command parsing.
+
 - Direct Google Search Integration, Client-Side Braver AI Engine & Autonomous Trajectory Synthesis:
   - `public/app.js`: Guaranteed that all browser searches from the omnibox, address bar autocomplete, or internal links resolve directly to Google Search with the verified embed parameter `igu=1` (`https://www.google.com/search?igu=1&q=...`). Replaced internal `search.html` routing with immediate Google redirection.
   - `public/newtab.html`: Updated the main search pill to dispatch searches directly to Google with `igu=1`. Integrated client-side refusal-free Braver AI intelligence engine inside the slide-out Copilot drawer, enabling rich technical explanations, expandable deep dive breakdowns (`details`), Bangla/English responses, and actionable task execution directly on static hosting (GitHub Pages) without server dependencies.
