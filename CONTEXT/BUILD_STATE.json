@@ -153,12 +153,17 @@
       "id": "phase8-task17",
       "description": "Search Bot & Captcha Elimination: Route web searches to native Braver Search SERP (search.html) with full AI Overview, Knowledge Panel, and multi-category media tabs, removing forced Google igu=1 redirects that trigger 'unusual traffic detected' reCAPTCHA challenges. Add unblocked DuckDuckGo webview search and clean external Google tab launch, and preserve internal pages without protocol or proxy mangling.",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task18",
+      "description": "Viewport Refusal Elimination & Graceful CDP Fallback: Resolve CSS parse errors in public/style.css; eliminate 'refused to connect' dead screens on YouTube, GitHub, Facebook, and external sites on GitHub Pages via Shielded Web Portal (portal.html) and Service Worker v2 cache eviction; and replace black CDP offline viewport with graceful recovery card (btn-cdp-return-web, btn-cdp-launch-retry) and auto-return to Web View on omnibox navigation.",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
     "OQ-001: Host filesystem capacity is 475MB free; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Conduct continuous regression verification and test live multi-category SERP queries across desktop and mobile.",
-  "last_commit": "035f5fe"
+  "next_action": "Verify GitHub Pages deployment workflow run and monitor live static webview navigation.",
+  "last_commit": "HEAD"
 }

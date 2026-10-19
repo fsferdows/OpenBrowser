@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Brave Autonomous Browser</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=1.0.3">
 </head>
 <body class="brave-theme dark-mode">
   <!-- Top App Navigation & Window Chrome -->
@@ -495,8 +495,29 @@
         <iframe id="browser-webview" src="newtab.html" title="Browser Tab Viewport"></iframe>
         <!-- Live Google Chrome CDP Screen Stream -->
         <div id="cdp-live-stream-container" class="cdp-live-stream-container hidden" tabindex="0">
-          <img id="cdp-live-stream-img" class="cdp-live-stream-img" src="/api/chrome/screenshot" alt="Live Google Chrome CDP Viewport" />
-          <div class="cdp-stream-overlay">
+          <img id="cdp-live-stream-img" class="cdp-live-stream-img hidden" alt="Live Google Chrome CDP Viewport" />
+          <!-- Graceful CDP Offline & Recovery UI -->
+          <div id="cdp-fallback-card" class="cdp-fallback-card">
+            <div class="cdp-fallback-badge">⚡ CHROME CDP (PORT 9222)</div>
+            <div class="cdp-fallback-icon">⚡</div>
+            <h3 class="cdp-fallback-title">Chrome CDP Stream Offline</h3>
+            <p class="cdp-fallback-desc" id="cdp-fallback-desc">
+              No active Google Chrome instance connected on port 9222.
+            </p>
+            <div class="cdp-fallback-actions">
+              <button type="button" class="btn-cdp-primary" id="btn-cdp-return-web">
+                <span>🌐 Return to Web View</span>
+              </button>
+              <button type="button" class="btn-cdp-secondary" id="btn-cdp-launch-retry">
+                <span>🚀 Launch Chrome CDP</span>
+              </button>
+            </div>
+            <div class="cdp-terminal-hint">
+              <span>Start headless Chrome daemon in terminal:</span>
+              <code>npm run browser:chrome</code>
+            </div>
+          </div>
+          <div class="cdp-stream-overlay" id="cdp-stream-overlay" style="display: none;">
             <span class="cdp-stream-badge">🔴 LIVE CHROME CDP (Port 9222)</span>
             <span class="cdp-interaction-hint">⌨️ Click to focus &amp; type with keyboard • Scroll with mouse wheel</span>
           </div>
@@ -965,6 +986,6 @@ AccessibilityTree:
     </aside>
   </main>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=1.0.3"></script>
 </body>
 </html>

@@ -11,7 +11,7 @@
  * - /api/status, /api/shields/*, /api/gateway/*, /api/skills, /api/settings
  */
 
-const CACHE_NAME = 'openbrowser-backend-v1';
+const CACHE_NAME = 'openbrowser-backend-v2';
 
 // In-Memory Brave Shields Statistics
 let shieldsStats = {
@@ -74,7 +74,15 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((k) => {
+          if (k !== CACHE_NAME) return caches.delete(k);
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('fetch', (event) => {
@@ -583,6 +591,10 @@ async function generateUnblockedHtml(rawTarget) {
         </a>
       </div>
     </body></html>`;
+  }
+
+  if (lower.includes('github.com')) {
+    return `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=portal.html?url=${encodeURIComponent(targetUrl)}&site=github"></head><body>Redirecting to GitHub Shielded Portal...</body></html>`;
   }
 
   // Generic fallback via portal.html

@@ -29,8 +29,9 @@
   // Service Worker Registration for In-Browser Standalone GitHub Execution
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js', { scope: './' })
+      navigator.serviceWorker.register('sw.js?v=2', { scope: './' })
         .then((reg) => {
+          reg.update().catch(() => {});
           console.log('🦁 OpenBrowser In-Browser Backend Service Worker registered:', reg.scope);
         })
         .catch((err) => {
@@ -810,6 +811,12 @@
   function navigateLiveUrl(rawUrl) {
     let targetUrl = (rawUrl || '').trim();
 
+    // Auto-restore Web View mode if user was viewing CDP stream
+    if (state.viewportMode === 'cdp') {
+      setViewportMode('web');
+      appendLog('system', '🌐 Automatically returned to Web View for navigation');
+    }
+
     // Check if destination is internal search SERP
     const isSearchPage = /^\/?search\.html/i.test(targetUrl) || targetUrl.startsWith('brave://search');
     if (isSearchPage) {
@@ -927,10 +934,13 @@
 
     // Determine iframe source:
     // 1. YouTube videos render directly in ad-free nocookie embed player
-    // 2. EVERY OTHER URL (including Google, Facebook, Wikipedia, etc.) routes through universal unblocker proxy (/api/proxy)
-    //    which strips X-Frame-Options and CSP frame-ancestors, eliminating "refused to connect" and bot detection!
+    // 2. On static hosting (GitHub Pages), framing-restricted sites (YouTube home, Facebook, GitHub, etc.)
+    //    route to Shielded Portal (portal.html) with zero tracking and full unblocking!
+    // 3. On localhost with Node server, routes through /api/proxy which strips frame-ancestors and X-Frame-Options!
+    const isStaticHosting = !window.location.port || window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
     const lower = targetUrl.toLowerCase();
     let effectiveSrc;
+
     if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
       let videoId = '';
       try {
@@ -939,9 +949,23 @@
         else if (u.pathname.includes('/embed/')) videoId = u.pathname.split('/embed/')[1] || '';
         else if (u.hostname.includes('youtu.be')) videoId = u.pathname.slice(1) || '';
       } catch (_) {}
-      effectiveSrc = videoId
-        ? `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`
-        : `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+      if (videoId) {
+        effectiveSrc = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
+      } else if (isStaticHosting) {
+        effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=youtube`;
+      } else {
+        effectiveSrc = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+      }
+    } else if (isStaticHosting) {
+      if (lower.includes('facebook.com') || lower.includes('fb.com')) {
+        effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=facebook`;
+      } else if (lower.includes('github.com')) {
+        effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=github`;
+      } else if (lower.includes('google.com') || lower.includes('search.html')) {
+        effectiveSrc = targetUrl;
+      } else {
+        effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}`;
+      }
     } else {
       effectiveSrc = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
     }
@@ -1026,6 +1050,9 @@
 
   function setViewportMode(mode) {
     state.viewportMode = mode;
+    const fallbackCard = document.getElementById('cdp-fallback-card');
+    const streamOverlay = document.getElementById('cdp-stream-overlay');
+
     if (mode === 'cdp') {
       const isStatic = !window.location.port || window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
       if (isStatic) {
@@ -1037,6 +1064,27 @@
       dom.btnModeWeb?.classList.remove('active');
       dom.webview.style.display = 'none';
       dom.cdpLiveStreamContainer?.classList.remove('hidden');
+
+      // Check CDP connection status before streaming
+      fetch('/api/chrome/status')
+        .then(r => r.json())
+        .then(status => {
+          if (status.connected) {
+            fallbackCard?.classList.add('hidden');
+            dom.cdpLiveStreamImg?.classList.remove('hidden');
+            if (streamOverlay) streamOverlay.style.display = 'flex';
+          } else {
+            fallbackCard?.classList.remove('hidden');
+            dom.cdpLiveStreamImg?.classList.add('hidden');
+            if (streamOverlay) streamOverlay.style.display = 'none';
+          }
+        })
+        .catch(() => {
+          fallbackCard?.classList.remove('hidden');
+          dom.cdpLiveStreamImg?.classList.add('hidden');
+          if (streamOverlay) streamOverlay.style.display = 'none';
+        });
+
       refreshCdpStream();
       if (!state.cdpStreamTimer) {
         state.cdpStreamTimer = setInterval(refreshCdpStream, 150);
@@ -1056,15 +1104,28 @@
   }
 
   let cdpFetching = false;
+  let cdpFailures = 0;
   function refreshCdpStream() {
     if (!dom.cdpLiveStreamImg || state.viewportMode !== 'cdp' || cdpFetching) return;
     cdpFetching = true;
     const img = new Image();
     img.onload = () => {
       dom.cdpLiveStreamImg.src = img.src;
+      dom.cdpLiveStreamImg.classList.remove('hidden');
+      document.getElementById('cdp-fallback-card')?.classList.add('hidden');
+      const streamOverlay = document.getElementById('cdp-stream-overlay');
+      if (streamOverlay) streamOverlay.style.display = 'flex';
+      cdpFailures = 0;
       cdpFetching = false;
     };
     img.onerror = () => {
+      cdpFailures++;
+      if (cdpFailures >= 2) {
+        dom.cdpLiveStreamImg.classList.add('hidden');
+        document.getElementById('cdp-fallback-card')?.classList.remove('hidden');
+        const streamOverlay = document.getElementById('cdp-stream-overlay');
+        if (streamOverlay) streamOverlay.style.display = 'none';
+      }
       cdpFetching = false;
     };
     img.src = `/api/chrome/screenshot?t=${Date.now()}`;
@@ -1072,6 +1133,20 @@
 
   dom.btnModeWeb?.addEventListener('click', () => setViewportMode('web'));
   dom.btnModeCdp?.addEventListener('click', () => setViewportMode('cdp'));
+
+  document.getElementById('btn-cdp-return-web')?.addEventListener('click', () => {
+    setViewportMode('web');
+  });
+  document.getElementById('btn-cdp-launch-retry')?.addEventListener('click', () => {
+    fetch('/api/chrome/launch', { method: 'POST' })
+      .then(() => {
+        showToast('🚀 Launching Google Chrome CDP daemon on port 9222...');
+        setTimeout(refreshCdpStream, 800);
+      })
+      .catch(() => {
+        showToast('Terminal command: npm run browser:chrome');
+      });
+  });
 
   // Forward clicks on CDP stream image to Chrome with immediate visual refresh
   dom.cdpLiveStreamImg?.addEventListener('click', (e) => {
@@ -1441,9 +1516,9 @@
       setTimeout(() => progressBar.classList.add('hidden'), 500);
     }
     const raw = state.activeUrl || dom.omnibox.value;
-    if (raw && !dom.webview.src.includes('/api/proxy')) {
-      appendLog('system', '🛡️ Direct connection failed. Automatically unblocking via /api/proxy...');
-      dom.webview.src = `/api/proxy?url=${encodeURIComponent(raw)}`;
+    if (raw && !dom.webview.src.includes('portal.html')) {
+      appendLog('system', `🛡️ Shielded Protection: Direct embedding restricted for ${raw}. Routing to Shielded Web Portal...`);
+      dom.webview.src = `portal.html?url=${encodeURIComponent(raw)}`;
     }
   });
 

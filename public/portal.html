@@ -1118,6 +1118,30 @@
     </div>
 
     <!-- =====================================================================
+         GITHUB SHIELDED PORTAL VIEW
+         ===================================================================== -->
+    <div id="view-github" class="generic-view-wrap" style="display: none;">
+      <div class="generic-card" style="border-color: rgba(240, 246, 252, 0.2);">
+        <div style="font-size: 54px; margin-bottom: 16px;">🐙</div>
+        <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 10px;">GitHub Developer Portal</h2>
+        <p style="color: var(--text-muted); font-size: 14.5px; line-height: 1.6; margin-bottom: 24px;">
+          Explore open-source repositories, developer tools, and code architectures. Shielded Mode protects your GitHub session and tokens from third-party tracking scripts.
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <a href="https://github.com" target="_blank" rel="noopener" class="btn-action" style="background: #238636;">
+            <span>↗ Open Live GitHub</span>
+          </a>
+          <button type="button" class="btn-action btn-secondary" id="gh-search-btn">
+            <span>🔍 Search GitHub Trending</span>
+          </button>
+          <button type="button" class="btn-action" style="background: #6366f1;" id="gh-agent-btn">
+            <span>🤖 Run Autonomous Code Recon</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================================
          GENERIC FRAMING GUARD VIEW
          ===================================================================== -->
     <div id="view-generic" class="generic-view-wrap" style="display: none;">
@@ -1146,7 +1170,7 @@
     const params = new URLSearchParams(window.location.search);
     const targetUrl = params.get('url') || 'https://www.facebook.com';
     const lowerUrl = targetUrl.toLowerCase();
-    const siteKey = params.get('site') || (lowerUrl.includes('facebook') || lowerUrl.includes('fb.com') ? 'facebook' : (lowerUrl.includes('youtube') || lowerUrl.includes('youtu.be') ? 'youtube' : 'generic'));
+    const siteKey = params.get('site') || (lowerUrl.includes('facebook') || lowerUrl.includes('fb.com') ? 'facebook' : (lowerUrl.includes('youtube') || lowerUrl.includes('youtu.be') ? 'youtube' : (lowerUrl.includes('github.com') ? 'github' : 'generic')));
 
     const domainLabel = document.getElementById('target-domain-label');
     const btnOpenReal = document.getElementById('btn-open-real-tab');
@@ -1155,15 +1179,18 @@
 
     const viewFacebook = document.getElementById('view-facebook');
     const viewYoutube = document.getElementById('view-youtube');
+    const viewGithub = document.getElementById('view-github');
     const viewGeneric = document.getElementById('view-generic');
 
     if (siteKey === 'facebook' || lowerUrl.includes('facebook') || lowerUrl.includes('fb.com')) {
       viewFacebook.style.display = 'flex';
       viewYoutube.style.display = 'none';
+      if (viewGithub) viewGithub.style.display = 'none';
       viewGeneric.style.display = 'none';
     } else if (siteKey === 'youtube' || lowerUrl.includes('youtube') || lowerUrl.includes('youtu.be')) {
       viewFacebook.style.display = 'none';
       viewYoutube.style.display = 'flex';
+      if (viewGithub) viewGithub.style.display = 'none';
       viewGeneric.style.display = 'none';
 
       // Check for videoId
@@ -1174,9 +1201,15 @@
           document.getElementById('yt-live-iframe').src = `https://www.youtube-nocookie.com/embed/${v}?autoplay=1`;
         }
       } catch (_) {}
+    } else if (siteKey === 'github' || lowerUrl.includes('github.com')) {
+      viewFacebook.style.display = 'none';
+      viewYoutube.style.display = 'none';
+      if (viewGithub) viewGithub.style.display = 'flex';
+      viewGeneric.style.display = 'none';
     } else {
       viewFacebook.style.display = 'none';
       viewYoutube.style.display = 'none';
+      if (viewGithub) viewGithub.style.display = 'none';
       viewGeneric.style.display = 'flex';
       try {
         const u = new URL(targetUrl);
@@ -1213,11 +1246,27 @@
       navigateToSearch(targetUrl);
     });
 
+    document.getElementById('gh-search-btn')?.addEventListener('click', () => {
+      navigateToSearch('github trending repositories');
+    });
+
+    document.getElementById('gh-agent-btn')?.addEventListener('click', () => {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'BRAVE_RUN_TASK',
+          goal: 'Inspect open-source trending repositories and analyze code security',
+          scenario: 'live'
+        }, '*');
+      } else {
+        showPortalToast('🦁 Autonomous Agent dispatched for GitHub code analysis');
+      }
+    });
+
     document.getElementById('generic-unblock-btn')?.addEventListener('click', () => {
       if (window.parent && window.parent !== window) {
         window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: targetUrl }, '*');
       } else {
-        window.location.href = '/api/proxy?url=' + encodeURIComponent(targetUrl);
+        window.location.href = 'portal.html?url=' + encodeURIComponent(targetUrl);
       }
     });
 

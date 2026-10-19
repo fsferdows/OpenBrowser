@@ -101,11 +101,15 @@ export function resolveOmniboxDestination(rawInput, options = {}) {
   const encodedQuery = encodeURIComponent(input);
   let searchUrl;
   if (searchEngine === 'google') {
-    searchUrl = options.embeddable
-      ? `https://www.google.com/search?igu=1&q=${encodedQuery}`
-      : `https://www.google.com/search?q=${encodedQuery}`;
+    searchUrl = options.useLocalSerp
+      ? `search.html?q=${encodedQuery}&engine=google`
+      : (options.embeddable
+          ? `https://www.google.com/search?igu=1&q=${encodedQuery}`
+          : `https://www.google.com/search?q=${encodedQuery}`);
   } else {
-    searchUrl = `https://search.brave.com/search?q=${encodedQuery}`;
+    searchUrl = options.useLocalSerp
+      ? `search.html?q=${encodedQuery}`
+      : `https://search.brave.com/search?q=${encodedQuery}`;
   }
 
   return {
