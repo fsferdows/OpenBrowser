@@ -842,7 +842,18 @@ const server = createServer(async (req, res) => {
   // Live Web Proxy API: Enables rendering any external website inside the Brave Studio iframe
   // by stripping frame-ancestors/x-frame-options and injecting base href and telemetry hooks
   if ((req.method === 'GET' || req.method === 'HEAD') && pathname === '/api/proxy') {
-    const rawTarget = parsedUrl.searchParams.get('url');
+    let rawTarget = '';
+    if (req.url && req.url.includes('url=')) {
+      const idx = req.url.indexOf('url=');
+      rawTarget = req.url.slice(idx + 4);
+      try {
+        if (/%[0-9a-fA-F]{2}/.test(rawTarget)) {
+          rawTarget = decodeURIComponent(rawTarget);
+        }
+      } catch (_) {}
+    } else {
+      rawTarget = parsedUrl.searchParams.get('url') || '';
+    }
     if (!rawTarget) {
       res.writeHead(400, { 'Content-Type': 'text/plain' });
       res.end('Missing url parameter');
@@ -852,6 +863,15 @@ const server = createServer(async (req, res) => {
     try {
       const destination = resolveOmniboxDestination(rawTarget, { embeddable: true });
       let finalUrl = destination.url || rawTarget;
+      if (finalUrl.includes('google.com/url') || finalUrl.startsWith('/url?') || finalUrl.includes('google.com/goto')) {
+        try {
+          const gu = new URL(finalUrl.startsWith('http') ? finalUrl : `https://www.google.com${finalUrl}`);
+          const destParam = gu.searchParams.get('url') || gu.searchParams.get('q');
+          if (destParam && (destParam.startsWith('http://') || destParam.startsWith('https://'))) {
+            finalUrl = destParam;
+          }
+        } catch (_) {}
+      }
       if (finalUrl.includes('google.com') || finalUrl.toLowerCase() === 'google') {
         finalUrl = normalizeGoogleUrl(finalUrl);
       }
@@ -1047,7 +1067,22 @@ const server = createServer(async (req, res) => {
             }
           });
         } catch (fetchErr) {
-          if (isConnected) {
+          if (finalUrl.startsWith('https://')) {
+            try {
+              const httpFallback = `http://${finalUrl.slice(8)}`;
+              fetchRes = await fetch(httpFallback, {
+                redirect: 'follow',
+                signal: AbortSignal.timeout(6000),
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Brave/124.0.0.0',
+                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                  'Accept-Language': 'en-US,en;q=0.9'
+                }
+              });
+              if (fetchRes) finalUrl = httpFallback;
+            } catch (_) {}
+          }
+          if (!fetchRes && isConnected) {
             try {
               const cdpFallback = await chromiumClient.navigateAndRender(finalUrl, 2000);
               if (cdpFallback && cdpFallback.success && cdpFallback.html && cdpFallback.html.length > 200) {
@@ -1056,7 +1091,7 @@ const server = createServer(async (req, res) => {
               }
             } catch (_) {}
           }
-          if (!html) throw fetchErr;
+          if (!html && !fetchRes) throw fetchErr;
         }
 
         if (fetchRes) {

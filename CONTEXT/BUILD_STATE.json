@@ -168,12 +168,17 @@
       "id": "phase8-task20",
       "description": "Blank Screen & Connection Refusal Elimination: Fix YouTube blank white skeleton screen on Vercel deployments by routing YouTube homepage and channels to the interactive YouTube Theater & Video Catalog (portal.html?url=...&site=youtube), while routing specific video URLs directly to the ad-free nocookie embed player. In api/proxy.js, add automatic 302 redirects for YouTube home, Facebook, and GitHub; rewrite subresource assets (CSS, JS modules) to eliminate CORS blocks; and set status 200 with ALLOWALL on proxy error responses to prevent browser 502 error screens. Bump Service Worker to v4 and cache busters to v=1.0.5.",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task21",
+      "description": "Real-Time Browser Live Proxy Resilience & Navigation Pipeline (ADR-0015): Eliminate 'Proxy Gateway Notice: fetch failed' errors on Vercel and localhost by unwrapping Google /url and /goto redirect URLs directly to destination targets, enabling NODE_TLS_REJECT_UNAUTHORIZED = '0' and automatic protocol fallback (HTTPS to HTTP) with full desktop browser telemetry headers, losslessly preserving multi-parameter query strings, removing forced portal 302 redirects for Facebook and GitHub to allow true live web browsing, updating the injected antiFrameBustShim to intercept all links (including target=_blank) and window.open while dispatching BRAVE_NAVIGATE to keep omnibox and tab title in sync, and passing through 3xx network responses in Service Worker v5.",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
     "OQ-001: Host filesystem capacity is constrained; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Monitor user feedback on YouTube Theater catalog and live web browsing on openbrowser-eosin.vercel.app.",
-  "last_commit": "8c9f46a"
+  "next_action": "Verify user browsing experience across diverse external URLs and search result navigation on openbrowser-eosin.vercel.app.",
+  "last_commit": "baf9fdf"
 }

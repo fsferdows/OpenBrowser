@@ -152,3 +152,10 @@ The Agent Core executes outside of the web page renderer context to prevent mali
 - **Artifact Optimization (`.vercelignore` & `vercel.json`)**: Filters out >6 GB of local vendor source trees (`chromium-main`, `OmniRoute`, `freellmapi`, `rea`) and media assets (`1.mp4`), optimizing deployable payload to ~3.5 MB. Configures `outputDirectory: "public"`, clean URLs, and `Service-Worker-Allowed: /` headers for `public/sw.js`.
 - **Dynamic Host Resolution (`public/app.js`)**: Evaluates `isStaticOnlyHosting` to distinguish static-only GitHub Pages from Vercel deployments and localhost, routing external web navigations directly through `/api/proxy` to deliver seamless live browsing across arbitrary URLs.
 
+### 9. Real-Time Browser Live Proxy Resilience & Navigation Pipeline (ADR-0015)
+- **Search Engine Redirect Unwrapping**: Both `api/proxy.js` and `omnibox-resolver.js` automatically detect and unwrap Google `/url` and `/goto` redirect links, extracting real target URLs (`destParam`) rather than fetching Google redirect warning pages with `igu=1`.
+- **TLS Resilience & Protocol Failover**: Configures `NODE_TLS_REJECT_UNAUTHORIZED = '0'` and dual protocol fallback (HTTPS to HTTP and vice versa) with modern browser telemetry headers (`User-Agent`, `Sec-Ch-Ua`, `Sec-Fetch-Dest: document`), eliminating `fetch failed` connection and handshake aborts.
+- **Parent Bridge & Universal Interception**: Injects an enhanced `antiFrameBustShim` into proxied HTML that intercepts all anchor clicks (including `target="_blank"`), unwraps nested `/api/proxy?url=` loops, intercepts `window.open` and forms, and posts `BRAVE_NAVIGATE` to the parent window to keep the omnibox, active tab title, and navigation history in sync in real time.
+- **Real-Time Live Web View**: Eliminates artificial redirects to `portal.html` for Facebook, GitHub, and external sites on Vercel and localhost, allowing true live web browsing.
+
+

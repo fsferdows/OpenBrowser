@@ -11,7 +11,7 @@
  * - /api/status, /api/shields/*, /api/gateway/*, /api/skills, /api/settings
  */
 
-const CACHE_NAME = 'openbrowser-backend-v4';
+const CACHE_NAME = 'openbrowser-backend-v5';
 
 // In-Memory Brave Shields Statistics
 let shieldsStats = {
@@ -93,7 +93,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith((async () => {
       try {
         const netRes = await fetch(event.request);
-        if (netRes && (netRes.ok || netRes.status === 204 || netRes.status === 304)) {
+        if (netRes && (netRes.ok || (netRes.status >= 300 && netRes.status < 400) || netRes.status === 204 || netRes.status === 304)) {
           return netRes;
         }
       } catch (_) {}

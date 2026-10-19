@@ -84,5 +84,22 @@ describe('Vercel CLI Deployment & Configuration Suite (ADR-0014)', () => {
     assert.strictEqual(statusCode, 200, 'Must return 200 for YouTube video');
     assert.ok(responseBody.includes('youtube-nocookie.com/embed/dQw4w9WgXcQ'), 'Must embed nocookie player');
     assert.strictEqual(headers['X-Frame-Options'], 'ALLOWALL', 'Must allow iframe embedding');
+
+    // Test Google redirect URL unwrapping
+    statusCode = 200;
+    headers = {};
+    responseBody = '';
+
+    const mockReqGoogleRedirect = {
+      query: { url: 'https://www.google.com/url?sa=t&url=https%3A%2F%2Fexample.com' },
+      url: '/api/proxy?url=https%3A%2F%2Fwww.google.com%2Furl%3Fsa%3Dt%26url%3Dhttps%253A%252F%252Fexample.com',
+      method: 'GET'
+    };
+
+    await proxyModule.default(mockReqGoogleRedirect, mockRes);
+    assert.strictEqual(statusCode, 200, 'Must return 200 for unwrapped Google redirect');
+    assert.ok(responseBody.includes('Example Domain'), 'Must render unwrapped destination content');
+    assert.strictEqual(headers['X-Frame-Options'], 'ALLOWALL', 'Must allow embedding');
+    assert.ok(responseBody.includes('handleProxyNavigate'), 'Must inject parent bridge script');
   });
 });

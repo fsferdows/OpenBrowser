@@ -329,6 +329,10 @@
     try {
       const parsed = new URL(str.startsWith('http://') || str.startsWith('https://') ? str : `https://${str}`);
       if (parsed.hostname === 'google.com' || parsed.hostname === 'www.google.com' || parsed.hostname.endsWith('.google.com')) {
+        const destParam = parsed.searchParams.get('url') || parsed.searchParams.get('q');
+        if (destParam && (destParam.startsWith('http://') || destParam.startsWith('https://'))) {
+          return destParam;
+        }
         if (parsed.pathname === '/' || parsed.pathname === '' || parsed.pathname === '/webhp') {
           return 'https://www.google.com/webhp?igu=1';
         }
@@ -952,13 +956,19 @@
       if (videoId) {
         effectiveSrc = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
       } else {
-        effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=youtube`;
+        effectiveSrc = isStaticOnlyHosting
+          ? `portal.html?url=${encodeURIComponent(targetUrl)}&site=youtube`
+          : `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
       }
     } else if (lower.includes('facebook.com') || lower.includes('fb.com')) {
-      effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=facebook`;
+      effectiveSrc = isStaticOnlyHosting
+        ? `portal.html?url=${encodeURIComponent(targetUrl)}&site=facebook`
+        : `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
     } else if (lower.includes('github.com')) {
-      effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=github`;
-    } else if (lower.includes('google.com') || lower.includes('search.html')) {
+      effectiveSrc = isStaticOnlyHosting
+        ? `portal.html?url=${encodeURIComponent(targetUrl)}&site=github`
+        : `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+    } else if (lower.includes('search.html')) {
       effectiveSrc = targetUrl;
     } else {
       effectiveSrc = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;

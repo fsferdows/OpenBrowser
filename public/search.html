@@ -1485,6 +1485,10 @@
         const host = url.hostname.toLowerCase();
         const isGoogle = host === 'google.com' || host === 'www.google.com' || host.endsWith('.google.com');
         if (!isGoogle) return raw;
+        const destParam = url.searchParams.get('url') || url.searchParams.get('q');
+        if (destParam && (destParam.startsWith('http://') || destParam.startsWith('https://'))) {
+          return destParam;
+        }
         if (!url.searchParams.has('igu')) {
           url.searchParams.set('igu', '1');
         }

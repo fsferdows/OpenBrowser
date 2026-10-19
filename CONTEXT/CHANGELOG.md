@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Real-Time Browser Live Proxy Resilience and Navigation Pipeline (ADR-0015):
+  - `api/proxy.js`: Added automatic Google `/url` and `/goto` redirect unwrapping (`finalUrl = destParam`) to directly navigate to target web pages instead of Google's unauthorized redirect warning page. Added `process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'` and protocol fallback (HTTPS to HTTP and vice versa) with complete browser headers (`User-Agent`, `Sec-Ch-Ua`, `Sec-Fetch-Dest`) to eliminate `TypeError: fetch failed` connection drops. Losslessly extracts target URLs from raw query slices without truncating multi-parameter destinations. Removed forced 302 redirects to `portal.html` for Facebook and GitHub to allow real-time live browsing. Injected upgraded `antiFrameBustShim` intercepting all links (including `target="_blank"`), unwrapping nested proxy loops, intercepting `window.open` and forms, and posting `BRAVE_NAVIGATE` to the parent window to keep the omnibox and tab title in sync in real time.
+  - `public/app.js`: Updated `navigateLiveUrl()` so that external web destinations route to the live proxy `/api/proxy` on Vercel and localhost, reserving `portal.html` exclusively for static-only hosting (`github.io`). Updated `normalizeGoogleUrl()` to unwrap search redirect URLs.
+  - `packages/control/src/omnibox-resolver.js`: Added destination unwrapping for Google redirect URLs in `normalizeGoogleUrl()`.
+  - `public/search.html`: Updated `normalizeGoogleUrl()` to extract destination URLs from search result links.
+  - `scripts/serve-localhost.mjs`: Added lossless URL extraction, Google redirect unwrapping, and automatic HTTPS-to-HTTP protocol fallback to the local proxy handler.
+  - `public/sw.js`: Allowed HTTP 3xx redirect responses to pass through from network without falling back to synthetic handlers, and bumped cache version to `openbrowser-backend-v5`.
+  - `packages/release/tests/vercel-deployment.test.js`: Added acceptance tests validating Google redirect unwrapping, live proxy rendering, and parent bridge injection.
+
 - Blank Screen & Connection Refusal Elimination:
   - `public/app.js`: Updated `navigateLiveUrl()` so that YouTube homepage and channel links seamlessly load the interactive YouTube Theater & Video Catalog (`portal.html?url=...&site=youtube`), while individual video URLs stream via the ad-free nocookie embed player, completely eliminating YouTube's blank white skeleton screen. Routed Facebook and GitHub directly to their dedicated interactive shielded portals across all hosting environments. Bumped Service Worker registration to `sw.js?v=4`.
   - `api/proxy.js`: Added automatic HTTP 302 redirects for YouTube homepage/channel URLs, Facebook, and GitHub destinations directly to their dedicated portals, ensuring that even direct proxy requests for complex walled gardens never render blank or broken error states. Set `res.statusCode = 200` with `X-Frame-Options: ALLOWALL` on proxy catch blocks so network failures render a friendly recovery card instead of a browser 502 error screen.
