@@ -1594,8 +1594,14 @@ const server = createServer(async (req, res) => {
         const targetUrl = destination.url || query;
 
         const targets = await chromiumClient.listTargets();
-        const pageTarget = targets.find(t => t.type === 'page');
+        let pageTarget = targets.find(t => t.type === 'page');
+        if (!pageTarget) {
+          try { pageTarget = await chromiumClient.createTarget('about:blank'); } catch (_) {}
+        }
         const targetId = payload.targetId || (pageTarget ? pageTarget.id : 'target-active');
+
+        // Enforce Brave Shields ad-blocking and video skip daemon on CDP target
+        await chromiumClient.enableBraveShields(targetId).catch(() => {});
 
         const navResult = await chromiumClient.navigateTarget(targetId, targetUrl);
         const livePage = await chromiumClient.captureLivePage(targetId);

@@ -5,6 +5,115 @@
  * Modeled after rea-main CdpConnection and CdpBrowserProvider.
  */
 
+export const BRAVE_SHIELDS_BLOCKED_URLS = [
+  '*googlesyndication.com*',
+  '*doubleclick.net*',
+  '*googleadservices.com*',
+  '*adservice.google.*',
+  '*pagead2.googlesyndication.com*',
+  '*securepubads.g.doubleclick.net*',
+  '*adnxs.com*',
+  '*amazon-adsystem.com*',
+  '*criteo.com*',
+  '*criteo.net*',
+  '*taboola.com*',
+  '*outbrain.com*',
+  '*pubmatic.com*',
+  '*rubiconproject.com*',
+  '*openx.net*',
+  '*casalemedia.com*',
+  '*scorecardresearch.com*',
+  '*moatads.com*',
+  '*adroll.com*',
+  '*advertising.com*',
+  '*smartadserver.com*',
+  '*bidswitch.net*',
+  '*yieldmo.com*',
+  '*chartbeat.com*',
+  '*castlereach.com*',
+  '*succeedscene.com*',
+  '*getadmiral.com*',
+  '*facebook.com/tr/*',
+  '*connect.facebook.net/*/fbevents.js*',
+  '*youtube.com/api/stats/ads*',
+  '*youtube.com/pagead/*',
+  '*youtube.com/ptracking*',
+  '*static.doubleclick.net*'
+];
+
+export const BRAVE_SHIELDS_CDP_SCRIPT = `
+(function() {
+  if (window.__BRAVE_SHIELDS_INJECTED__) return;
+  window.__BRAVE_SHIELDS_INJECTED__ = true;
+
+  // 1. Inject Brave Shields Anti-Ad Stylesheet
+  const css = \`
+    ins.adsbygoogle, .adsbygoogle, [id^="google_ads_"], [id*="gpt-ad"],
+    [class*="ad-box"], [class*="advertisement"], [class*="sponsored-post"],
+    .taboola-ad, .outbrain-ad, [id*="taboola"], [class*="outbrain"],
+    .ad-banner, .top-ad, .sidebar-ad, .bottom-ad,
+    ytd-ad-slot-renderer, ytd-in-feed-ad-layout-renderer, ytd-banner-promo-renderer,
+    ytd-statement-banner-renderer, ytd-promoted-video-renderer,
+    #masthead-ad, .video-ads, .ytp-ad-module, .ytp-ad-overlay-container,
+    .ytp-ad-text, .ytp-ad-player-overlay, .ytp-ad-image-overlay,
+    .badge-style-type-ad, .ytd-merch-shelf-renderer,
+    .DCDOr, [class*="a__s1p0xe8r"], div[class*="adblock"], iframe[src*="getadmiral"],
+    .adblock-overlay {
+      display: none !important;
+      visibility: hidden !important;
+      height: 0 !important;
+      min-height: 0 !important;
+      max-height: 0 !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+    html, body {
+      overflow: auto !important;
+      position: static !important;
+    }
+  \`;
+  const style = document.createElement('style');
+  style.id = 'brave-shields-cdp-adblock';
+  style.textContent = css;
+  (document.head || document.documentElement).appendChild(style);
+
+  // 2. Anti-Adblock Defusers
+  window.googletag = window.googletag || { cmd: [], apiReady: true };
+  window.adsbygoogle = window.adsbygoogle || [];
+  window.adsbygoogle.loaded = true;
+  window._afsr = false;
+  window.__tcfapi = function(c, v, cb) { if(cb) cb({ gdprApplies: false }, true); };
+
+  // 3. YouTube Video Ad Fast-Forward & Auto-Skip Daemon
+  setInterval(() => {
+    // Auto-click YouTube skip button if visible
+    const skipBtns = document.querySelectorAll(
+      '.ytp-ad-skip-button, .ytp-skip-ad-button, .ytp-ad-skip-button-modern, ' +
+      '.ytp-ad-overlay-close-button, button.ytp-ad-skip-button-text'
+    );
+    for (const btn of skipBtns) {
+      try { btn.click(); } catch (_) {}
+    }
+
+    // Fast-forward video ads if active
+    const player = document.querySelector('#movie_player, .html5-video-player');
+    const isAd = player && (
+      player.classList.contains('ad-showing') ||
+      player.classList.contains('ad-interrupting') ||
+      document.querySelector('.ytp-ad-player-overlay')
+    );
+    if (isAd) {
+      const video = document.querySelector('video');
+      if (video && !isNaN(video.duration)) {
+        video.muted = true;
+        video.playbackRate = 16.0;
+        video.currentTime = video.duration - 0.1;
+      }
+    }
+  }, 100);
+})();
+`;
+
 export class ChromiumCdpClient {
   constructor(options = {}) {
     this.host = options.host || '127.0.0.1';
@@ -233,6 +342,27 @@ export class ChromiumCdpClient {
   }
 
   /**
+   * Enforces Brave Shields on a CDP target:
+   * 1. Blocks ad networks and tracker domains at the CDP socket layer via Network.setBlockedURLs
+   * 2. Injects CSS ad-hiding rules, anti-adblock defusers, and YouTube ad auto-skippers via Page.addScriptToEvaluateOnNewDocument
+   */
+  async enableBraveShields(targetId) {
+    try {
+      await this.sendCommand(targetId, 'Network.enable');
+      await this.sendCommand(targetId, 'Network.setBlockedURLs', {
+        urls: BRAVE_SHIELDS_BLOCKED_URLS
+      });
+      await this.sendCommand(targetId, 'Page.enable');
+      await this.sendCommand(targetId, 'Page.addScriptToEvaluateOnNewDocument', {
+        source: BRAVE_SHIELDS_CDP_SCRIPT
+      });
+      return { success: true, targetId, shieldsActive: true };
+    } catch (err) {
+      return { success: false, targetId, error: err.message };
+    }
+  }
+
+  /**
    * Navigates a browser target to a URL via Page.navigate.
    */
   async navigateTarget(targetId, url) {
@@ -240,6 +370,9 @@ export class ChromiumCdpClient {
       const t = this.simulatedTargets.get(targetId);
       t.url = url;
     }
+
+    // Ensure Brave Shields is attached to the target before navigating
+    await this.enableBraveShields(targetId).catch(() => {});
 
     try {
       const res = await this.sendCommand(targetId, 'Page.navigate', { url });

@@ -193,13 +193,18 @@
       "id": "phase8-task25",
       "description": "Self-Hosted Real-Time Chrome CDP Auto-Supervision and Viewport Status Synchronization (ADR-0019): Implement autonomous CDP supervisor in scripts/serve-localhost.mjs with automatic stale lockfile cleanup in /tmp/chrome-real-user-profile, background daemon spawning via launch-chrome-cdp.sh, and 10s health heartbeat loop. Implement /api/chrome/status and /api/chrome/health endpoints returning connected status, browser version, target counts, and port 9222. Add target auto-provisioning to /api/chrome/screenshot to guarantee real-time JPEG stream availability for public/app.js without falling back to connection warning cards.",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task26",
+      "description": "Live Chrome Primary Viewport and CDP Brave Shields Ad-Blocking Pipeline (ADR-0020): Configure Live Chrome (CDP) as primary default viewport mode on localhost with direct auto-activation on startup. Implement enableBraveShields in ChromiumCdpClient with CDP socket-layer Network.setBlockedURLs (blocking 32 ad/tracker patterns) and Page.addScriptToEvaluateOnNewDocument (injecting #brave-shields-cdp-adblock stylesheet, GPT/CMP defuser stubs, and continuous YouTube video ad skip daemon). Implement self-pacing double-buffered screencast stream in public/app.js with scheduleNextFrame and failure threshold tolerance (20+), eliminating stream flicker, stutters, and forced webview reversions on navigation.",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
     "OQ-001: Host filesystem capacity is constrained; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Monitor real-time self-hosted session telemetry and expand automated workflows.",
-  "last_commit": "01efc70"
+  "next_action": "Monitor real-time Live Chrome screencast and ad-free navigation.",
+  "last_commit": "d71a70e"
 }
 

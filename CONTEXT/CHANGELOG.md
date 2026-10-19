@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Live Chrome Primary Viewport and CDP Brave Shields Ad-Blocking Pipeline (ADR-0020):
+  - `packages/control/src/chromium-client.js`: Exported `BRAVE_SHIELDS_BLOCKED_URLS` (blocking 32 major ad and tracker networks) and `BRAVE_SHIELDS_CDP_SCRIPT` (injecting `#brave-shields-cdp-adblock` stylesheet, GPT/CMP defusers, and YouTube video ad fast-forward & skip daemon). Implemented `enableBraveShields(targetId)` which invokes `Network.setBlockedURLs` at the CDP socket layer and registers `Page.addScriptToEvaluateOnNewDocument`. Automatically attached Brave Shields during target navigation.
+  - `packages/control/src/index.js`: Re-exported `BRAVE_SHIELDS_BLOCKED_URLS` and `BRAVE_SHIELDS_CDP_SCRIPT`.
+  - `packages/control/tests/cdp-brave-shields.test.js`: Added acceptance tests for CDP blocklist definitions, script injection, socket-level blocking dispatch, and target navigation shielding.
+  - `scripts/serve-localhost.mjs`: Bound `enableBraveShields` into `/api/chrome/navigate` and provisioned page targets automatically to guarantee zero ads and zero navigation failures.
+  - `scripts/launch-chrome-cdp.sh`: Added `--disk-cache-size=20971520` and `--media-cache-size=20971520` to prevent unbounded cache growth on local disks.
+  - `public/app.js`: Configured `viewportMode` to default to `'cdp'` on localhost. Eliminated forced `setViewportMode('web')` reversion on navigation, allowing the browser to stay in Live Chrome mode continuously. Re-engineered `refreshCdpStream` as a self-pacing double-buffered screencast loop (`scheduleNextFrame`) with increased failure tolerance (20+), eliminating stream flicker and stutters.
+  - `public/index.html`: Bumped cache-busting query strings on `style.css` and `app.js` to `?v=1.0.6`.
+
 - Self-Hosted Real-Time Chrome CDP Auto-Supervision and Viewport Status Synchronization (ADR-0019):
   - `scripts/serve-localhost.mjs`: Added autonomous Chrome CDP supervisor (`ensureChromeCdpSupervised`) with automatic stale lockfile cleanup (`SingletonLock`, `SingletonSocket`, `SingletonCookie`) in `/tmp/chrome-real-user-profile`, detached background launch via `launch-chrome-cdp.sh`, and a 10s supervisor heartbeat. Implemented `/api/chrome/status` and `/api/chrome/health` endpoints to report `{ connected, browser, targetsCount, port: 9222, mode: 'self-hosted' }` so that `public/app.js` renders the live stream canvas immediately without displaying the fallback connection card. Added page target auto-provisioning to `/api/chrome/screenshot` to guarantee real-time JPEG stream availability. Updated `/api/chrome/launch` to trigger supervised revival.
   - `scripts/launch-chrome-cdp.sh`: Added automatic stale lock cleanup before invoking Google Chrome binary to prevent profile deadlock.

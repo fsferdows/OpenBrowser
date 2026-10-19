@@ -22,7 +22,7 @@
     tokensEarned: 15.4,
     advancedShieldsOpen: false,
     scriptBlockingActive: false,
-    viewportMode: 'web',
+    viewportMode: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'cdp' : 'web',
     cdpStreamTimer: null
   };
 
@@ -854,10 +854,9 @@
   function navigateLiveUrl(rawUrl) {
     let targetUrl = sanitizeAndRepairUrl(rawUrl);
 
-    // Auto-restore Web View mode if user was viewing CDP stream
+    // Keep Live Chrome active during navigation when running on localhost or in CDP mode
     if (state.viewportMode === 'cdp') {
-      setViewportMode('web');
-      appendLog('system', '🌐 Automatically returned to Web View for navigation');
+      appendLog('system', `⚡ Navigating Live Chrome: ${targetUrl}`);
     }
 
     // Check if destination is internal search SERP
@@ -1019,7 +1018,7 @@
       TAB_DATA[state.activeTabId].iframeSrc = effectiveSrc;
     }
 
-    // Sync to live Google Chrome CDP session in real time
+    // Sync to live Google Chrome CDP session in real time with Brave Shields adblock
     fetch('/api/chrome/navigate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1028,7 +1027,9 @@
       if (data.livePage && data.livePage.elementCount) {
         appendLog('system', `🟢 Google Chrome CDP attached: "${data.livePage.title || 'Page'}" (${data.livePage.elementCount} live DOM nodes)`);
       }
+      scheduleNextFrame(50);
     }).catch(() => {});
+    scheduleNextFrame(50);
 
     // Run REA live audit on external URL
     runReaLiveInspection(targetUrl);
@@ -1125,19 +1126,16 @@
           if (streamOverlay) streamOverlay.style.display = 'none';
         });
 
-      refreshCdpStream();
-      if (!state.cdpStreamTimer) {
-        state.cdpStreamTimer = setInterval(refreshCdpStream, 150);
-      }
+      scheduleNextFrame(0);
       appendLog('system', '⚡ Viewport switched to Live Google Chrome CDP Screen Stream (Port 9222)');
     } else {
       dom.btnModeWeb?.classList.add('active');
       dom.btnModeCdp?.classList.remove('active');
       dom.webview.style.display = 'block';
       dom.cdpLiveStreamContainer?.classList.add('hidden');
-      if (state.cdpStreamTimer) {
-        clearInterval(state.cdpStreamTimer);
-        state.cdpStreamTimer = null;
+      if (nextFrameTimer) {
+        clearTimeout(nextFrameTimer);
+        nextFrameTimer = null;
       }
       appendLog('system', '🌐 Viewport switched to Interactive Web DOM View with Shields & REA');
     }
@@ -1145,10 +1143,20 @@
 
   let cdpFetching = false;
   let cdpFailures = 0;
+  let nextFrameTimer = null;
+
+  function scheduleNextFrame(delay = 60) {
+    if (nextFrameTimer) clearTimeout(nextFrameTimer);
+    if (state.viewportMode === 'cdp') {
+      nextFrameTimer = setTimeout(refreshCdpStream, delay);
+    }
+  }
+
   function refreshCdpStream() {
     if (!dom.cdpLiveStreamImg || state.viewportMode !== 'cdp' || cdpFetching) return;
     cdpFetching = true;
     const img = new Image();
+    const reqTime = Date.now();
     img.onload = () => {
       dom.cdpLiveStreamImg.src = img.src;
       dom.cdpLiveStreamImg.classList.remove('hidden');
@@ -1157,18 +1165,20 @@
       if (streamOverlay) streamOverlay.style.display = 'flex';
       cdpFailures = 0;
       cdpFetching = false;
+      scheduleNextFrame(60);
     };
     img.onerror = () => {
       cdpFailures++;
-      if (cdpFailures >= 2) {
+      if (cdpFailures >= 20) {
         dom.cdpLiveStreamImg.classList.add('hidden');
         document.getElementById('cdp-fallback-card')?.classList.remove('hidden');
         const streamOverlay = document.getElementById('cdp-stream-overlay');
         if (streamOverlay) streamOverlay.style.display = 'none';
       }
       cdpFetching = false;
+      scheduleNextFrame(250);
     };
-    img.src = `/api/chrome/screenshot?t=${Date.now()}`;
+    img.src = `/api/chrome/screenshot?t=${reqTime}`;
   }
 
   dom.btnModeWeb?.addEventListener('click', () => setViewportMode('web'));
@@ -3110,6 +3120,9 @@
   }
 
   switchTab('newtab');
+  if (!isStaticOnBoot) {
+    setViewportMode('cdp');
+  }
   initHackSuite();
   initRealtimeStream();
 })();
