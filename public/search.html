@@ -1505,9 +1505,7 @@
         window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: finalUrl }, '*');
       } else {
         const lower = finalUrl.toLowerCase();
-        if (lower.includes('facebook.com') || lower.includes('fb.com')) {
-          window.location.href = `portal.html?url=${encodeURIComponent(finalUrl)}&site=facebook`;
-        } else if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
+        if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
           let videoId = '';
           try {
             const u = new URL(finalUrl);
@@ -1517,11 +1515,9 @@
           } catch (_) {}
           window.location.href = videoId
             ? `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`
-            : `portal.html?url=${encodeURIComponent(finalUrl)}&site=youtube`;
-        } else if (lower.includes('github.com')) {
-          window.location.href = `portal.html?url=${encodeURIComponent(finalUrl)}&site=github`;
+            : `/api/proxy?url=${encodeURIComponent(finalUrl)}`;
         } else {
-          window.location.href = finalUrl;
+          window.location.href = `/api/proxy?url=${encodeURIComponent(finalUrl)}`;
         }
       }
     }

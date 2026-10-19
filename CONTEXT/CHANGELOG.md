@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Elimination of Mock Templates & Real-Time Live SPA Pipeline (ADR-0017):
+  - `scripts/serve-localhost.mjs`: Completely removed hardcoded mock HTML catalog ("YouTube - Braver Clean Web View" with 4 static cards and Rick Astley links). Maintained official ad-free nocookie embed player exclusively for explicit video IDs (`/watch?v=...`), allowing all general YouTube visits (homepage, search results, channels) to fall through to real-time live upstream fetching or Chromium CDP rendering. Added support for `POST` proxying and buffering of request payloads. Injected transparent client-side SPA `window.fetch` and `XMLHttpRequest.prototype.open` proxy hooks into `bridgeScript` so relative/cross-origin API calls resolve against `window.__BRAVE_PROXY_URL__` and route through `/api/proxy`, eliminating SPA CORS blocks and 404s.
+  - `api/proxy.js`: Removed hardcoded mock HTML catalog ("YouTube - OpenBrowser Theater"). Allowed non-video YouTube URLs to fall through to live web fetching with `<base href>` and `antiFrameBustShim`. Injected client-side SPA `fetch` and `XMLHttpRequest` proxy hooks into `antiFrameBustShim`.
+  - `public/portal.html`: Eliminated all fake/demo mock cards and simulated Facebook newsfeed posts. Replaced them with authentic Shielded Gateway notices providing direct `[ ⚡ Unblock in Browser ]`, `[ ↗ Open Live Website ]`, and Google/YouTube search.
+  - `public/search.html`: Updated `navigateToUrl` to route standalone navigation directly to `/api/proxy` rather than hardcoded `portal.html` redirects.
+  - `public/app.js`: Restricted `dom.webview` error redirect to `portal.html` exclusively to static GitHub Pages hosting, ensuring localhost and Vercel environments always render through the live proxy pipeline.
+  - `packages/release/tests/vercel-deployment.test.js`: Updated acceptance test suite to assert the permanent absence of mock theater templates and assert successful live YouTube proxy rendering.
+
 - Real-Time Browser Universal Navigation & Subresource Optimization (ADR-0016):
   - `api/proxy.js`: Added query and keyword resolution in serverless proxy, redirecting non-URL searches (e.g. `apple`, `how to code`) via 302 to `/search.html?q=...` instead of triggering `TypeError: fetch failed (ENOTFOUND)`. Added top-sites mapping for direct keywords. Added full YouTube Theater & Catalog view for YouTube home/search visits, preventing blank white screen in iframes. Discontinued recursive proxying of `<script src>` and `<link href>` tags, relying on `<base href>` and stripped `crossorigin`/`integrity` so subresources load directly from origin CDNs with zero proxy congestion. Added percent-decoding for redirect targets.
   - `scripts/serve-localhost.mjs`: Removed recursive script and stylesheet proxy rewriting. Added percent-decoding to Google redirect target unwrapping.

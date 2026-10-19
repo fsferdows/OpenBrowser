@@ -115,7 +115,7 @@ describe('Vercel CLI Deployment & Configuration Suite (ADR-0014)', () => {
     assert.strictEqual(statusCode, 302, 'Must return 302 for non-URL search query');
     assert.ok(headers['Location'].includes('search.html?q='), 'Must redirect query to Braver Search');
 
-    // Test YouTube home & catalog view
+    // Test YouTube live home view (must fetch live page and never return mock theater)
     statusCode = 200;
     headers = {};
     responseBody = '';
@@ -127,8 +127,9 @@ describe('Vercel CLI Deployment & Configuration Suite (ADR-0014)', () => {
     };
 
     await proxyModule.default(mockReqYouTubeHome, mockRes);
-    assert.strictEqual(statusCode, 200, 'Must return 200 for YouTube home view');
-    assert.ok(responseBody.includes('YouTube - OpenBrowser Theater'), 'Must render YouTube Theater view');
-    assert.ok(responseBody.includes('Brave Shields: Zero-Ad Embed Active'), 'Must display ad-free badge');
+    assert.strictEqual(statusCode, 200, 'Must return 200 for live YouTube');
+    assert.ok(!responseBody.includes('YouTube - OpenBrowser Theater'), 'Must never render fake demo theater catalog');
+    assert.ok(responseBody.includes('base href="https://www.youtube.com"'), 'Must inject base href for live site assets');
+    assert.ok(responseBody.includes('YouTube') || responseBody.includes('youtube'), 'Must render real YouTube content');
   });
 });

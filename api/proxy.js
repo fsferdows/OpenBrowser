@@ -119,6 +119,10 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
 
     if (videoId) {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('X-Frame-Options', 'ALLOWALL');
+      res.setHeader('Access-Control-Allow-Origin', '*');
       return res.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>YouTube Video Player - OpenBrowser</title>
       <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -140,107 +144,6 @@ export default async function handler(req, res) {
       <div class="yt-player-wrap">
         <iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
       </div></body></html>`);
-    } else {
-      // Interactive YouTube Clean Home & Search View
-      const query = searchQuery || '';
-      return res.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>YouTube - OpenBrowser Theater</title>
-      <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #0f0f0f; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; }
-        .yt-header { position: sticky; top: 0; z-index: 100; height: 56px; background: #0f0f0f; border-bottom: 1px solid #272727; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; gap: 16px; }
-        .yt-logo { font-size: 18px; font-weight: 700; color: #ff0000; display: flex; align-items: center; gap: 6px; text-decoration: none; }
-        .yt-logo span { color: #fff; }
-        .yt-search-form { display: flex; max-width: 600px; flex: 1; margin: 0 20px; }
-        .yt-search-input { flex: 1; background: #121212; border: 1px solid #303030; border-radius: 20px 0 0 20px; padding: 8px 16px; color: #fff; font-size: 14px; outline: none; }
-        .yt-search-input:focus { border-color: #3ea6ff; }
-        .yt-search-btn { background: #222222; border: 1px solid #303030; border-left: none; border-radius: 0 20px 20px 0; padding: 0 18px; color: #fff; cursor: pointer; }
-        .yt-badge { font-size: 11px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; padding: 4px 10px; border-radius: 6px; font-weight: 600; }
-        .yt-chips { display: flex; gap: 8px; padding: 12px 16px; overflow-x: auto; background: #0f0f0f; border-bottom: 1px solid #1f1f1f; }
-        .chip { background: #272727; color: #fff; border: none; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
-        .chip.active, .chip:hover { background: #fff; color: #000; }
-        .yt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; padding: 20px 16px; max-width: 1600px; margin: 0 auto; }
-        .video-card { display: flex; flex-direction: column; gap: 8px; cursor: pointer; text-decoration: none; color: inherit; transition: transform 0.15s ease; }
-        .video-card:hover { transform: translateY(-2px); }
-        .thumb-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: #222; border-radius: 10px; overflow: hidden; }
-        .thumb-wrap img { width: 100%; height: 100%; object-fit: cover; }
-        .badge-live { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.8); color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
-        .video-info { display: flex; gap: 10px; margin-top: 4px; }
-        .channel-avatar { width: 36px; height: 36px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
-        .video-title { font-size: 14px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .video-meta { font-size: 12px; color: #aaa; margin-top: 2px; }
-      </style></head><body>
-        <header class="yt-header">
-          <a href="/api/proxy?url=https://www.youtube.com" class="yt-logo">▶ <span>YouTube</span></a>
-          <form class="yt-search-form" action="/api/proxy" method="GET">
-            <input type="hidden" name="url" value="https://www.youtube.com/results">
-            <input type="text" name="search_query" class="yt-search-input" placeholder="Search YouTube Videos & Channels..." value="${query.replace(/"/g, '&quot;')}">
-            <button type="submit" class="yt-search-btn">🔍</button>
-          </form>
-          <span class="yt-badge">🛡️ Brave Shields: Zero-Ad Embed Active</span>
-        </header>
-        <div class="yt-chips">
-          <button class="chip active" onclick="location.href='/api/proxy?url=https://www.youtube.com'">All</button>
-          <button class="chip" onclick="location.href='/api/proxy?url=https://www.youtube.com/results?search_query=technology'">Technology</button>
-          <button class="chip" onclick="location.href='/api/proxy?url=https://www.youtube.com/results?search_query=coding+programming'">Coding</button>
-          <button class="chip" onclick="location.href='/api/proxy?url=https://www.youtube.com/results?search_query=ai+agents'">AI & Agents</button>
-          <button class="chip" onclick="location.href='/api/proxy?url=https://www.youtube.com/results?search_query=cybersecurity'">Cybersecurity</button>
-          <button class="chip" onclick="location.href='/api/proxy?url=https://www.youtube.com/results?search_query=nature+relax'">Nature & Music</button>
-        </div>
-        <main class="yt-grid">
-          <a href="/api/proxy?url=https://www.youtube.com/watch?v=dQw4w9WgXcQ" class="video-card">
-            <div class="thumb-wrap">
-              <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80" alt="Building Next-Gen Autonomous AI Agents" />
-              <span class="badge-live">18:42</span>
-            </div>
-            <div class="video-info">
-              <div class="channel-avatar">AI</div>
-              <div>
-                <div class="video-title">Building Next-Gen Autonomous AI Agents: Complete Full-Stack Architecture</div>
-                <div class="video-meta">AI Engineering • 420K views • 2 days ago</div>
-              </div>
-            </div>
-          </a>
-          <a href="/api/proxy?url=https://www.youtube.com/watch?v=dQw4w9WgXcQ" class="video-card">
-            <div class="thumb-wrap">
-              <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80" alt="Cybersecurity & Zero-Trust Web Architecture" />
-              <span class="badge-live">24:15</span>
-            </div>
-            <div class="video-info">
-              <div class="channel-avatar" style="background: #10b981;">SEC</div>
-              <div>
-                <div class="video-title">Cybersecurity Defense & Zero-Trust Web Security: Real-World Masterclass</div>
-                <div class="video-meta">CyberSec Lab • 185K views • 4 days ago</div>
-              </div>
-            </div>
-          </a>
-          <a href="/api/proxy?url=https://www.youtube.com/watch?v=dQw4w9WgXcQ" class="video-card">
-            <div class="thumb-wrap">
-              <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" alt="Modern Web Standards & High-Performance Browsers" />
-              <span class="badge-live">12:30</span>
-            </div>
-            <div class="video-info">
-              <div class="channel-avatar" style="background: #8b5cf6;">WEB</div>
-              <div>
-                <div class="video-title">Modern Web Standards & High-Performance Embedded Browsers in 2026</div>
-                <div class="video-meta">Frontend Deep Dive • 95K views • 1 week ago</div>
-              </div>
-            </div>
-          </a>
-          <a href="/api/proxy?url=https://www.youtube.com/watch?v=dQw4w9WgXcQ" class="video-card">
-            <div class="thumb-wrap">
-              <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80" alt="Relaxing Lofi Coding Beats & Deep Focus" />
-              <span class="badge-live">LIVE</span>
-            </div>
-            <div class="video-info">
-              <div class="channel-avatar" style="background: #f59e0b;">♫</div>
-              <div>
-                <div class="video-title">Relaxing Lofi Coding Beats & Deep Focus • 24/7 Radio</div>
-                <div class="video-meta">Chill Beats • 2.8K watching</div>
-              </div>
-            </div>
-          </a>
-        </main>
-      </body></html>`);
     }
   }
 
@@ -345,6 +248,42 @@ export default async function handler(req, res) {
     Object.defineProperty(window, 'top', { get: () => window.self, configurable: true });
     Object.defineProperty(window, 'parent', { get: () => window.self, configurable: true });
   } catch (_) {}
+
+  // Transparent client-side SPA API proxy hook
+  (function() {
+    var origFetch = window.fetch;
+    if (typeof origFetch === 'function') {
+      window.fetch = function(res, init) {
+        try {
+          var u = typeof res === 'string' ? res : (res && res.url ? res.url : '');
+          if (u && typeof u === 'string' && !u.startsWith('data:') && !u.startsWith('blob:') && !u.startsWith('/api/proxy')) {
+            var base = ${JSON.stringify(effectiveUrl)};
+            var resolved = new URL(u, base).href;
+            if (typeof res === 'string') {
+              res = '/api/proxy?url=' + encodeURIComponent(resolved);
+            } else if (res && res.url) {
+              res = new Request('/api/proxy?url=' + encodeURIComponent(resolved), init || res);
+            }
+          }
+        } catch (_) {}
+        return origFetch.call(this, res, init);
+      };
+    }
+    var origXHR = window.XMLHttpRequest;
+    if (origXHR && origXHR.prototype && origXHR.prototype.open) {
+      var origOpen = origXHR.prototype.open;
+      origXHR.prototype.open = function(m, u, ...rest) {
+        try {
+          if (u && typeof u === 'string' && !u.startsWith('data:') && !u.startsWith('blob:') && !u.startsWith('/api/proxy')) {
+            var base = ${JSON.stringify(effectiveUrl)};
+            var resolved = new URL(u, base).href;
+            u = '/api/proxy?url=' + encodeURIComponent(resolved);
+          }
+        } catch (_) {}
+        return origOpen.call(this, m, u, ...rest);
+      };
+    }
+  })();
 
   function handleProxyNavigate(destUrl) {
     if (!destUrl || destUrl.startsWith('javascript:') || destUrl.startsWith('#')) return;

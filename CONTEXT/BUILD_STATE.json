@@ -178,12 +178,17 @@
       "id": "phase8-task22",
       "description": "Real-Time Browser Universal Navigation & Subresource Optimization (ADR-0016): Fix 'Proxy Gateway Notice: fetch failed' on non-URL search queries by adding search query detection and 302 redirection to Braver Search in api/proxy.js. Add full YouTube Theater & Catalog view for YouTube home visits to eliminate blank white screen. Discontinue recursive proxying of script and stylesheet tags, injecting base href and stripping crossorigin/integrity so subresources load directly from origin CDNs without exhausting serverless function concurrency limits. Add percent-decoding to Google redirect destination extraction across all packages.",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task23",
+      "description": "Elimination of Mock Templates & Real-Time Live SPA Pipeline (ADR-0017): Completely remove hardcoded mock catalogs ('YouTube - Braver Clean Web View' and 'YouTube - OpenBrowser Theater') and simulated Facebook feeds. Allow all non-video YouTube URLs, search queries, and channels to fall through to live web fetching or Chromium CDP rendering, while retaining official nocookie embed player for watch URLs. Support POST method in proxy handlers and inject transparent client-side SPA window.fetch and XMLHttpRequest proxy hooks into bridgeScript and antiFrameBustShim to route dynamic API calls through /api/proxy.",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
     "OQ-001: Host filesystem capacity is constrained; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Commit and push ADR-0016 changes and verify live browsing on Vercel production deployment openbrowser-eosin.vercel.app.",
-  "last_commit": "38d007a"
+  "next_action": "Commit and push ADR-0017 changes and verify live browsing without any mock templates on Vercel deployment.",
+  "last_commit": "2c33c64"
 }

@@ -831,197 +831,24 @@
     <!-- =====================================================================
          FACEBOOK INTERACTIVE FEED & PORTAL
          ===================================================================== -->
-    <div id="view-facebook" class="fb-app-wrapper" style="display: none;">
-      <!-- Facebook Navigation Bar -->
-      <nav class="fb-top-nav">
-        <div class="fb-nav-left">
-          <a href="#" class="fb-logo-icon">f</a>
-          <div class="fb-search-bar">
-            <span>🔍</span>
-            <input type="text" class="fb-search-input" id="fb-search-input" placeholder="Search Facebook..." />
-          </div>
+    <div id="view-facebook" class="generic-view-wrap" style="display: none;">
+      <div class="generic-card">
+        <div style="font-size: 54px; margin-bottom: 16px;">👥</div>
+        <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 10px;">Facebook Web Gateway</h2>
+        <p style="color: var(--text-muted); font-size: 14.5px; line-height: 1.6; margin-bottom: 24px;">
+          Facebook requires user authentication and restricts direct frame embedding. You can browse directly via our live web proxy, open Facebook in a dedicated tab, or run autonomous agent reconnaissance.
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <button type="button" class="btn-action" style="background: #1877f2;" id="fb-unblock-proxy-btn">
+            <span>⚡ Unblock in Browser</span>
+          </button>
+          <a href="https://www.facebook.com" target="_blank" rel="noopener" class="btn-action" id="fb-open-real-btn">
+            <span>↗ Open Live Facebook</span>
+          </a>
+          <button type="button" class="btn-action btn-secondary" id="fb-search-btn">
+            <span>🔍 View Search Dossier</span>
+          </button>
         </div>
-        <div class="fb-nav-center">
-          <div class="fb-tab-item active" title="Home">🏠</div>
-          <div class="fb-tab-item" title="Watch" onclick="showPortalToast('Navigating to Facebook Watch...')">📺</div>
-          <div class="fb-tab-item" title="Marketplace" onclick="showPortalToast('Opening Marketplace...')">🏪</div>
-          <div class="fb-tab-item" title="Groups" onclick="showPortalToast('Opening Groups...')">👥</div>
-          <div class="fb-tab-item" title="Gaming" onclick="showPortalToast('Opening Gaming...')">🎮</div>
-        </div>
-        <div class="fb-nav-right">
-          <button class="fb-circle-btn" title="Messenger" onclick="toggleMessenger()">💬</button>
-          <button class="fb-circle-btn" title="Notifications" onclick="showPortalToast('You have 3 unread notifications')">🔔</button>
-          <div class="fb-user-avatar" style="width: 36px; height: 36px; cursor: pointer;" title="Profile">FB</div>
-        </div>
-      </nav>
-
-      <!-- Facebook Body Layout -->
-      <div class="fb-body-layout">
-        <!-- Left Column: Navigation Shortcuts -->
-        <aside class="fb-left-sidebar">
-          <div class="fb-sidebar-item">
-            <div class="fb-user-avatar" style="width: 32px; height: 32px;">U</div>
-            <span>User Profile</span>
-          </div>
-          <div class="fb-sidebar-item" onclick="showPortalToast('Browsing Friends list...')">
-            <span class="fb-sidebar-icon">👥</span>
-            <span>Friends</span>
-          </div>
-          <div class="fb-sidebar-item" onclick="showPortalToast('Loading Feeds...')">
-            <span class="fb-sidebar-icon">📰</span>
-            <span>Feeds</span>
-          </div>
-          <div class="fb-sidebar-item" onclick="showPortalToast('Loading Groups...')">
-            <span class="fb-sidebar-icon">🤝</span>
-            <span>Groups</span>
-          </div>
-          <div class="fb-sidebar-item" onclick="showPortalToast('Opening Marketplace...')">
-            <span class="fb-sidebar-icon">🛒</span>
-            <span>Marketplace</span>
-          </div>
-          <div class="fb-sidebar-item" onclick="showPortalToast('Opening Memories...')">
-            <span class="fb-sidebar-icon">⏰</span>
-            <span>Memories</span>
-          </div>
-          <div class="fb-sidebar-item" onclick="showPortalToast('Opening Saved Posts...')">
-            <span class="fb-sidebar-icon">🔖</span>
-            <span>Saved</span>
-          </div>
-        </aside>
-
-        <!-- Center Column: News Feed -->
-        <section class="fb-feed-column">
-          <!-- Stories Carousel -->
-          <div class="fb-stories-strip">
-            <div class="fb-story-card" style="background: linear-gradient(180deg, #1e293b, #0f172a); display: flex; flex-direction: column; align-items: center; justify-content: center;">
-              <span style="font-size: 28px; color: #3b82f6;">➕</span>
-              <span style="font-size: 12px; font-weight: 600; margin-top: 8px;">Create Story</span>
-            </div>
-            <div class="fb-story-card" style="background-image: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=300&q=80');">
-              <div class="fb-story-avatar"></div>
-              <div class="fb-story-name">Tech Horizon</div>
-            </div>
-            <div class="fb-story-card" style="background-image: url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=300&q=80');">
-              <div class="fb-story-avatar"></div>
-              <div class="fb-story-name">Alex Rivera</div>
-            </div>
-            <div class="fb-story-card" style="background-image: url('https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=300&q=80');">
-              <div class="fb-story-avatar"></div>
-              <div class="fb-story-name">Sarah Chen</div>
-            </div>
-          </div>
-
-          <!-- Post Creator -->
-          <div class="fb-card">
-            <div class="fb-create-top">
-              <div class="fb-user-avatar">U</div>
-              <input type="text" class="fb-create-input" id="fb-post-input" placeholder="What's on your mind?" />
-              <button type="button" class="btn-action" style="padding: 8px 16px; border-radius: 20px;" id="fb-submit-post">Post</button>
-            </div>
-            <div class="fb-create-actions">
-              <button type="button" class="fb-create-btn-action" onclick="showPortalToast('Live Video Camera ready')">
-                <span style="color: #ef4444;">📹</span> Live Video
-              </button>
-              <button type="button" class="fb-create-btn-action" onclick="showPortalToast('Photo attach dialog opened')">
-                <span style="color: #22c55e;">🖼️</span> Photo/video
-              </button>
-              <button type="button" class="fb-create-btn-action" onclick="showPortalToast('Feeling/activity selected')">
-                <span style="color: #eab308;">😊</span> Feeling/activity
-              </button>
-            </div>
-          </div>
-
-          <!-- Dynamic Posts Container -->
-          <div id="fb-posts-container" style="display: flex; flex-direction: column; gap: 16px;">
-            <!-- Seed Post 1: Meta Platforms -->
-            <article class="fb-card" id="post-1">
-              <header class="fb-post-header">
-                <div class="fb-post-user-info">
-                  <div class="fb-user-avatar" style="background: #1877f2;">M</div>
-                  <div>
-                    <div class="fb-post-author">Meta Platforms</div>
-                    <div class="fb-post-time">Sponsored • 2 hrs ago • 🌐</div>
-                  </div>
-                </div>
-                <span style="cursor: pointer; color: #b0b3b8;">•••</span>
-              </header>
-              <div class="fb-post-content">
-                Excited to unveil our next-generation AI and Spatial Computing developments. Empowering creators and communities worldwide with zero-latency connection.
-              </div>
-              <div class="fb-post-media">
-                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1000&q=80" alt="Meta Post Visual" />
-              </div>
-              <div class="fb-post-stats">
-                <span id="post-1-likes">👍❤️ 3.4k</span>
-                <span>482 Comments • 198 Shares</span>
-              </div>
-              <div class="fb-post-interactions">
-                <button type="button" class="fb-interact-btn" onclick="togglePostLike('post-1', 3400)">👍 Like</button>
-                <button type="button" class="fb-interact-btn" onclick="focusComment('post-1')">💬 Comment</button>
-                <button type="button" class="fb-interact-btn" onclick="sharePost('Meta Platforms')">↗ Share</button>
-              </div>
-              <div class="fb-comments-section" id="post-1-comments">
-                <div class="fb-comment-item">
-                  <div class="fb-user-avatar" style="width: 28px; height: 28px; font-size: 11px;">J</div>
-                  <div class="fb-comment-bubble">
-                    <div class="fb-comment-author">James Miller</div>
-                    <div>Incredible advancements in AI tooling this year!</div>
-                  </div>
-                </div>
-              </div>
-              <div class="fb-comment-input-row">
-                <input type="text" class="fb-comment-input" id="post-1-comment-in" placeholder="Write a comment..." onkeydown="if(event.key==='Enter') addComment('post-1')" />
-              </div>
-            </article>
-
-            <!-- Seed Post 2: OpenBrowser Community -->
-            <article class="fb-card" id="post-2">
-              <header class="fb-post-header">
-                <div class="fb-post-user-info">
-                  <div class="fb-user-avatar" style="background: #ea580c;">🦁</div>
-                  <div>
-                    <div class="fb-post-author">OpenBrowser Autonomous Network</div>
-                    <div class="fb-post-time">Just now • 🌐</div>
-                  </div>
-                </div>
-                <span style="cursor: pointer; color: #b0b3b8;">•••</span>
-              </header>
-              <div class="fb-post-content">
-                OpenBrowser is now completely autonomous! With In-Browser cloud execution, users can explore, search Google, stream YouTube, and browse Facebook directly with zero local server configuration.
-              </div>
-              <div class="fb-post-stats">
-                <span id="post-2-likes">👍 912</span>
-                <span>84 Comments • 46 Shares</span>
-              </div>
-              <div class="fb-post-interactions">
-                <button type="button" class="fb-interact-btn" onclick="togglePostLike('post-2', 912)">👍 Like</button>
-                <button type="button" class="fb-interact-btn" onclick="focusComment('post-2')">💬 Comment</button>
-                <button type="button" class="fb-interact-btn" onclick="sharePost('OpenBrowser Autonomous Network')">↗ Share</button>
-              </div>
-              <div class="fb-comments-section" id="post-2-comments"></div>
-              <div class="fb-comment-input-row">
-                <input type="text" class="fb-comment-input" id="post-2-comment-in" placeholder="Write a comment..." onkeydown="if(event.key==='Enter') addComment('post-2')" />
-              </div>
-            </article>
-          </div>
-        </section>
-
-        <!-- Right Column: Contacts -->
-        <aside class="fb-right-sidebar">
-          <div style="font-size: 14px; font-weight: 600; color: #b0b3b8; margin-bottom: 8px;">Contacts</div>
-          <div class="fb-contact-item" onclick="openChat('Daniel Vance')">
-            <div class="fb-contact-avatar">DV<div class="online-indicator"></div></div>
-            <span>Daniel Vance</span>
-          </div>
-          <div class="fb-contact-item" onclick="openChat('Emily Watson')">
-            <div class="fb-contact-avatar" style="background:#8b5cf6;">EW<div class="online-indicator"></div></div>
-            <span>Emily Watson</span>
-          </div>
-          <div class="fb-contact-item" onclick="openChat('Sophia Patel')">
-            <div class="fb-contact-avatar" style="background:#ec4899;">SP<div class="online-indicator"></div></div>
-            <span>Sophia Patel</span>
-          </div>
-        </aside>
       </div>
     </div>
 
@@ -1044,86 +871,16 @@
       <!-- Main Theater Player -->
       <div class="yt-player-container">
         <div class="yt-main-player">
-          <iframe id="yt-live-iframe" src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=0&rel=0&modestbranding=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          <iframe id="yt-live-iframe" src="about:blank" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
         </div>
         <div class="yt-video-info-row">
           <div>
-            <h2 class="yt-now-playing-title" id="yt-active-title">Building Autonomous AI Agents & Browsers in 2026: Masterclass</h2>
-            <div style="font-size: 13px; color: #aaa; margin-top: 4px;">Deep Tech Engineering • 1.2M views • 🛡️ Zero Ads Active</div>
+            <h2 class="yt-now-playing-title" id="yt-active-title">YouTube Video Player (Ad-Free)</h2>
+            <div style="font-size: 13px; color: #aaa; margin-top: 4px;">🛡️ Brave Shields: Zero Tracking & Ads Active</div>
           </div>
           <div style="display: flex; gap: 8px;">
-            <button type="button" class="btn-action" style="background: #272727; color: #fff;" onclick="showPortalToast('👍 Added to Liked Videos')">👍 84K</button>
-            <button type="button" class="btn-action" style="background: #272727; color: #fff;" onclick="showPortalToast('🔗 Video Link Copied!')">↗ Share</button>
-            <button type="button" class="btn-action" style="background: #272727; color: #fff;" onclick="showPortalToast('📥 Saved to Watch Later')">💾 Save</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Category Filter Chips -->
-      <div class="yt-chips-row">
-        <button class="yt-chip active" onclick="filterYtVideos('all')">All</button>
-        <button class="yt-chip" onclick="filterYtVideos('ai')">AI & Autonomous Agents</button>
-        <button class="yt-chip" onclick="filterYtVideos('tech')">Technology & Systems</button>
-        <button class="yt-chip" onclick="filterYtVideos('security')">Cybersecurity</button>
-        <button class="yt-chip" onclick="filterYtVideos('coding')">Coding Tutorials</button>
-        <button class="yt-chip" onclick="filterYtVideos('music')">Nature & Music</button>
-      </div>
-
-      <!-- Video Catalog Grid -->
-      <div class="yt-grid" id="yt-videos-grid">
-        <div class="yt-card" onclick="playYtVideo('dQw4w9WgXcQ', 'Building Autonomous AI Agents & Browsers in 2026: Masterclass', 'Deep Tech Engineering')">
-          <div class="yt-thumb-wrap">
-            <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" alt="Video 1" />
-            <span class="yt-duration">14:28</span>
-          </div>
-          <div class="yt-details">
-            <div class="yt-channel-avatar"></div>
-            <div>
-              <div class="yt-title">Building Autonomous AI Agents & Browsers in 2026: Masterclass</div>
-              <div class="yt-meta">Deep Tech Engineering • 1.2M views</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="yt-card" onclick="playYtVideo('dQw4w9WgXcQ', 'Chrome DevTools Protocol (CDP) & Live Automation Architecture', 'Security Systems Lab')">
-          <div class="yt-thumb-wrap">
-            <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80" alt="Video 2" />
-            <span class="yt-duration">18:42</span>
-          </div>
-          <div class="yt-details">
-            <div class="yt-channel-avatar" style="background:#3b82f6;"></div>
-            <div>
-              <div class="yt-title">Chrome DevTools Protocol (CDP) & Live Automation Architecture</div>
-              <div class="yt-meta">Security Systems Lab • 840K views</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="yt-card" onclick="playYtVideo('dQw4w9WgXcQ', 'Python Web Scraping & High-Performance Network Pipelines', 'Code Mastery')">
-          <div class="yt-thumb-wrap">
-            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80" alt="Video 3" />
-            <span class="yt-duration">22:15</span>
-          </div>
-          <div class="yt-details">
-            <div class="yt-channel-avatar" style="background:#10b981;"></div>
-            <div>
-              <div class="yt-title">Python Web Scraping & High-Performance Network Pipelines</div>
-              <div class="yt-meta">Code Mastery • 520K views</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="yt-card" onclick="playYtVideo('dQw4w9WgXcQ', 'Brave Shields Architecture: How Zero Ad Browsing Works', 'Privacy Engineers')">
-          <div class="yt-thumb-wrap">
-            <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80" alt="Video 4" />
-            <span class="yt-duration">11:04</span>
-          </div>
-          <div class="yt-details">
-            <div class="yt-channel-avatar" style="background:#a855f7;"></div>
-            <div>
-              <div class="yt-title">Brave Shields Architecture: How Zero Ad Browsing Works</div>
-              <div class="yt-meta">Privacy Engineers • 910K views</div>
-            </div>
+            <button type="button" class="btn-action" style="background: #10b981;" id="yt-unblock-proxy-btn">⚡ Unblock in Browser</button>
+            <a href="https://www.youtube.com" target="_blank" rel="noopener" class="btn-action" style="background: #272727; color: #fff;" id="yt-open-live-btn">↗ Open Live YouTube</a>
           </div>
         </div>
       </div>
@@ -1292,114 +1049,29 @@
       }
     });
 
-    // Facebook Interactive Engine
-    document.getElementById('fb-submit-post')?.addEventListener('click', () => {
-      const input = document.getElementById('fb-post-input');
-      const text = (input.value || '').trim();
-      if (!text) return;
-
-      const container = document.getElementById('fb-posts-container');
-      const newPost = document.createElement('article');
-      newPost.className = 'fb-card';
-      const postId = 'post-' + Date.now();
-      newPost.id = postId;
-      newPost.innerHTML = `
-        <header class="fb-post-header">
-          <div class="fb-post-user-info">
-            <div class="fb-user-avatar" style="background: #2563eb;">U</div>
-            <div>
-              <div class="fb-post-author">You</div>
-              <div class="fb-post-time">Just now • 🌐</div>
-            </div>
-          </div>
-          <span style="cursor: pointer; color: #b0b3b8;">•••</span>
-        </header>
-        <div class="fb-post-content">${text.replace(/</g, '&lt;')}</div>
-        <div class="fb-post-stats">
-          <span id="${postId}-likes">👍 1</span>
-          <span>0 Comments • 0 Shares</span>
-        </div>
-        <div class="fb-post-interactions">
-          <button type="button" class="fb-interact-btn" onclick="togglePostLike('${postId}', 1)">👍 Like</button>
-          <button type="button" class="fb-interact-btn" onclick="focusComment('${postId}')">💬 Comment</button>
-          <button type="button" class="fb-interact-btn" onclick="sharePost('Your post')">↗ Share</button>
-        </div>
-        <div class="fb-comments-section" id="${postId}-comments"></div>
-        <div class="fb-comment-input-row">
-          <input type="text" class="fb-comment-input" id="${postId}-comment-in" placeholder="Write a comment..." onkeydown="if(event.key==='Enter') addComment('${postId}')" />
-        </div>
-      `;
-
-      container.prepend(newPost);
-      input.value = '';
-      showPortalToast('Post published to your live feed!');
+    // Facebook Gateway Handlers
+    document.getElementById('fb-unblock-proxy-btn')?.addEventListener('click', () => {
+      const fbUrl = 'https://www.facebook.com';
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'BRAVE_NAVIGATE_PROXY', url: fbUrl }, '*');
+      } else {
+        window.location.href = '/api/proxy?url=' + encodeURIComponent(fbUrl);
+      }
     });
 
-    function togglePostLike(postId, baseCount) {
-      const likesEl = document.getElementById(`${postId}-likes`);
-      if (!likesEl) return;
-      const isLiked = likesEl.getAttribute('data-liked') === 'true';
-      if (isLiked) {
-        likesEl.textContent = `👍 ${baseCount}`;
-        likesEl.removeAttribute('data-liked');
-        showPortalToast('Unliked post');
+    document.getElementById('fb-search-btn')?.addEventListener('click', () => {
+      navigateToSearch('site:facebook.com');
+    });
+
+    // YouTube Gateway Handlers
+    document.getElementById('yt-unblock-proxy-btn')?.addEventListener('click', () => {
+      const ytUrl = targetUrl.includes('youtube.com') ? targetUrl : 'https://www.youtube.com';
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'BRAVE_NAVIGATE_PROXY', url: ytUrl }, '*');
       } else {
-        likesEl.textContent = `👍❤️ ${baseCount + 1}`;
-        likesEl.setAttribute('data-liked', 'true');
-        showPortalToast('Liked post! 👍');
+        window.location.href = '/api/proxy?url=' + encodeURIComponent(ytUrl);
       }
-    }
-
-    function focusComment(postId) {
-      document.getElementById(`${postId}-comment-in`)?.focus();
-    }
-
-    function addComment(postId) {
-      const input = document.getElementById(`${postId}-comment-in`);
-      const text = (input.value || '').trim();
-      if (!text) return;
-
-      const commentsSection = document.getElementById(`${postId}-comments`);
-      const comment = document.createElement('div');
-      comment.className = 'fb-comment-item';
-      comment.innerHTML = `
-        <div class="fb-user-avatar" style="width: 28px; height: 28px; font-size: 11px;">U</div>
-        <div class="fb-comment-bubble">
-          <div class="fb-comment-author">You</div>
-          <div>${text.replace(/</g, '&lt;')}</div>
-        </div>
-      `;
-      commentsSection.appendChild(comment);
-      input.value = '';
-      showPortalToast('Comment added!');
-    }
-
-    function sharePost(author) {
-      showPortalToast(`Shared ${author}'s post to your profile!`);
-    }
-
-    function toggleMessenger() {
-      showPortalToast('Facebook Messenger active (Zero Trackers)');
-    }
-
-    function openChat(name) {
-      showPortalToast(`Opened chat conversation with ${name}`);
-    }
-
-    // YouTube Video Player Controller
-    function playYtVideo(id, title, channel) {
-      const iframe = document.getElementById('yt-live-iframe');
-      iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`;
-      document.getElementById('yt-active-title').textContent = title;
-      showPortalToast(`Now Playing: ${title}`);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function filterYtVideos(category) {
-      document.querySelectorAll('.yt-chip').forEach(c => c.classList.remove('active'));
-      event.target.classList.add('active');
-      showPortalToast(`Filtering YouTube by: ${event.target.textContent}`);
-    }
+    });
 
     document.getElementById('btn-yt-search-go')?.addEventListener('click', handleYtSearch);
     document.getElementById('yt-search-input')?.addEventListener('keydown', (e) => {

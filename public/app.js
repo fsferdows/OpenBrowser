@@ -1524,8 +1524,9 @@
       progressBar.classList.add('done');
       setTimeout(() => progressBar.classList.add('hidden'), 500);
     }
+    const isStatic = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
     const raw = state.activeUrl || dom.omnibox.value;
-    if (raw && !dom.webview.src.includes('portal.html')) {
+    if (isStatic && raw && !dom.webview.src.includes('portal.html')) {
       appendLog('system', `🛡️ Shielded Protection: Direct embedding restricted for ${raw}. Routing to Shielded Web Portal...`);
       dom.webview.src = `portal.html?url=${encodeURIComponent(raw)}`;
     }

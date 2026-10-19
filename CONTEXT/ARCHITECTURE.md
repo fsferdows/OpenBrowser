@@ -158,4 +158,15 @@ The Agent Core executes outside of the web page renderer context to prevent mali
 - **Parent Bridge & Universal Interception**: Injects an enhanced `antiFrameBustShim` into proxied HTML that intercepts all anchor clicks (including `target="_blank"`), unwraps nested `/api/proxy?url=` loops, intercepts `window.open` and forms, and posts `BRAVE_NAVIGATE` to the parent window to keep the omnibox, active tab title, and navigation history in sync in real time.
 - **Real-Time Live Web View**: Eliminates artificial redirects to `portal.html` for Facebook, GitHub, and external sites on Vercel and localhost, allowing true live web browsing.
 
+### 10. Real-Time Browser Universal Navigation & Subresource Optimization (ADR-0016)
+- **Omnibox Query Redirection**: Automatically detects search queries without TLDs in `api/proxy.js` and issues HTTP 302 redirects to `/search.html?q=...` instead of failing with `TypeError: fetch failed`.
+- **Subresource Direct CDN Loading**: Discontinues recursive proxying of `<script src>` and `<link href>` tags. Uses `<base href>` and stripped `crossorigin`/`integrity` attributes so subresources load directly from origin CDNs with zero proxy bottleneck or concurrency exhaustion.
+- **Percent-Decoding Unwrapper**: Recursively decodes percent-encoded destination URLs across all URL parsing components.
+
+### 11. Elimination of Mock Templates & Real-Time Live SPA Pipeline (ADR-0017)
+- **Zero Mock Templates**: Completely eliminates hardcoded mock catalogs and simulated social feeds. Preserves real live website rendering for all web destinations (YouTube, Google, Facebook, GitHub, Wikipedia, etc.).
+- **Authentic Video Streaming**: Routes specific YouTube watch URLs (`/watch?v=...`) directly to the official ad-free nocookie embed player (`https://www.youtube-nocookie.com/embed/${videoId}`), while allowing general YouTube pages (homepage, search results, channels) to stream live web content via proxy and CDP.
+- **Transparent SPA Fetch & XHR Routing**: Injects client-side API interception in `bridgeScript` and `antiFrameBustShim` that resolves relative and cross-origin endpoints against `window.__BRAVE_PROXY_URL__` and routes them through `/api/proxy?url=...`, enabling full SPA interactivity without CORS or 404 failures.
+- **POST Proxying**: Enables `POST` method support and request body forwarding in `/api/proxy` to serve modern SPA APIs.
+
 
