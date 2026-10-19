@@ -1485,7 +1485,14 @@
       if (window.parent && window.parent !== window) {
         window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: finalUrl }, '*');
       } else {
-        window.location.href = finalUrl;
+        const lower = finalUrl.toLowerCase();
+        if (lower.includes('facebook.com') || lower.includes('fb.com')) {
+          window.location.href = `portal.html?url=${encodeURIComponent(finalUrl)}&site=facebook`;
+        } else if (lower.includes('github.com')) {
+          window.location.href = `portal.html?url=${encodeURIComponent(finalUrl)}&site=github`;
+        } else {
+          window.location.href = finalUrl;
+        }
       }
     }
 

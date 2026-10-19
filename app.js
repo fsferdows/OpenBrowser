@@ -597,20 +597,25 @@
       }
     } else {
       dom.omnibox.value = targetUrl;
-      dom.viewportTitle.textContent = `Connecting to ${targetUrl}...`;
-      dom.viewportUrlBadge.textContent = targetUrl;
-
+      let displayHost = targetUrl;
       try {
-        const parsed = new URL(targetUrl);
-        dom.shieldsHostname.textContent = parsed.hostname;
-        dom.sslPopoverHost.textContent = parsed.hostname;
+        displayHost = (new URL(targetUrl)).hostname;
+      } catch (_) {}
+      dom.viewportTitle.textContent = displayHost;
+      dom.viewportUrlBadge.textContent = targetUrl;
+      dom.shieldsHostname.textContent = displayHost;
+      dom.sslPopoverHost.textContent = displayHost;
 
-        const activeTabTitle = document.querySelector('.tab-item.active .tab-title');
-        if (activeTabTitle) {
-          activeTabTitle.textContent = parsed.hostname;
-        }
-      } catch (_) {
-        dom.shieldsHostname.textContent = targetUrl;
+      const activeTabTitle = document.querySelector('.tab-item.active .tab-title');
+      if (activeTabTitle) {
+        activeTabTitle.textContent = displayHost;
+      }
+      const activeTabIcon = document.querySelector('.tab-item.active .tab-icon');
+      if (activeTabIcon) {
+        if (targetUrl.includes('facebook') || targetUrl.includes('fb.com')) activeTabIcon.textContent = '🔵';
+        else if (targetUrl.includes('youtube')) activeTabIcon.textContent = '🔴';
+        else if (targetUrl.includes('github')) activeTabIcon.textContent = '🐙';
+        else activeTabIcon.textContent = '🌐';
       }
     }
 
@@ -623,15 +628,49 @@
 
     // Determine iframe source:
     // 1. Google with igu=1 can ALWAYS be rendered directly without proxy errors or CORS/CSP blocks
-    // 2. On static hosting (like GitHub Pages or file:// where /api/proxy doesn't exist), render directly
+    // 2. On static hosting (like GitHub Pages), sites known to block framing are routed to authentic in-browser Shielded Portals or embed players
     // 3. On localhost with active proxy, load via /api/proxy
     const isStaticDeployment = !window.location.port || window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
-    const effectiveSrc = (isGoogle || isStaticDeployment)
-      ? targetUrl
-      : `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+    const lower = targetUrl.toLowerCase();
+    const isFramingBlocked = (
+      lower.includes('facebook.com') ||
+      lower.includes('fb.com') ||
+      lower.includes('instagram.com') ||
+      lower.includes('twitter.com') ||
+      lower.includes('x.com') ||
+      lower.includes('github.com') ||
+      (lower.includes('youtube.com') && !lower.includes('/embed')) ||
+      (lower.includes('youtu.be') && !lower.includes('/embed'))
+    );
+
+    let effectiveSrc;
+    if (isGoogle) {
+      effectiveSrc = targetUrl;
+    } else if (isStaticDeployment && isFramingBlocked) {
+      if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
+        let videoId = '';
+        try {
+          const u = new URL(targetUrl);
+          videoId = u.searchParams.get('v') || '';
+        } catch (_) {}
+        effectiveSrc = videoId
+          ? `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1`
+          : `portal.html?url=${encodeURIComponent(targetUrl)}&site=youtube`;
+      } else if (lower.includes('facebook.com') || lower.includes('fb.com')) {
+        effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=facebook`;
+      } else if (lower.includes('github.com')) {
+        effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=github`;
+      } else {
+        effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=generic`;
+      }
+    } else if (isStaticDeployment) {
+      effectiveSrc = targetUrl;
+    } else {
+      effectiveSrc = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+    }
 
     dom.webview.src = effectiveSrc;
-    appendLog('system', isGoogle ? '🟢 Connected to Google Search Engine (Live IFrame)' : `🌐 Navigating to live web destination: ${targetUrl}`);
+    appendLog('system', isGoogle ? '🟢 Connected to Google Search Engine (Live IFrame)' : `🌐 Navigating to destination: ${targetUrl}`);
 
     // Update active tab persistent state
     if (TAB_DATA[state.activeTabId]) {
@@ -695,6 +734,11 @@
   function setViewportMode(mode) {
     state.viewportMode = mode;
     if (mode === 'cdp') {
+      const isStatic = !window.location.port || window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+      if (isStatic) {
+        alert('⚡ Live Chrome CDP Mode:\n\nConnecting to Google Chrome directly via CDP (port 9222) is supported when running OpenBrowser locally with:\n  npm start\n  npm run browser:chrome\n\nOn GitHub Pages, enjoy the full Interactive Web View with Brave Shields!');
+        return;
+      }
       dom.btnModeCdp?.classList.add('active');
       dom.btnModeWeb?.classList.remove('active');
       dom.webview.style.display = 'none';
@@ -818,6 +862,12 @@
     if (state.activeUrl && (state.activeUrl.includes('youtube.com') || state.activeUrl.includes('facebook.com') || state.activeUrl.includes('github.com') || state.activeUrl.includes('x.com'))) {
       loginUrl = state.activeUrl;
     }
+    const isStatic = !window.location.port || window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+    if (isStatic) {
+      appendLog('system', `🔑 Opening secure sign-in window: ${loginUrl}`);
+      window.open(loginUrl, '_blank');
+      return;
+    }
     appendLog('system', `🔑 Loading in-browser sign-in screen: ${loginUrl}`);
     setViewportMode('cdp');
     fetch(`/api/chrome/login-window?url=${encodeURIComponent(loginUrl)}`)
@@ -830,6 +880,13 @@
       .catch(err => {
         appendLog('error', `Sign-in load error: ${err.message}`);
       });
+  });
+
+  // Open active page in external real tab
+  document.getElementById('btn-open-external')?.addEventListener('click', () => {
+    const raw = state.activeUrl || dom.omnibox.value || 'https://www.google.com';
+    const finalUrl = (raw.startsWith('http://') || raw.startsWith('https://')) ? raw : `https://${raw}`;
+    window.open(finalUrl, '_blank');
   });
 
   dom.navHome.addEventListener('click', () => switchTab('newtab'));
@@ -1100,6 +1157,13 @@
       progressBar.classList.remove('loading');
       progressBar.classList.add('done');
       setTimeout(() => progressBar.classList.add('hidden'), 500);
+    }
+    const isStatic = !window.location.port || window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+    if (isStatic) {
+      appendLog('system', `🛡️ Target restricts third-party framing. Activating Brave Shielded Portal.`);
+      const raw = state.activeUrl || dom.omnibox.value || 'https://www.facebook.com';
+      dom.webview.src = `portal.html?url=${encodeURIComponent(raw)}`;
+      return;
     }
     appendLog('system', `⚠️ Connection error on live viewport. Auto-switching to Live Chrome CDP fallback.`);
     if (state.activeScenario === 'live') {
@@ -2252,6 +2316,14 @@
   }
 
   // Initial Boot
+  const isStaticOnBoot = !window.location.port || window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+  if (isStaticOnBoot) {
+    const cdpText = document.getElementById('telemetry-cdp-text');
+    const reaText = document.getElementById('telemetry-rea-text');
+    if (cdpText) cdpText.textContent = 'Brave Shields Active';
+    if (reaText) reaText.textContent = 'Client-Side Sandbox Mode';
+  }
+
   switchTab('newtab');
   initHackSuite();
   initRealtimeStream();
