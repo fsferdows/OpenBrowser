@@ -180,5 +180,5 @@
     "OQ-001: Host filesystem capacity is constrained; Phase A strategy avoids local C++ Chromium compilation."
   ],
   "next_action": "Verify user browsing experience across diverse external URLs and search result navigation on openbrowser-eosin.vercel.app.",
-  "last_commit": "baf9fdf"
+  "last_commit": "c88cc60"
 }
