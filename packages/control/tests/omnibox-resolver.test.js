@@ -77,4 +77,31 @@ describe('Omnibox Destination & Search Resolution Tests', () => {
     assert.strictEqual(automateCmd.type, 'agent');
     assert.strictEqual(automateCmd.goal, 'automate fill portal form');
   });
+
+  it('repairs malformed query string delimiters (e.g. & without initial ? in YouTube themeRefresh)', () => {
+    // Exact user issue: https://www.youtube.com&themeRefresh=1
+    const yt1 = resolveOmniboxDestination('https://www.youtube.com&themeRefresh=1');
+    assert.strictEqual(yt1.type, 'url');
+    assert.strictEqual(yt1.url, 'https://www.youtube.com/?themeRefresh=1');
+
+    // YouTube with slash and ampersand
+    const yt2 = resolveOmniboxDestination('https://www.youtube.com/&themeRefresh=1');
+    assert.strictEqual(yt2.type, 'url');
+    assert.strictEqual(yt2.url, 'https://www.youtube.com/?themeRefresh=1');
+
+    // Query in path without ? (e.g. results&search_query=hello)
+    const yt3 = resolveOmniboxDestination('https://www.youtube.com/results&search_query=hello');
+    assert.strictEqual(yt3.type, 'url');
+    assert.strictEqual(yt3.url, 'https://www.youtube.com/results?search_query=hello');
+
+    // Domain with malformed ampersand query string
+    const yt4 = resolveOmniboxDestination('www.youtube.com&themeRefresh=1');
+    assert.strictEqual(yt4.type, 'domain');
+    assert.strictEqual(yt4.url, 'https://www.youtube.com/?themeRefresh=1');
+
+    // Regular query strings are preserved intact
+    const yt5 = resolveOmniboxDestination('https://www.youtube.com/?themeRefresh=1&another=2');
+    assert.strictEqual(yt5.type, 'url');
+    assert.strictEqual(yt5.url, 'https://www.youtube.com/?themeRefresh=1&another=2');
+  });
 });

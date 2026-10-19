@@ -28,6 +28,50 @@ const TOP_SITE_MAP = {
   ycombinator: 'https://news.ycombinator.com'
 };
 
+function sanitizeAndRepairUrl(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== 'string') return '';
+  let url = rawUrl.trim().replace(/^["']+|["']+$/g, '');
+  if (!url) return '';
+
+  if (url.startsWith('//')) {
+    url = 'https:' + url;
+  }
+
+  const lower = url.toLowerCase();
+  if (TOP_SITE_MAP[lower]) {
+    url = TOP_SITE_MAP[lower];
+  }
+
+  // If missing scheme and not an internal scheme
+  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(url) && !/^(brave|chrome|about|javascript|data|blob):/.test(url)) {
+    if (/^localhost(:\d+)?/i.test(url) || /^127\.0\.0\.1(:\d+)?/.test(url)) {
+      url = 'http://' + url;
+    } else if (url.includes('.') && !url.includes(' ')) {
+      url = 'https://' + url;
+    }
+  }
+
+  // Repair malformed query parameter delimiter:
+  // If URL has '&' after the protocol, but NO '?' anywhere in the URL:
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(url) && !url.includes('?') && url.includes('&')) {
+    const protoEnd = url.indexOf('://') + 3;
+    const rest = url.slice(protoEnd);
+    const slashIdx = rest.indexOf('/');
+    const ampersandIdx = rest.indexOf('&');
+
+    if (slashIdx === -1 || ampersandIdx < slashIdx) {
+      url = url.slice(0, protoEnd + ampersandIdx) + '/?' + url.slice(protoEnd + ampersandIdx + 1);
+    } else {
+      url = url.slice(0, protoEnd + ampersandIdx) + '?' + url.slice(protoEnd + ampersandIdx + 1);
+    }
+  }
+
+  url = url.replace(/\/&/, '/?');
+  url = url.replace(/\?&/g, '?').replace(/&&+/g, '&');
+
+  return url;
+}
+
 export default async function handler(req, res) {
   // Robust query extraction preserving full multi-parameter target URLs
   let targetUrl = '';
@@ -56,6 +100,20 @@ export default async function handler(req, res) {
     const innerIdx = finalUrl.lastIndexOf('/api/proxy?url=');
     finalUrl = decodeURIComponent(finalUrl.slice(innerIdx + 15));
   }
+
+  finalUrl = sanitizeAndRepairUrl(finalUrl);
+
+  // Associate any secondary unencoded query parameters on req.url with target URL
+  try {
+    const parsedReq = new URL(req.url, 'http://localhost');
+    const u = new URL(finalUrl);
+    for (const [k, v] of parsedReq.searchParams.entries()) {
+      if (k !== 'url' && k !== 'mode' && k !== 'raw' && !u.searchParams.has(k)) {
+        u.searchParams.set(k, v);
+      }
+    }
+    finalUrl = u.toString();
+  } catch (_) {}
 
   // Check top sites map
   const lowerTarget = finalUrl.toLowerCase();
@@ -219,6 +277,9 @@ export default async function handler(req, res) {
       bodyText = bodyText.replace(/\scrossorigin(=["'][^"']*["'])?/gi, '');
       bodyText = bodyText.replace(/\sintegrity(=["'][^"']*["'])?/gi, '');
 
+      // 2b. Neutralize Admiral, BlockThrough, and anti-adblock detection scripts (e.g. TechCrunch)
+      bodyText = bodyText.replace(/<script\b[^>]*>[\s\S]*?(?:castlereach|succeedscene|getadmiral|pubgifs|_afsr|admiral-extended|Disable your adblocker)[\s\S]*?<\/script>/gi, '<!-- brave-anti-adblock-defused -->');
+
       // 3. Base tag insertion for relative assets + parent bridge link/window interceptors + adblock
       const baseTag = `<base href="${effectiveUrl}">`;
       const antiFrameBustShim = `
@@ -242,11 +303,89 @@ export default async function handler(req, res) {
     opacity: 0 !important;
     pointer-events: none !important;
   }
+
+  /* Anti-Adblock Defuser & Wall Neutralizer (Admiral / TechCrunch / BlockThrough) */
+  .DCDOr, [class*="a__s1p0xe8r"], div:has(> .DCDOr),
+  iframe[src*="getadmiral.com"], iframe[src*="admiral"],
+  div[class*="adblock"], div[id*="adblock"],
+  div[class*="ad-blocker"], div[id*="ad-blocker"],
+  .adblock-overlay, .adblocker-overlay,
+  [data-adblock], [aria-label*="adblock" i] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    z-index: -99999 !important;
+  }
+  html, body {
+    overflow: auto !important;
+  }
 </style>
 <script>
   try {
     Object.defineProperty(window, 'top', { get: () => window.self, configurable: true });
     Object.defineProperty(window, 'parent', { get: () => window.self, configurable: true });
+  } catch (_) {}
+
+  // Brave Shields Anti-Adblock Defuser Stubs (Neutralizes Admiral, BlockThrough, CMP walls)
+  try {
+    window['_afsr'] = false;
+    window['admiral'] = function() {};
+    window['admiral'].v = 4;
+    window['admiral'].s = 4;
+    window['admiral'].q = [];
+
+    window.googletag = window.googletag || {};
+    window.googletag.cmd = window.googletag.cmd || [];
+    window.googletag.cmd.push = function(fn) {
+      if (typeof fn === 'function') {
+        try { fn(); } catch (_) {}
+      }
+      return 1;
+    };
+    window.googletag.display = window.googletag.display || function() {};
+    window.googletag.pubads = window.googletag.pubads || function() {
+      return {
+        addEventListener: function() {},
+        enableSingleRequest: function() {},
+        setTargeting: function() {},
+        refresh: function() {},
+        clear: function() {},
+        getSlots: function() { return []; },
+        setCategoryExclusion: function() {},
+        collapseEmptyDivs: function() {}
+      };
+    };
+    window.googletag.enableServices = window.googletag.enableServices || function() {};
+
+    window.adsbygoogle = window.adsbygoogle || [];
+    window.adsbygoogle.push = function() { return 1; };
+
+    if (typeof window.__tcfapi !== 'function') {
+      window.__tcfapi = function(cmd, ver, cb) {
+        if (typeof cb === 'function') {
+          cb({ eventStatus: 'tcloaded', gdprApplies: false }, true);
+        }
+      };
+    }
+
+    function clearAdblockModals() {
+      var modals = document.querySelectorAll('.DCDOr, [class*="a__s1p0xe8r"], iframe[src*="getadmiral"]');
+      for (var i = 0; i < modals.length; i++) {
+        try { modals[i].remove(); } catch (_) {}
+      }
+      if (document.body && (document.body.style.overflow === 'hidden' || document.body.style.position === 'fixed')) {
+        document.body.style.overflow = 'auto';
+        document.body.style.position = 'static';
+      }
+    }
+    if (typeof MutationObserver !== 'undefined') {
+      new MutationObserver(clearAdblockModals).observe(document.documentElement, { childList: true, subtree: true });
+    }
+    window.addEventListener('DOMContentLoaded', clearAdblockModals);
+    window.addEventListener('load', clearAdblockModals);
   } catch (_) {}
 
   // Transparent client-side SPA API proxy hook

@@ -35,6 +35,61 @@ const AGENT_VERB_REGEX = /^(automate|scrape|fill\s+(out\s+)?|buy\s+|checkout\s+)
 const TLD_REGEX = /^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(\/.*)?$/;
 
 /**
+ * Sanitizes and repairs malformed URLs, specifically fixing query parameters
+ * that were appended with an ampersand (&) instead of a question mark (?),
+ * such as https://www.youtube.com&themeRefresh=1 -> https://www.youtube.com/?themeRefresh=1.
+ * @param {string} rawUrl
+ * @returns {string}
+ */
+export function sanitizeAndRepairUrl(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== 'string') return '';
+  let url = rawUrl.trim().replace(/^["']+|["']+$/g, '');
+  if (!url) return '';
+
+  if (url.startsWith('//')) {
+    url = 'https:' + url;
+  }
+
+  const lower = url.toLowerCase();
+  if (TOP_SITE_MAP[lower]) {
+    url = TOP_SITE_MAP[lower];
+  }
+
+  // If missing scheme and not an internal scheme
+  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(url) && !/^(brave|chrome|about|javascript|data|blob):/.test(url)) {
+    if (/^localhost(:\d+)?/i.test(url) || /^127\.0\.0\.1(:\d+)?/.test(url)) {
+      url = 'http://' + url;
+    } else if (url.includes('.') && !url.includes(' ')) {
+      url = 'https://' + url;
+    }
+  }
+
+  // Repair malformed query parameter delimiter:
+  // If URL has '&' after the protocol, but NO '?' anywhere in the URL:
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(url) && !url.includes('?') && url.includes('&')) {
+    const protoEnd = url.indexOf('://') + 3;
+    const rest = url.slice(protoEnd);
+    const slashIdx = rest.indexOf('/');
+    const ampersandIdx = rest.indexOf('&');
+
+    if (slashIdx === -1 || ampersandIdx < slashIdx) {
+      // '&' occurs before any path slash (e.g. https://www.youtube.com&themeRefresh=1)
+      url = url.slice(0, protoEnd + ampersandIdx) + '/?' + url.slice(protoEnd + ampersandIdx + 1);
+    } else {
+      // '&' occurs in path without '?' (e.g. https://www.youtube.com/results&search_query=cat)
+      url = url.slice(0, protoEnd + ampersandIdx) + '?' + url.slice(protoEnd + ampersandIdx + 1);
+    }
+  }
+
+  // Fix instance where a slash is followed immediately by & instead of ?: e.g. .com/&themeRefresh=1
+  url = url.replace(/\/&/, '/?');
+  // Fix duplicate delimiters: e.g. ?& or &&
+  url = url.replace(/\?&/g, '?').replace(/&&+/g, '&');
+
+  return url;
+}
+
+/**
  * Resolves raw Omnibox user input into an actionable destination object.
  * @param {string} rawInput 
  * @param {object} options
@@ -60,9 +115,10 @@ export function resolveOmniboxDestination(rawInput, options = {}) {
     return { type: 'agent', goal: input };
   }
 
-  // 3. Fully qualified URLs
+  // 3. Fully qualified URLs (including repairing malformed query delimiters)
   if (input.startsWith('http://') || input.startsWith('https://')) {
-    return { type: 'url', url: input };
+    const repaired = sanitizeAndRepairUrl(input);
+    return { type: 'url', url: repaired };
   }
 
   // 4. Localhost ports
@@ -92,8 +148,17 @@ export function resolveOmniboxDestination(rawInput, options = {}) {
       : rawDomain;
     return {
       type: 'domain',
-      url: finalDomain
+      url: sanitizeAndRepairUrl(finalDomain)
     };
+  }
+  if (!input.includes(' ') && input.includes('.') && input.includes('&')) {
+    const repaired = sanitizeAndRepairUrl(input);
+    if (repaired.startsWith('http')) {
+      return {
+        type: 'domain',
+        url: repaired
+      };
+    }
   }
 
   // 7. Default: Web Search via Brave Search (or configured provider)

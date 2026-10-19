@@ -11,7 +11,7 @@ import { PolicyEngine } from '../packages/safety/src/policy-engine.js';
 import { EncryptedVault } from '../packages/safety/src/vault.js';
 import { SkillLibrary, SelfRepairEngine, ReaAnalysisAdapter } from '../packages/skill-engine/src/index.js';
 import { GatewayClient } from '../packages/gateway/src/index.js';
-import { ChromiumCdpClient, TargetResolver, AccessibilityTree, resolveOmniboxDestination, normalizeGoogleUrl, TOP_SITE_MAP } from '../packages/control/src/index.js';
+import { ChromiumCdpClient, TargetResolver, AccessibilityTree, resolveOmniboxDestination, normalizeGoogleUrl, sanitizeAndRepairUrl, TOP_SITE_MAP } from '../packages/control/src/index.js';
 import { ACTIONS, RISK_LEVELS, i18n } from '../packages/shared/src/index.js';
 import { HereticChatEngine } from '../packages/agent-core/src/heretic-chat-engine.js';
 import { analyzeSecurityPosture } from '../packages/agent-core/src/hacksuite-utils.js';
@@ -869,9 +869,24 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    // Sanitize and repair malformed query parameters (& before initial ?)
+    rawTarget = sanitizeAndRepairUrl(rawTarget);
+
+    // Associate unencoded secondary query parameters with target destination cleanly
+    try {
+      const u = new URL(rawTarget);
+      for (const [k, v] of parsedUrl.searchParams.entries()) {
+        if (k !== 'url' && k !== 'mode' && k !== 'raw' && !u.searchParams.has(k)) {
+          u.searchParams.set(k, v);
+        }
+      }
+      rawTarget = u.toString();
+    } catch (_) {}
+
     try {
       const destination = resolveOmniboxDestination(rawTarget, { embeddable: true });
       let finalUrl = destination.url || rawTarget;
+      finalUrl = sanitizeAndRepairUrl(finalUrl);
       if (finalUrl.includes('google.com/url') || finalUrl.startsWith('/url?') || finalUrl.includes('google.com/goto')) {
         try {
           const gu = new URL(finalUrl.startsWith('http') ? finalUrl : `https://www.google.com${finalUrl}`);
@@ -1087,6 +1102,9 @@ const server = createServer(async (req, res) => {
       // 2. Filter out known ad network scripts (Brave Shields Engine)
       html = html.replace(/<script[^>]+src=["'][^"']*(googlesyndication|doubleclick|adservice|adnxs|taboola|outbrain|criteo|popads|moatads|adform)[^"']*["'][^>]*>[\s\S]*?<\/script>/gi, '');
 
+      // 2b. Neutralize Admiral, BlockThrough, and anti-adblock detection scripts (e.g. TechCrunch)
+      html = html.replace(/<script\b[^>]*>[\s\S]*?(?:castlereach|succeedscene|getadmiral|pubgifs|_afsr|admiral-extended|Disable your adblocker)[\s\S]*?<\/script>/gi, '<!-- brave-anti-adblock-defused -->');
+
       // 3. Inject Brave Shields AdBlock CSS + Live User Move Tracker + Link Interceptor
       const baseHref = `<base href="${effectiveUrl}">`;
       const bridgeScript = `
@@ -1110,6 +1128,25 @@ const server = createServer(async (req, res) => {
     opacity: 0 !important;
     pointer-events: none !important;
   }
+
+  /* Anti-Adblock Defuser & Wall Neutralizer (Admiral / TechCrunch / BlockThrough) */
+  .DCDOr, [class*="a__s1p0xe8r"], div:has(> .DCDOr),
+  iframe[src*="getadmiral.com"], iframe[src*="admiral"],
+  div[class*="adblock"], div[id*="adblock"],
+  div[class*="ad-blocker"], div[id*="ad-blocker"],
+  .adblock-overlay, .adblocker-overlay,
+  [data-adblock], [aria-label*="adblock" i] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    z-index: -99999 !important;
+  }
+  html, body {
+    overflow: auto !important;
+  }
 </style>
 <script>
   // Brave Autonomous Browser Bridge & Live User Move Tracker
@@ -1117,6 +1154,65 @@ const server = createServer(async (req, res) => {
   try {
     Object.defineProperty(window, 'top', { get: () => window.self, configurable: true });
     Object.defineProperty(window, 'parent', { get: () => window.self, configurable: true });
+  } catch (_) {}
+
+  // Brave Shields Anti-Adblock Defuser Stubs (Neutralizes Admiral, BlockThrough, CMP walls)
+  try {
+    window['_afsr'] = false;
+    window['admiral'] = function() {};
+    window['admiral'].v = 4;
+    window['admiral'].s = 4;
+    window['admiral'].q = [];
+
+    window.googletag = window.googletag || {};
+    window.googletag.cmd = window.googletag.cmd || [];
+    window.googletag.cmd.push = function(fn) {
+      if (typeof fn === 'function') {
+        try { fn(); } catch (_) {}
+      }
+      return 1;
+    };
+    window.googletag.display = window.googletag.display || function() {};
+    window.googletag.pubads = window.googletag.pubads || function() {
+      return {
+        addEventListener: function() {},
+        enableSingleRequest: function() {},
+        setTargeting: function() {},
+        refresh: function() {},
+        clear: function() {},
+        getSlots: function() { return []; },
+        setCategoryExclusion: function() {},
+        collapseEmptyDivs: function() {}
+      };
+    };
+    window.googletag.enableServices = window.googletag.enableServices || function() {};
+
+    window.adsbygoogle = window.adsbygoogle || [];
+    window.adsbygoogle.push = function() { return 1; };
+
+    if (typeof window.__tcfapi !== 'function') {
+      window.__tcfapi = function(cmd, ver, cb) {
+        if (typeof cb === 'function') {
+          cb({ eventStatus: 'tcloaded', gdprApplies: false }, true);
+        }
+      };
+    }
+
+    function clearAdblockModals() {
+      var modals = document.querySelectorAll('.DCDOr, [class*="a__s1p0xe8r"], iframe[src*="getadmiral"]');
+      for (var i = 0; i < modals.length; i++) {
+        try { modals[i].remove(); } catch (_) {}
+      }
+      if (document.body && (document.body.style.overflow === 'hidden' || document.body.style.position === 'fixed')) {
+        document.body.style.overflow = 'auto';
+        document.body.style.position = 'static';
+      }
+    }
+    if (typeof MutationObserver !== 'undefined') {
+      new MutationObserver(clearAdblockModals).observe(document.documentElement, { childList: true, subtree: true });
+    }
+    window.addEventListener('DOMContentLoaded', clearAdblockModals);
+    window.addEventListener('load', clearAdblockModals);
   } catch (_) {}
 
   window.__BRAVE_PROXY_URL__ = ${JSON.stringify(effectiveUrl)};

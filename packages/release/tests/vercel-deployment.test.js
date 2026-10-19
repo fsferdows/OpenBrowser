@@ -129,7 +129,25 @@ describe('Vercel CLI Deployment & Configuration Suite (ADR-0014)', () => {
     await proxyModule.default(mockReqYouTubeHome, mockRes);
     assert.strictEqual(statusCode, 200, 'Must return 200 for live YouTube');
     assert.ok(!responseBody.includes('YouTube - OpenBrowser Theater'), 'Must never render fake demo theater catalog');
-    assert.ok(responseBody.includes('base href="https://www.youtube.com"'), 'Must inject base href for live site assets');
+    assert.ok(responseBody.includes('base href="https://www.youtube.com'), 'Must inject base href for live site assets');
     assert.ok(responseBody.includes('YouTube') || responseBody.includes('youtube'), 'Must render real YouTube content');
+
+    // Test malformed query delimiter repair (e.g. https://www.youtube.com&themeRefresh=1)
+    statusCode = 200;
+    headers = {};
+    responseBody = '';
+
+    const mockReqMalformedQuery = {
+      query: { url: 'https://www.youtube.com&themeRefresh=1' },
+      url: '/api/proxy?url=https://www.youtube.com&themeRefresh=1',
+      method: 'GET'
+    };
+
+    await proxyModule.default(mockReqMalformedQuery, mockRes);
+    assert.strictEqual(statusCode, 200, 'Must return 200 for repaired YouTube URL with & query');
+    assert.ok(!responseBody.includes('fetch failed'), 'Must never fail with fetch failed for repaired query');
+    assert.ok(responseBody.includes('base href="https://www.youtube.com/?themeRefresh=1"'), 'Must inject repaired base href');
+    assert.ok(responseBody.includes('.DCDOr'), 'Must inject anti-adblock stylesheet suppression rules');
+    assert.ok(responseBody.includes('window.googletag'), 'Must inject GPT anti-adblock stubs');
   });
 });

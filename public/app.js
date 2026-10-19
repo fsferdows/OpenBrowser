@@ -817,8 +817,42 @@
     }
   });
 
+  function sanitizeAndRepairUrl(rawUrl) {
+    if (!rawUrl || typeof rawUrl !== 'string') return '';
+    let url = rawUrl.trim().replace(/^["']+|["']+$/g, '');
+    if (!url) return '';
+    if (url.startsWith('//')) url = 'https:' + url;
+
+    const lower = url.toLowerCase();
+    if (typeof TOP_SITE_MAP !== 'undefined' && TOP_SITE_MAP[lower]) {
+      url = TOP_SITE_MAP[lower];
+    }
+
+    if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(url) && !/^(brave|chrome|about|javascript|data|blob):/.test(url)) {
+      if (/^localhost(:\d+)?/i.test(url) || /^127\.0\.0\.1(:\d+)?/.test(url)) {
+        url = 'http://' + url;
+      } else if (url.includes('.') && !url.includes(' ')) {
+        url = 'https://' + url;
+      }
+    }
+
+    if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(url) && !url.includes('?') && url.includes('&')) {
+      const protoEnd = url.indexOf('://') + 3;
+      const rest = url.slice(protoEnd);
+      const slashIdx = rest.indexOf('/');
+      const ampersandIdx = rest.indexOf('&');
+      if (slashIdx === -1 || ampersandIdx < slashIdx) {
+        url = url.slice(0, protoEnd + ampersandIdx) + '/?' + url.slice(protoEnd + ampersandIdx + 1);
+      } else {
+        url = url.slice(0, protoEnd + ampersandIdx) + '?' + url.slice(protoEnd + ampersandIdx + 1);
+      }
+    }
+    url = url.replace(/\/&/, '/?').replace(/\?&/g, '?').replace(/&&+/g, '&');
+    return url;
+  }
+
   function navigateLiveUrl(rawUrl) {
-    let targetUrl = (rawUrl || '').trim();
+    let targetUrl = sanitizeAndRepairUrl(rawUrl);
 
     // Auto-restore Web View mode if user was viewing CDP stream
     if (state.viewportMode === 'cdp') {

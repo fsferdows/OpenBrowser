@@ -168,5 +168,9 @@ The Agent Core executes outside of the web page renderer context to prevent mali
 - **Authentic Video Streaming**: Routes specific YouTube watch URLs (`/watch?v=...`) directly to the official ad-free nocookie embed player (`https://www.youtube-nocookie.com/embed/${videoId}`), while allowing general YouTube pages (homepage, search results, channels) to stream live web content via proxy and CDP.
 - **Transparent SPA Fetch & XHR Routing**: Injects client-side API interception in `bridgeScript` and `antiFrameBustShim` that resolves relative and cross-origin endpoints against `window.__BRAVE_PROXY_URL__` and routes them through `/api/proxy?url=...`, enabling full SPA interactivity without CORS or 404 failures.
 - **POST Proxying**: Enables `POST` method support and request body forwarding in `/api/proxy` to serve modern SPA APIs.
-
-
+### 12. Malformed Query Repair & Anti-Adblock Neutralization Pipeline (ADR-0018)
+- **Sanitize & Repair URLs**: `sanitizeAndRepairUrl` detects and fixes query strings appended with `&` without an initial `?` (e.g. `https://www.youtube.com&themeRefresh=1` -> `https://www.youtube.com/?themeRefresh=1`), preventing DNS resolution failures (`ENOTFOUND`) and proxy gateway notices.
+- **Secondary Parameter Association**: When unencoded query parameters are attached to the proxy endpoint, they are cleanly merged into the target URL rather than corrupting the URL scheme or host.
+- **Anti-Adblock Script Stripping**: Automatically strips obfuscated third-party anti-adblock detection scripts (Admiral, BlockThrough, Uponit via `castlereach.com`, `succeedscene.com`) before HTML delivery.
+- **CSS Suppression Rules**: Injects stylesheet rules in `#brave-shields-adblock` hiding anti-adblock overlay containers (`.DCDOr`, `[class*="a__s1p0xe8r"]`) and guaranteeing `html, body { overflow: auto !important; }`.
+- **Publisher GPT / CMP Stubs**: Injects dummy stubs for Google Publisher Tag (`window.googletag`), AdSense (`window.adsbygoogle`), and CMP (`window.__tcfapi`) to disarm runtime blocker detection and prevent lockout nag screens on publishers like TechCrunch.
