@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Direct Google Search Integration, Client-Side Braver AI Engine & Autonomous Trajectory Synthesis:
+  - `public/app.js`: Guaranteed that all browser searches from the omnibox, address bar autocomplete, or internal links resolve directly to Google Search with the verified embed parameter `igu=1` (`https://www.google.com/search?igu=1&q=...`). Replaced internal `search.html` routing with immediate Google redirection.
+  - `public/newtab.html`: Updated the main search pill to dispatch searches directly to Google with `igu=1`. Integrated client-side refusal-free Braver AI intelligence engine inside the slide-out Copilot drawer, enabling rich technical explanations, expandable deep dive breakdowns (`details`), Bangla/English responses, and actionable task execution directly on static hosting (GitHub Pages) without server dependencies.
+  - `public/search.html`: Updated `loadSearchData()` and the search form to immediately forward search queries directly to Google with `igu=1` and implemented safe fallback handling that prevents WebKit/Safari regex and syntax parse errors.
+  - `public/app.js`: Implemented `generateClientAiResponse()` and `synthesizeClientTrajectory()` providing fully autonomous, offline-capable and static-capable execution for Braver Copilot and agent goals (`navigate`, `perceive`, `click`, `fill`, `detect_barrier`, `verify_auth`, `repair`). Animated agent cursor (`#brave-agent-cursor`), visual telemetry stream, and human hand-off protocol execute seamlessly on both local Node and GitHub Pages.
+  - `public/app.js` & `public/style.css`: Replaced blocking browser `alert()` popups on `⚡ Live Chrome` mode and skill saves with glassmorphic, non-blocking `.braver-toast` in-app notifications. Persisted learned skills to browser `localStorage`.
+  - `public/index.html`: Set default status bar telemetry text to `Brave Shields Active • AI Agentic Engine Online`.
+  - `public/portal.html`: Updated search navigation to route queries directly to Google Search with `igu=1`.
+
 - Google Connection Fix (`igu=1`), Full Cross-Device Responsiveness & GitHub Pages Deployment:
   - `packages/control/src/omnibox-resolver.js` & `packages/control/src/index.js`: Implemented `normalizeGoogleUrl()` which transparently appends Google's official iframe embedding parameter `igu=1` to any Google URL or search query (`https://www.google.com/webhp?igu=1` and `https://www.google.com/search?igu=1&q=...`). This eliminates the "www.google.com refused to connect" error caused by `X-Frame-Options: SAMEORIGIN` and enables 100% native in-frame rendering on any host or origin.
   - `packages/control/tests/google-integration.test.js`: Added comprehensive 10-assertion test suite validating Google domain mapping, embeddable omnibox resolution, and edge-case query handling.

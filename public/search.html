@@ -1555,6 +1555,12 @@
       document.getElementById('serp-input').value = query;
       document.title = `${query || 'Search'} - Braver Search`;
 
+      if (query) {
+        const googleUrl = `https://www.google.com/search?igu=1&q=${encodeURIComponent(query)}`;
+        navigateToUrl(googleUrl);
+        return;
+      }
+
       const resultsColumn = document.getElementById('dynamic-results-list');
       const loadingIndicator = document.getElementById('results-loading');
       const kpColumn = document.getElementById('knowledge-column');
@@ -1563,7 +1569,7 @@
 
       if (!query) {
         if (loadingIndicator) loadingIndicator.style.display = 'none';
-        resultsColumn.innerHTML = `<div style="padding: 40px; color: #9aa0a6; font-size: 15px;">Please enter a search term above to explore real web results.</div>`;
+        resultsColumn.innerHTML = `<div style="padding: 40px; color: #9aa0a6; font-size: 15px;">Please enter a search term above to explore real web results directly on Google.</div>`;
         return;
       }
 
@@ -1904,7 +1910,7 @@
         navigateToUrl('https://www.google.com/webhp?igu=1');
         return;
       }
-      window.location.search = `?q=${encodeURIComponent(val)}`;
+      navigateToUrl(`https://www.google.com/search?igu=1&q=${encodeURIComponent(val)}`);
     });
 
     document.getElementById('btn-clear-serp').addEventListener('click', () => {
