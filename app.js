@@ -613,7 +613,7 @@
       dom.cdpLiveStreamContainer?.classList.remove('hidden');
       refreshCdpStream();
       if (!state.cdpStreamTimer) {
-        state.cdpStreamTimer = setInterval(refreshCdpStream, 800);
+        state.cdpStreamTimer = setInterval(refreshCdpStream, 150);
       }
       appendLog('system', '⚡ Viewport switched to Live Google Chrome CDP Screen Stream (Port 9222)');
     } else {
@@ -629,37 +629,25 @@
     }
   }
 
+  let cdpFetching = false;
   function refreshCdpStream() {
-    if (dom.cdpLiveStreamImg && state.viewportMode === 'cdp') {
-      const img = new Image();
-      img.onload = () => {
-        dom.cdpLiveStreamImg.src = img.src;
-      };
-      img.src = `/api/chrome/screenshot?t=${Date.now()}`;
-    }
+    if (!dom.cdpLiveStreamImg || state.viewportMode !== 'cdp' || cdpFetching) return;
+    cdpFetching = true;
+    const img = new Image();
+    img.onload = () => {
+      dom.cdpLiveStreamImg.src = img.src;
+      cdpFetching = false;
+    };
+    img.onerror = () => {
+      cdpFetching = false;
+    };
+    img.src = `/api/chrome/screenshot?t=${Date.now()}`;
   }
 
   dom.btnModeWeb?.addEventListener('click', () => setViewportMode('web'));
   dom.btnModeCdp?.addEventListener('click', () => setViewportMode('cdp'));
 
-  // Visible interactive cursor for Live Chrome CDP stream
-  dom.cdpLiveStreamContainer?.addEventListener('mousemove', (e) => {
-    let pointer = document.getElementById('cdp-cursor-pointer');
-    if (!pointer) {
-      pointer = document.createElement('div');
-      pointer.id = 'cdp-cursor-pointer';
-      pointer.style.cssText = 'position:absolute;width:12px;height:12px;border:2px solid #ff5500;background:rgba(255,85,0,0.6);border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);z-index:9999;box-shadow:0 0 8px #ff5500;';
-      dom.cdpLiveStreamContainer.appendChild(pointer);
-    }
-    const rect = dom.cdpLiveStreamContainer.getBoundingClientRect();
-    pointer.style.left = `${e.clientX - rect.left}px`;
-    pointer.style.top = `${e.clientY - rect.top}px`;
-  });
-  dom.cdpLiveStreamContainer?.addEventListener('mouseleave', () => {
-    document.getElementById('cdp-cursor-pointer')?.remove();
-  });
-
-  // Forward clicks on CDP stream image to Chrome
+  // Forward clicks on CDP stream image to Chrome with immediate visual refresh
   dom.cdpLiveStreamImg?.addEventListener('click', (e) => {
     dom.cdpLiveStreamContainer?.focus();
     const rect = dom.cdpLiveStreamImg.getBoundingClientRect();
@@ -1219,11 +1207,18 @@
     });
   });
 
-  dom.btnToggleCopilot.addEventListener('click', () => {
+  const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+  btnToggleSidebar?.addEventListener('click', () => {
+    const isCollapsed = dom.sidebar.classList.contains('collapsed');
+    dom.sidebar.classList.toggle('collapsed', !isCollapsed);
+    btnToggleSidebar.classList.toggle('active', isCollapsed);
+  });
+
+  dom.btnToggleCopilot?.addEventListener('click', () => {
     switchDockPanel('copilot');
   });
 
-  dom.btnToggleRea.addEventListener('click', () => {
+  dom.btnToggleRea?.addEventListener('click', () => {
     switchDockPanel('rea');
   });
 

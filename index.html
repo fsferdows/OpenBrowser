@@ -42,12 +42,18 @@
         <button class="toolbar-btn" id="nav-btn-home" title="Brave New Tab" aria-label="Home">🏠</button>
       </div>
 
-      <!-- Brave Smart Omnibox -->
+      <!-- Brave Smart Omnibox (Matching Screenshot) -->
       <div class="omnibox-wrapper">
         <div class="omnibox-container" id="omnibox-box">
-          <div class="security-badge" id="ssl-badge" title="Connection is Secure (Click for Certificate & Permissions)">
-            <span class="lock-icon">🔒</span>
-            <span class="cert-text">Secure</span>
+          <div class="security-badge" id="ssl-badge" title="Search Engine: Google (Default)">
+            <span class="search-provider-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+              </svg>
+            </span>
           </div>
           <input
             type="text"
@@ -57,14 +63,16 @@
             spellcheck="false"
             aria-label="Search or enter web address"
             autocomplete="off"
+            placeholder="Search or enter web address"
           />
           <div class="omnibox-right-actions">
-            <button class="omnibox-btn" id="btn-bookmark" title="Bookmark This Tab">⭐</button>
-            
-            <!-- Brave Shields Lion Button -->
+            <!-- Brave Shields Lion Button inside Omnibox (Matching Screenshot) -->
             <button class="shields-lion-btn active" id="btn-brave-shields" title="Brave Shields" aria-label="Brave Shields Controls" aria-expanded="false">
               <span class="lion-face">🦁</span>
               <span class="shields-counter-badge" id="shields-badge-count">3</span>
+            </button>
+            <button class="omnibox-rewards-btn" id="btn-rewards" title="Brave Rewards">
+              <span class="rewards-tri-icon">🔺</span>
             </button>
           </div>
         </div>
@@ -78,50 +86,55 @@
         </div>
       </div>
 
-      <!-- Toolbar Action Icons -->
+      <!-- Toolbar Action Icons (Matching Screenshot: Extensions, Sidebar, Vertical Tabs, Bookmark, Shields, Profile, Menu) -->
       <div class="action-icons">
-        <button class="action-btn copilot-toggle active" id="btn-toggle-copilot" title="Brave Autonomous Agent">
-          <span class="btn-icon">🦁✨</span>
-          <span class="btn-text">Agent</span>
+        <button class="toolbar-btn" id="btn-extensions-top" title="Extensions">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5s-1.12-2.5-2.5-2.5z"/>
+          </svg>
         </button>
-        <button class="action-btn" id="btn-toggle-rea" title="REA Deep Site Intelligence">
-          <span class="btn-icon">🔬</span>
-          <span class="btn-text">REA</span>
+        <button class="toolbar-btn" id="btn-toggle-sidebar" title="Toggle AI Agent Copilot Sidebar (◫)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 16H5V5h7v14zm7 0h-5V5h5v14z"/>
+          </svg>
         </button>
-        <button class="action-btn hacksuite-toggle" id="btn-toggle-hacksuite" title="HackSuite Pentest & Recon Workstation">
-          <span class="btn-icon">⚡</span>
-          <span class="btn-text">HackSuite</span>
+        <button class="toolbar-btn" id="btn-vertical-tabs-top" title="Vertical Tabs">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 5v14h18V5H3zm2 2h3v10H5V7zm14 10h-9V7h9v10z"/>
+          </svg>
         </button>
-        <button class="action-btn" id="btn-toggle-lang" title="Switch Language">
-          <span class="btn-icon">🌐</span>
-          <span class="btn-text" id="lbl-lang">EN</span>
+        <button class="toolbar-btn" id="btn-bookmark" title="Bookmark this tab">
+          <span>⭐</span>
         </button>
-        <!-- Chromium CDP Status Badge -->
-        <button class="action-btn cdp-badge simulated" id="btn-cdp-status" title="Chromium CDP Remote Debugging Basement (Port 9222)">
-          <span class="btn-icon" id="cdp-status-dot">⚪</span>
-          <span class="btn-text" id="cdp-status-text">CDP: Simulated</span>
+        <button class="toolbar-btn" id="btn-shields-nav" title="Shields Protection">
+          <span>🛡️</span>
         </button>
-
-        <button class="action-btn bat-rewards" id="btn-rewards" title="Brave Autonomous Rewards &amp; Credits">
-          <span class="btn-icon">🔺</span>
-          <span class="btn-text" id="lbl-bat-val">15.4</span>
-        </button>
+        <div class="user-profile-badge" id="btn-user-profile" title="Brave Account: Faisal (FS)">
+          FS
+        </div>
         <button class="toolbar-btn menu-btn" id="btn-brave-menu" title="Customize and control Brave">
           <span>⋮</span>
         </button>
       </div>
     </div>
 
-    <!-- Brave Bookmarks Bar -->
+    <!-- Brave Bookmarks Bar (Exact replica of screenshot) -->
     <div class="bookmarks-bar" id="bookmarks-bar" role="toolbar" aria-label="Bookmarks">
-      <button class="bookmark-chip live-web" data-url="youtube" data-live="true">🔴 YouTube</button>
-      <button class="bookmark-chip live-web" data-url="facebook" data-live="true">🔵 Facebook</button>
-      <button class="bookmark-chip live-web" data-url="google" data-live="true">🟢 Google</button>
-      <button class="bookmark-chip live-web" data-url="https://news.ycombinator.com" data-live="true">📰 Hacker News</button>
-      <button class="bookmark-chip live-web" data-url="https://en.wikipedia.org/wiki/Brave_(web_browser)" data-live="true">🌐 Wikipedia</button>
-      <button class="bookmark-chip live-web" data-url="https://github.com" data-live="true">🐙 GitHub</button>
-      <button class="bookmark-chip live-web" data-url="https://reddit.com" data-live="true">💬 Reddit</button>
-      <button class="bookmark-chip live-web" data-url="https://x.com" data-live="true">🐦 X / Twitter</button>
+      <div class="bookmarks-quick-access">
+        <span class="app-launcher-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
+          </svg>
+        </span>
+        <span class="b-text">For quick access, place your bookmarks here on the bookmarks bar.</span>
+        <a href="#" id="btn-import-bookmarks" class="import-link">Import bookmarks now ...</a>
+      </div>
+      <div class="bookmarks-chips-group">
+        <button class="bookmark-chip live-web" data-url="youtube" data-live="true">🔴 YouTube</button>
+        <button class="bookmark-chip live-web" data-url="facebook" data-live="true">🔵 Facebook</button>
+        <button class="bookmark-chip live-web" data-url="google" data-live="true">🟢 Google</button>
+        <button class="bookmark-chip live-web" data-url="https://github.com" data-live="true">🐙 GitHub</button>
+      </div>
     </div>
   </header>
 
@@ -494,8 +507,8 @@
       </div>
     </section>
 
-    <!-- Brave Autonomous Sidebar (Dock + Multi-Tab Panel) -->
-    <aside class="brave-sidebar-pane" id="brave-sidebar" aria-label="Autonomous Copilot & Tools">
+    <!-- Brave Autonomous Sidebar (Collapsible: Hidden by default for clean full-screen view) -->
+    <aside class="brave-sidebar-pane collapsed" id="brave-sidebar" aria-label="Autonomous Copilot & Tools">
       <!-- Vertical Sidebar Dock Bar -->
       <nav class="sidebar-dock" aria-label="Sidebar Navigation">
         <button class="dock-btn active" data-panel="copilot" title="Autonomous Agent Copilot" aria-label="Agent Copilot">

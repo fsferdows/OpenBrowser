@@ -893,7 +893,11 @@ input:checked + .slider:before {
 }
 
 .brave-sidebar-pane.collapsed {
-  width: 48px;
+  width: 0 !important;
+  min-width: 0 !important;
+  border-left: none !important;
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Vertical Dock Bar */
@@ -1549,6 +1553,7 @@ input:checked + .slider:before {
 .bookmarks-bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   height: 28px;
   padding: 0 12px;
   gap: 8px;
@@ -1558,11 +1563,56 @@ input:checked + .slider:before {
   scrollbar-width: none;
 }
 
-.bookmarks-bar::-webkit-scrollbar {
-  display: none;
+.bookmarks-quick-access {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: #94a3b8;
+  white-space: nowrap;
 }
 
-.bookmark-chip {
+.bookmarks-quick-access .app-launcher-icon {
+  display: flex;
+  align-items: center;
+  color: #94a3b8;
+}
+
+.bookmarks-quick-access .b-text {
+  color: #9ca3af;
+}
+
+.bookmarks-quick-access .import-link {
+  color: #38bdf8;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.bookmarks-chips-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.omnibox-rewards-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  display: flex;
+  align-items: center;
+  color: #c084fc;
+}
+
+.rewards-tri-icon {
+  font-size: 14px;
+}
+
+.cdp-live-stream-container,
+.cdp-live-stream-img {
+  cursor: default !important;
+}
   background: transparent;
   border: none;
   color: var(--text-secondary);
