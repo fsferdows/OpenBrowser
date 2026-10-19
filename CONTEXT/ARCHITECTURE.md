@@ -174,3 +174,9 @@ The Agent Core executes outside of the web page renderer context to prevent mali
 - **Anti-Adblock Script Stripping**: Automatically strips obfuscated third-party anti-adblock detection scripts (Admiral, BlockThrough, Uponit via `castlereach.com`, `succeedscene.com`) before HTML delivery.
 - **CSS Suppression Rules**: Injects stylesheet rules in `#brave-shields-adblock` hiding anti-adblock overlay containers (`.DCDOr`, `[class*="a__s1p0xe8r"]`) and guaranteeing `html, body { overflow: auto !important; }`.
 - **Publisher GPT / CMP Stubs**: Injects dummy stubs for Google Publisher Tag (`window.googletag`), AdSense (`window.adsbygoogle`), and CMP (`window.__tcfapi`) to disarm runtime blocker detection and prevent lockout nag screens on publishers like TechCrunch.
+
+### 13. Self-Hosted Real-Time Chrome CDP Auto-Supervision & Viewport Synchronization (ADR-0019)
+- **Autonomous Local Supervisor**: `scripts/serve-localhost.mjs` actively supervises headless Google Chrome / Chromium on port `9222`. Cleans up stale profile locks (`SingletonLock`, `SingletonSocket`, `SingletonCookie`) in `/tmp/chrome-real-user-profile` before launching to prevent deadlocks from unclean shutdowns.
+- **Heartbeat & Self-Healing**: Checks CDP health every 10 seconds and automatically revives the Chrome daemon if terminated.
+- **Status Endpoint Parity**: Exposes `/api/chrome/status` and `/api/chrome/health` returning `{ connected, browser, targetsCount, port: 9222, mode: 'self-hosted' }`, allowing `public/app.js` to immediately activate the live stream canvas without rendering connection warning cards.
+- **Real-Time Screencast & Input Relay**: Supports target auto-provisioning and captures JPEG screenshot frames every 150ms for low-latency visual observation, while forwarding user clicks, keystrokes, and scrolling events directly into the browser basement.

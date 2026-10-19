@@ -2,7 +2,7 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, unlinkSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
@@ -42,6 +42,57 @@ const policyEngine = new PolicyEngine({
 const skillLibrary = new SkillLibrary();
 const reaAdapter = new ReaAnalysisAdapter();
 const chromiumClient = new ChromiumCdpClient({ port: 9222 });
+
+// Self-Hosted Autonomous Chrome CDP Supervisor
+let isStartingChrome = false;
+async function ensureChromeCdpSupervised(forceRestart = false) {
+  if (isStartingChrome) return false;
+  try {
+    const connected = await chromiumClient.isCdpConnected();
+    if (connected && !forceRestart) {
+      return true;
+    }
+    isStartingChrome = true;
+    console.log('🤖 [Self-Hosted CDP Supervisor] Supervising Google Chrome CDP on port 9222...');
+
+    // Clean up stale lock files from user profile to prevent profile deadlock
+    const userDataDir = '/tmp/chrome-real-user-profile';
+    try {
+      if (existsSync(userDataDir)) {
+        for (const f of ['SingletonLock', 'SingletonSocket', 'SingletonCookie']) {
+          const p = join(userDataDir, f);
+          if (existsSync(p)) {
+            try { unlinkSync(p); } catch (_) {}
+          }
+        }
+      }
+    } catch (_) {}
+
+    const scriptPath = join(__dirname, 'scripts', 'launch-chrome-cdp.sh');
+    if (existsSync(scriptPath)) {
+      const child = spawn('bash', [scriptPath], {
+        detached: true,
+        stdio: 'ignore'
+      });
+      child.unref();
+    }
+
+    // Wait up to 3 seconds for port 9222 to respond
+    for (let i = 0; i < 15; i++) {
+      await new Promise(r => setTimeout(r, 200));
+      if (await chromiumClient.isCdpConnected()) {
+        console.log('✅ [Self-Hosted CDP Supervisor] Google Chrome CDP connected on port 9222.');
+        return true;
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ [Self-Hosted CDP Supervisor] Warning:', err.message);
+  } finally {
+    isStartingChrome = false;
+  }
+  return false;
+}
+
 
 // Model Gateway client fronting OmniRoute (primary) and FreeLLMAPI (fallback)
 const gatewayClient = new GatewayClient({
@@ -1458,6 +1509,51 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // Google Chrome CDP Status & Supervisor Health API
+  if (req.method === 'GET' && (pathname === '/api/chrome/status' || pathname === '/api/chrome/health')) {
+    try {
+      let isConnected = await chromiumClient.isCdpConnected();
+      if (!isConnected) {
+        await ensureChromeCdpSupervised();
+        isConnected = await chromiumClient.isCdpConnected();
+      }
+      let browserInfo = { browser: 'Chromium' };
+      let targetsCount = 0;
+      if (isConnected) {
+        try {
+          browserInfo = await chromiumClient.getBrowserInfo();
+          const targets = await chromiumClient.listTargets();
+          targetsCount = targets.length;
+        } catch (_) {}
+      }
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify({
+        connected: isConnected,
+        browser: browserInfo.browser,
+        targetsCount,
+        port: 9222,
+        mode: 'self-hosted'
+      }));
+    } catch (err) {
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify({
+        connected: false,
+        error: err.message,
+        port: 9222,
+        mode: 'self-hosted'
+      }));
+    }
+    return;
+  }
+
   // Google Chrome Live Data API
   if (req.method === 'GET' && pathname === '/api/chrome/live-data') {
     try {
@@ -1524,7 +1620,12 @@ const server = createServer(async (req, res) => {
   if ((req.method === 'GET' || req.method === 'HEAD') && pathname === '/api/chrome/screenshot') {
     try {
       const targets = await chromiumClient.listTargets();
-      const pageTarget = targets.find(t => t.type === 'page');
+      let pageTarget = targets.find(t => t.type === 'page');
+      if (!pageTarget) {
+        try {
+          pageTarget = await chromiumClient.createTarget('about:blank');
+        } catch (_) {}
+      }
       const targetId = parsedUrl.searchParams.get('targetId') || (pageTarget ? pageTarget.id : 'target-active');
       const shot = await chromiumClient.captureScreenshot(targetId, { format: 'jpeg', quality: 80 });
       if (shot && shot.data) {
@@ -1638,24 +1739,18 @@ const server = createServer(async (req, res) => {
   // Google Chrome CDP Auto-Launch API
   if (req.method === 'POST' && pathname === '/api/chrome/launch') {
     try {
+      await ensureChromeCdpSupervised(true);
       const isConnected = await chromiumClient.isCdpConnected();
-      if (isConnected) {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, message: 'Google Chrome CDP is already running on port 9222.' }));
-        return;
-      }
-
-      const scriptPath = join(__dirname, 'scripts', 'launch-chrome-cdp.sh');
-      const child = spawn('bash', [scriptPath], {
-        detached: true,
-        stdio: 'ignore'
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
       });
-      child.unref();
-
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, message: 'Google Chrome launched with remote debugging port 9222.' }));
+      res.end(JSON.stringify({
+        success: isConnected,
+        message: isConnected ? 'Google Chrome CDP is running on port 9222.' : 'Google Chrome launch initiated.'
+      }));
     } catch (err) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
       res.end(JSON.stringify({ error: err.message }));
     }
     return;
@@ -1832,4 +1927,16 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(`   Routing: OmniRoute Multi-Provider & FreeLLMAPI Zero-Cost Tier`);
   console.log(`   Reverse Engineering & Shields: REA Engine v6.5.0`);
   console.log(`============================================================\n`);
+
+  // Auto-supervise Chrome CDP daemon on startup
+  ensureChromeCdpSupervised().catch(() => {});
+
+  // Periodic health supervisor: verify CDP every 10 seconds and revive if disconnected
+  setInterval(() => {
+    chromiumClient.isCdpConnected().then(connected => {
+      if (!connected) {
+        ensureChromeCdpSupervised().catch(() => {});
+      }
+    }).catch(() => {});
+  }, 10000);
 });

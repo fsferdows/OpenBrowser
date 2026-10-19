@@ -22,6 +22,9 @@ fi
 echo "🚀 Launching Google Chrome on CDP port ${PORT}..."
 mkdir -p "$USER_DATA_DIR/Default"
 
+# Remove stale lock files from previous runs to prevent profile deadlock
+rm -f "$USER_DATA_DIR/SingletonLock" "$USER_DATA_DIR/SingletonSocket" "$USER_DATA_DIR/SingletonCookie" 2>/dev/null || true
+
 # Sync cookies from real Chrome profile if present, or Brave profile
 CHROME_REAL_PROFILE="$HOME/Library/Application Support/Google/Chrome/Default"
 BRAVE_REAL_PROFILE="$HOME/Library/Application Support/BraveSoftware/Brave-Browser/Default"

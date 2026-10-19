@@ -188,13 +188,18 @@
       "id": "phase8-task24",
       "description": "Malformed URL Query Repair and Anti-Adblock Neutralization Pipeline (ADR-0018): Implement sanitizeAndRepairUrl to detect and repair query strings malformed with & instead of ? (e.g. https://www.youtube.com&themeRefresh=1 -> https://www.youtube.com/?themeRefresh=1), eliminating DNS resolution failure 'fetch failed' and connection notice errors. Associate unencoded secondary parameters on proxy requests with destination targets cleanly. Neutralize publisher anti-adblock detection walls (Admiral / TechCrunch) by stripping obfuscated detection script tags, injecting container suppression rules in #brave-shields-adblock CSS, providing GPT/CMP defuser stubs, and dynamically clearing modal lockouts via MutationObserver.",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task25",
+      "description": "Self-Hosted Real-Time Chrome CDP Auto-Supervision and Viewport Status Synchronization (ADR-0019): Implement autonomous CDP supervisor in scripts/serve-localhost.mjs with automatic stale lockfile cleanup in /tmp/chrome-real-user-profile, background daemon spawning via launch-chrome-cdp.sh, and 10s health heartbeat loop. Implement /api/chrome/status and /api/chrome/health endpoints returning connected status, browser version, target counts, and port 9222. Add target auto-provisioning to /api/chrome/screenshot to guarantee real-time JPEG stream availability for public/app.js without falling back to connection warning cards.",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
     "OQ-001: Host filesystem capacity is constrained; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Verify YouTube live browsing and TechCrunch anti-adblock bypass in browser window.",
-  "last_commit": "24954ef"
+  "next_action": "Monitor real-time self-hosted session telemetry and expand automated workflows.",
+  "last_commit": "01efc70"
 }
 
