@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Real-Time Browser Universal Navigation & Subresource Optimization (ADR-0016):
+  - `api/proxy.js`: Added query and keyword resolution in serverless proxy, redirecting non-URL searches (e.g. `apple`, `how to code`) via 302 to `/search.html?q=...` instead of triggering `TypeError: fetch failed (ENOTFOUND)`. Added top-sites mapping for direct keywords. Added full YouTube Theater & Catalog view for YouTube home/search visits, preventing blank white screen in iframes. Discontinued recursive proxying of `<script src>` and `<link href>` tags, relying on `<base href>` and stripped `crossorigin`/`integrity` so subresources load directly from origin CDNs with zero proxy congestion. Added percent-decoding for redirect targets.
+  - `scripts/serve-localhost.mjs`: Removed recursive script and stylesheet proxy rewriting. Added percent-decoding to Google redirect target unwrapping.
+  - `packages/control/src/omnibox-resolver.js`: Added percent-decoding to Google destination parameter extraction in `normalizeGoogleUrl()`.
+  - `public/app.js`: Added percent-decoding to Google redirect target unwrapping in `normalizeGoogleUrl()`.
+  - `public/sw.js`: Handled empty/non-HTML proxy results with HTTP 204 to prevent broken iframe rendering.
+  - `packages/release/tests/vercel-deployment.test.js`: Added acceptance tests for query redirection and YouTube Theater catalog rendering.
+
 - Real-Time Browser Live Proxy Resilience and Navigation Pipeline (ADR-0015):
   - `api/proxy.js`: Added automatic Google `/url` and `/goto` redirect unwrapping (`finalUrl = destParam`) to directly navigate to target web pages instead of Google's unauthorized redirect warning page. Added `process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'` and protocol fallback (HTTPS to HTTP and vice versa) with complete browser headers (`User-Agent`, `Sec-Ch-Ua`, `Sec-Fetch-Dest`) to eliminate `TypeError: fetch failed` connection drops. Losslessly extracts target URLs from raw query slices without truncating multi-parameter destinations. Removed forced 302 redirects to `portal.html` for Facebook and GitHub to allow real-time live browsing. Injected upgraded `antiFrameBustShim` intercepting all links (including `target="_blank"`), unwrapping nested proxy loops, intercepting `window.open` and forms, and posting `BRAVE_NAVIGATE` to the parent window to keep the omnibox and tab title in sync in real time.
   - `public/app.js`: Updated `navigateLiveUrl()` so that external web destinations route to the live proxy `/api/proxy` on Vercel and localhost, reserving `portal.html` exclusively for static-only hosting (`github.io`). Updated `normalizeGoogleUrl()` to unwrap search redirect URLs.

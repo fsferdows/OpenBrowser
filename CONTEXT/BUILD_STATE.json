@@ -173,12 +173,17 @@
       "id": "phase8-task21",
       "description": "Real-Time Browser Live Proxy Resilience & Navigation Pipeline (ADR-0015): Eliminate 'Proxy Gateway Notice: fetch failed' errors on Vercel and localhost by unwrapping Google /url and /goto redirect URLs directly to destination targets, enabling NODE_TLS_REJECT_UNAUTHORIZED = '0' and automatic protocol fallback (HTTPS to HTTP) with full desktop browser telemetry headers, losslessly preserving multi-parameter query strings, removing forced portal 302 redirects for Facebook and GitHub to allow true live web browsing, updating the injected antiFrameBustShim to intercept all links (including target=_blank) and window.open while dispatching BRAVE_NAVIGATE to keep omnibox and tab title in sync, and passing through 3xx network responses in Service Worker v5.",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task22",
+      "description": "Real-Time Browser Universal Navigation & Subresource Optimization (ADR-0016): Fix 'Proxy Gateway Notice: fetch failed' on non-URL search queries by adding search query detection and 302 redirection to Braver Search in api/proxy.js. Add full YouTube Theater & Catalog view for YouTube home visits to eliminate blank white screen. Discontinue recursive proxying of script and stylesheet tags, injecting base href and stripping crossorigin/integrity so subresources load directly from origin CDNs without exhausting serverless function concurrency limits. Add percent-decoding to Google redirect destination extraction across all packages.",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
     "OQ-001: Host filesystem capacity is constrained; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Verify user browsing experience across diverse external URLs and search result navigation on openbrowser-eosin.vercel.app.",
+  "next_action": "Commit and push ADR-0016 changes and verify live browsing on Vercel production deployment openbrowser-eosin.vercel.app.",
   "last_commit": "c88cc60"
 }

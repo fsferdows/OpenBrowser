@@ -866,13 +866,17 @@ const server = createServer(async (req, res) => {
       if (finalUrl.includes('google.com/url') || finalUrl.startsWith('/url?') || finalUrl.includes('google.com/goto')) {
         try {
           const gu = new URL(finalUrl.startsWith('http') ? finalUrl : `https://www.google.com${finalUrl}`);
-          const destParam = gu.searchParams.get('url') || gu.searchParams.get('q');
-          if (destParam && (destParam.startsWith('http://') || destParam.startsWith('https://'))) {
-            finalUrl = destParam;
+          let destParam = gu.searchParams.get('url') || gu.searchParams.get('q');
+          if (destParam) {
+            try {
+              if (/%[0-9a-fA-F]{2}/.test(destParam)) destParam = decodeURIComponent(destParam);
+            } catch (_) {}
+            if (destParam.startsWith('http://') || destParam.startsWith('https://')) {
+              finalUrl = destParam;
+            }
           }
         } catch (_) {}
-      }
-      if (finalUrl.includes('google.com') || finalUrl.toLowerCase() === 'google') {
+      } else if (finalUrl.includes('google.com') || finalUrl.toLowerCase() === 'google') {
         finalUrl = normalizeGoogleUrl(finalUrl);
       }
       if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
@@ -1174,23 +1178,7 @@ const server = createServer(async (req, res) => {
       html = html.replace(/\scrossorigin(=["'][^"']*["'])?/gi, '');
       html = html.replace(/\sintegrity(=["'][^"']*["'])?/gi, '');
 
-      // 1c. Rewrite stylesheet, preload, and script tags
-      html = html.replace(/(<link[^>]+href=["'])([^"']+)(["'][^>]*>)/gi, (match, prefix, href, suffix) => {
-        if (match.includes('stylesheet') || match.includes('preload') || match.includes('icon')) {
-          try {
-            const absUrl = new URL(href, finalUrl).href;
-            return `${prefix}/api/proxy?url=${encodeURIComponent(absUrl)}${suffix}`;
-          } catch (_) { return match; }
-        }
-        return match;
-      });
-
-      html = html.replace(/(<script[^>]+src=["'])([^"']+)(["'][^>]*>)/gi, (match, prefix, src, suffix) => {
-        try {
-          const absUrl = new URL(src, finalUrl).href;
-          return `${prefix}/api/proxy?url=${encodeURIComponent(absUrl)}${suffix}`;
-        } catch (_) { return match; }
-      });
+      // 1c. Relative assets load directly from origin CDN via injected <base href> tag below
 
       // 2. Filter out known ad network scripts (Brave Shields Engine)
       html = html.replace(/<script[^>]+src=["'][^"']*(googlesyndication|doubleclick|adservice|adnxs|taboola|outbrain|criteo|popads|moatads|adform)[^"']*["'][^>]*>[\s\S]*?<\/script>/gi, '');
@@ -1261,11 +1249,33 @@ const server = createServer(async (req, res) => {
     const a = e.target.closest('a');
     if (a && a.href && !a.href.startsWith('javascript:') && !a.href.startsWith('#')) {
       e.preventDefault();
-      reportUserMove('navigate', a.href, { label: a.innerText?.trim() || a.href });
+      e.stopPropagation();
+      var destUrl = a.href;
+
+      // Unwrap nested /api/proxy?url= loops
+      if (destUrl.includes('/api/proxy?url=')) {
+        try {
+          var pu = new URL(destUrl, window.location.origin);
+          destUrl = pu.searchParams.get('url') || destUrl;
+        } catch (_) {}
+      }
+
+      // Unwrap Google redirect /url?q= or /url?url= patterns
+      if (destUrl.includes('google.com/url') || destUrl.includes('/url?')) {
+        try {
+          var gu = new URL(destUrl.startsWith('http') ? destUrl : window.location.origin + destUrl);
+          var realDest = gu.searchParams.get('url') || gu.searchParams.get('q');
+          if (realDest && (realDest.startsWith('http://') || realDest.startsWith('https://'))) {
+            destUrl = realDest;
+          }
+        } catch (_) {}
+      }
+
+      reportUserMove('navigate', destUrl, { label: a.innerText?.trim() || destUrl });
       if (__BRAVE_HOST__) {
-        __BRAVE_HOST__.postMessage({ type: 'BRAVE_NAVIGATE', url: a.href }, '*');
+        __BRAVE_HOST__.postMessage({ type: 'BRAVE_NAVIGATE', url: destUrl }, '*');
       } else {
-        window.location.href = '/api/proxy?url=' + encodeURIComponent(a.href);
+        window.location.href = '/api/proxy?url=' + encodeURIComponent(destUrl);
       }
     }
   }, true);

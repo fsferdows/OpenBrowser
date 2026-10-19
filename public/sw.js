@@ -250,6 +250,9 @@ async function handleApiRequest(request, url) {
     }
 
     const unblockedHtml = await generateUnblockedHtml(rawTarget);
+    if (!unblockedHtml) {
+      return new Response('', { status: 204 });
+    }
     return htmlResponse(unblockedHtml);
   }
 
@@ -517,6 +520,7 @@ function synthesizeInBrowserTrajectory(goal, targetUrl) {
 
 /**
  * Universal Web Unblocker HTML generator
+ * Fetches target URL, strips frame-blocking headers, injects navigation bridge
  */
 async function generateUnblockedHtml(rawTarget) {
   let targetUrl = rawTarget.trim();
@@ -526,7 +530,7 @@ async function generateUnblockedHtml(rawTarget) {
 
   const lower = targetUrl.toLowerCase();
 
-  // YouTube
+  // YouTube video embed
   if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
     let videoId = '';
     try {
@@ -548,55 +552,143 @@ async function generateUnblockedHtml(rawTarget) {
       </style></head><body>
       <div class="yt-top">
         <span style="font-weight: 700; color: #ff0000;">▶ YouTube</span>
-        <span class="yt-badge">🛡️ Brave Shields: Zero Ads</span>
+        <span class="yt-badge">Brave Shields: Zero Ads</span>
       </div>
       <div class="player-wrap">
         <iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
       </div></body></html>`;
     }
+  }
 
-    // Interactive YouTube Catalog
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>YouTube - OpenBrowser</title>
+  // Unwrap Google redirect URLs
+  if (targetUrl.includes('google.com/url') || targetUrl.startsWith('/url?')) {
+    try {
+      const gu = new URL(targetUrl.startsWith('http') ? targetUrl : `https://www.google.com${targetUrl}`);
+      const destParam = gu.searchParams.get('url') || gu.searchParams.get('q');
+      if (destParam && (destParam.startsWith('http://') || destParam.startsWith('https://'))) {
+        targetUrl = destParam;
+      }
+    } catch (_) {}
+  }
+
+  // Fetch the actual page content
+  try {
+    const response = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9'
+      },
+      signal: AbortSignal.timeout(8000),
+      redirect: 'follow'
+    });
+
+    const contentType = response.headers.get('content-type') || 'text/html';
+    if (!contentType.includes('text/html')) {
+      // Non-HTML content: return as-is
+      return null;
+    }
+
+    const effectiveUrl = response.url || targetUrl;
+    let html = await response.text();
+
+    // Strip meta CSP and X-Frame-Options tags
+    html = html.replace(/<meta[^>]*http-equiv=["']?(Content-Security-Policy|X-Frame-Options)["']?[^>]*>/gi, '');
+
+    // Strip crossorigin and integrity attributes
+    html = html.replace(/\scrossorigin(=["'][^"']*["'])?/gi, '');
+    html = html.replace(/\sintegrity(=["'][^"']*["'])?/gi, '');
+
+    // Inject base tag and navigation bridge script
+    const bridgeScript = `<base href="${effectiveUrl}">
+<script>
+  try { window.top = window.self; } catch(_) {}
+
+  function handleProxyNav(url) {
+    if (!url || url.startsWith('javascript:') || url.startsWith('#')) return;
+    var clean = url;
+    if (clean.includes('/api/proxy?url=')) {
+      try { var pu = new URL(clean, location.origin); clean = pu.searchParams.get('url') || clean; } catch(_) {}
+    }
+    if (clean.includes('google.com/url') || clean.includes('/url?')) {
+      try {
+        var gu = new URL(clean.startsWith('http') ? clean : location.origin + clean);
+        var rd = gu.searchParams.get('url') || gu.searchParams.get('q');
+        if (rd && (rd.startsWith('http://') || rd.startsWith('https://'))) clean = rd;
+      } catch(_) {}
+    }
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: clean }, '*');
+        return;
+      }
+    } catch(_) {}
+    location.href = '/api/proxy?url=' + encodeURIComponent(clean);
+  }
+
+  document.addEventListener('click', function(e) {
+    var a = e.target.closest('a');
+    if (a && a.href) { e.preventDefault(); e.stopPropagation(); handleProxyNav(a.href); }
+  }, true);
+
+  window.open = function(url) { if (url) handleProxyNav(url); return null; };
+
+  document.addEventListener('submit', function(e) {
+    var form = e.target;
+    if (form && form.action && (form.method||'get').toLowerCase() === 'get') {
+      e.preventDefault();
+      var fd = new FormData(form);
+      var ps = new URLSearchParams(fd).toString();
+      var dest = form.action + (form.action.includes('?') ? '&' : '?') + ps;
+      handleProxyNav(dest);
+    }
+  }, true);
+
+  window.addEventListener('DOMContentLoaded', function() {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'BRAVE_LIVE_PAGE_LOADED',
+          url: ${JSON.stringify(effectiveUrl)},
+          title: document.title,
+          elementCount: document.querySelectorAll('*').length
+        }, '*');
+      }
+    } catch(_) {}
+  });
+</script>`;
+
+    if (/<head[^>]*>/i.test(html)) {
+      html = html.replace(/(<head[^>]*>)/i, `$1${bridgeScript}`);
+    } else if (/<html[^>]*>/i.test(html)) {
+      html = html.replace(/(<html[^>]*>)/i, `$1<head>${bridgeScript}</head>`);
+    } else {
+      html = `<head>${bridgeScript}</head>${html}`;
+    }
+
+    return html;
+  } catch (err) {
+    // Fetch failed: return error page with retry options
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Connection Notice - OpenBrowser</title>
     <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { background: #0f0f0f; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 16px; }
-      .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #272727; padding-bottom: 14px; }
-      .logo { font-size: 20px; font-weight: 700; color: #ff0000; }
-      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-      .card { background: #1e1e1e; border-radius: 10px; overflow: hidden; cursor: pointer; text-decoration: none; color: inherit; transition: transform 0.2s; }
-      .card:hover { transform: translateY(-3px); }
-      .card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
-      .card-info { padding: 12px; }
-      .card-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
-      .card-meta { font-size: 12px; color: #aaa; }
+      body { background: #0f1013; color: #f1f5f9; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; text-align: center; }
+      .card { background: #181920; border: 1px solid #334155; border-radius: 14px; padding: 32px; max-width: 520px; width: 100%; }
+      h2 { color: #f87171; margin: 0 0 12px; font-size: 20px; }
+      p { color: #94a3b8; font-size: 14px; line-height: 1.5; margin: 0 0 20px; }
+      .url { font-family: monospace; font-size: 12.5px; background: #090a0d; padding: 8px 12px; border-radius: 6px; border: 1px solid #27272a; color: #38bdf8; word-break: break-all; margin-bottom: 20px; }
+      .btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+      .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 13.5px; border: none; cursor: pointer; text-decoration: none; }
+      .btn-retry { background: #3b82f6; color: white; }
+      .btn-open { background: #fb542b; color: white; }
     </style></head><body>
-      <div class="header">
-        <div class="logo">▶ YouTube Ad-Free Portal</div>
-        <span style="color: #34d399; font-size: 12px;">🛡️ Brave Shields Online</span>
+    <div class="card">
+      <h2>Connection Notice</h2>
+      <p>Could not load this site through the browser proxy (${err.message || 'fetch failed'}).</p>
+      <div class="url">${targetUrl}</div>
+      <div class="btns">
+        <button class="btn btn-retry" onclick="location.reload()">Retry</button>
+        <a href="${targetUrl}" target="_blank" rel="noopener" class="btn btn-open">Open in New Tab</a>
       </div>
-      <div class="grid">
-        <a href="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1" class="card">
-          <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" />
-          <div class="card-info">
-            <div class="card-title">Building Autonomous AI Agents & Browsers in 2026</div>
-            <div class="card-meta">Deep Tech Lab • 1.2M views</div>
-          </div>
-        </a>
-        <a href="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1" class="card">
-          <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80" />
-          <div class="card-info">
-            <div class="card-title">Chrome DevTools Protocol & Reverse Engineering Architecture</div>
-            <div class="card-meta">Security Engineering • 840K views</div>
-          </div>
-        </a>
-      </div>
-    </body></html>`;
+    </div></body></html>`;
   }
-
-  if (lower.includes('github.com')) {
-    return `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=portal.html?url=${encodeURIComponent(targetUrl)}&site=github"></head><body>Redirecting to GitHub Shielded Portal...</body></html>`;
-  }
-
-  // Generic fallback via portal.html
-  return `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=portal.html?url=${encodeURIComponent(targetUrl)}"></head><body>Redirecting to Shielded Portal...</body></html>`;
 }

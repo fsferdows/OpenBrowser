@@ -329,9 +329,14 @@
     try {
       const parsed = new URL(str.startsWith('http://') || str.startsWith('https://') ? str : `https://${str}`);
       if (parsed.hostname === 'google.com' || parsed.hostname === 'www.google.com' || parsed.hostname.endsWith('.google.com')) {
-        const destParam = parsed.searchParams.get('url') || parsed.searchParams.get('q');
-        if (destParam && (destParam.startsWith('http://') || destParam.startsWith('https://'))) {
-          return destParam;
+        let destParam = parsed.searchParams.get('url') || parsed.searchParams.get('q');
+        if (destParam) {
+          try {
+            if (/%[0-9a-fA-F]{2}/.test(destParam)) destParam = decodeURIComponent(destParam);
+          } catch (_) {}
+          if (destParam.startsWith('http://') || destParam.startsWith('https://')) {
+            return destParam;
+          }
         }
         if (parsed.pathname === '/' || parsed.pathname === '' || parsed.pathname === '/webhp') {
           return 'https://www.google.com/webhp?igu=1';
@@ -937,10 +942,12 @@
     }
 
     // Determine iframe source:
-    // 1. YouTube videos render directly in ad-free nocookie embed player
-    // 2. On Vercel (*.vercel.app or serverless backend) and Localhost (localhost:3000):
-    //    Routes through /api/proxy which strips frame-ancestors and X-Frame-Options to visit EVERY URL live!
-    // 3. On static-only hosting (GitHub Pages), framing-restricted sites use Shielded Portal or direct load
+    // Route ALL external URLs through the proxy. The proxy:
+    // - Strips X-Frame-Options and CSP frame-ancestors headers
+    // - Injects click interception bridge so link clicks postMessage back to app.js
+    // - Injects ad-block CSS and user move tracker
+    // Without the proxy, clicking links inside the iframe navigates directly to sites
+    // that refuse framing, causing blank screens or connection errors.
     const isStaticOnlyHosting = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
     const lower = targetUrl.toLowerCase();
     let effectiveSrc;
@@ -960,17 +967,12 @@
           ? `portal.html?url=${encodeURIComponent(targetUrl)}&site=youtube`
           : `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
       }
-    } else if (lower.includes('facebook.com') || lower.includes('fb.com')) {
-      effectiveSrc = isStaticOnlyHosting
-        ? `portal.html?url=${encodeURIComponent(targetUrl)}&site=facebook`
-        : `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
-    } else if (lower.includes('github.com')) {
-      effectiveSrc = isStaticOnlyHosting
-        ? `portal.html?url=${encodeURIComponent(targetUrl)}&site=github`
-        : `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
     } else if (lower.includes('search.html')) {
       effectiveSrc = targetUrl;
+    } else if (isStaticOnlyHosting) {
+      effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}`;
     } else {
+      // All external URLs (Google, Facebook, GitHub, Wikipedia, etc.) go through proxy
       effectiveSrc = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
     }
 

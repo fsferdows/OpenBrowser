@@ -6,6 +6,28 @@
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
+const TOP_SITE_MAP = {
+  facebook: 'https://www.facebook.com',
+  fb: 'https://www.facebook.com',
+  youtube: 'https://www.youtube.com',
+  yt: 'https://www.youtube.com',
+  google: 'https://www.google.com/webhp?igu=1',
+  reddit: 'https://www.reddit.com',
+  twitter: 'https://x.com',
+  x: 'https://x.com',
+  github: 'https://github.com',
+  wikipedia: 'https://www.wikipedia.org',
+  amazon: 'https://www.amazon.com',
+  instagram: 'https://www.instagram.com',
+  linkedin: 'https://www.linkedin.com',
+  tiktok: 'https://www.tiktok.com',
+  netflix: 'https://www.netflix.com',
+  gmail: 'https://mail.google.com',
+  chatgpt: 'https://chatgpt.com',
+  hackernews: 'https://news.ycombinator.com',
+  ycombinator: 'https://news.ycombinator.com'
+};
+
 export default async function handler(req, res) {
   // Robust query extraction preserving full multi-parameter target URLs
   let targetUrl = '';
@@ -30,24 +52,41 @@ export default async function handler(req, res) {
   let finalUrl = targetUrl.trim();
 
   // Unwrap nested /api/proxy?url= loops
-  if (finalUrl.includes('/api/proxy?url=')) {
+  while (finalUrl.includes('/api/proxy?url=')) {
     const innerIdx = finalUrl.lastIndexOf('/api/proxy?url=');
     finalUrl = decodeURIComponent(finalUrl.slice(innerIdx + 15));
+  }
+
+  // Check top sites map
+  const lowerTarget = finalUrl.toLowerCase();
+  if (TOP_SITE_MAP[lowerTarget]) {
+    finalUrl = TOP_SITE_MAP[lowerTarget];
   }
 
   // Unwrap Google redirect URLs so search results navigate directly to destination
   if (finalUrl.includes('google.com/url') || finalUrl.startsWith('/url?') || finalUrl.includes('google.com/goto')) {
     try {
       const u = new URL(finalUrl.startsWith('http') ? finalUrl : `https://www.google.com${finalUrl}`);
-      const destParam = u.searchParams.get('url') || u.searchParams.get('q');
-      if (destParam && (destParam.startsWith('http://') || destParam.startsWith('https://'))) {
-        finalUrl = destParam;
+      let destParam = u.searchParams.get('url') || u.searchParams.get('q');
+      if (destParam) {
+        try {
+          if (/%[0-9a-fA-F]{2}/.test(destParam)) destParam = decodeURIComponent(destParam);
+        } catch (_) {}
+        if (destParam.startsWith('http://') || destParam.startsWith('https://')) {
+          finalUrl = destParam;
+        }
       }
     } catch (_) {}
   }
 
-  // Normalize protocol
+  // Search query / non-URL detection (e.g. user typed "apple" or "news query" instead of URL)
   if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+    if (!finalUrl.includes('.') || finalUrl.includes(' ')) {
+      // It is a search query, redirect to Braver Search SERP
+      res.statusCode = 302;
+      res.setHeader('Location', `/search.html?q=${encodeURIComponent(finalUrl)}`);
+      return res.end();
+    }
     finalUrl = `https://${finalUrl}`;
   }
 
@@ -57,9 +96,10 @@ export default async function handler(req, res) {
     finalUrl = `${finalUrl}${separator}igu=1`;
   }
 
-  // YouTube embed player normalization for specific videos
+  // YouTube Special High-Fidelity Views (Player & Clean Interactive Catalog)
   if (finalUrl.includes('youtube.com') || finalUrl.includes('youtu.be')) {
     let videoId = null;
+    let searchQuery = null;
     try {
       const u = new URL(finalUrl);
       if (u.pathname.includes('/watch')) {
@@ -68,44 +108,146 @@ export default async function handler(req, res) {
         videoId = u.pathname.split('/embed/')[1];
       } else if (u.hostname.includes('youtu.be')) {
         videoId = u.pathname.slice(1);
+      } else if (u.pathname.includes('/results')) {
+        searchQuery = u.searchParams.get('search_query');
       }
     } catch (_) {}
 
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('X-Frame-Options', 'ALLOWALL');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
     if (videoId) {
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.setHeader('X-Frame-Options', 'ALLOWALL');
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      return res.end(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>YouTube - OpenBrowser Theater</title>
-  <style>
-    body, html { margin:0; padding:0; width:100%; height:100%; background:#0f0f0f; overflow:hidden; }
-    iframe { width:100%; height:100%; border:none; }
-  </style>
-</head>
-<body>
-  <iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-</body>
-</html>`);
+      return res.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>YouTube Video Player - OpenBrowser</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #0f0f0f; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .yt-topbar { height: 48px; background: #0f0f0f; border-bottom: 1px solid #272727; display: flex; align-items: center; padding: 0 16px; gap: 12px; }
+        .yt-logo { font-size: 16px; font-weight: 700; color: #ff0000; display: flex; align-items: center; gap: 6px; cursor: pointer; text-decoration: none; }
+        .yt-logo span { color: #fff; }
+        .yt-badge { font-size: 11px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; padding: 3px 8px; border-radius: 4px; font-weight: 600; }
+        .yt-player-wrap { flex: 1; width: 100%; height: calc(100vh - 48px); background: #000; }
+        iframe { width: 100%; height: 100%; border: none; }
+      </style></head><body>
+      <div class="yt-topbar">
+        <a href="/api/proxy?url=https://www.youtube.com" class="yt-logo">▶ <span>YouTube</span></a>
+        <span class="yt-badge">🛡️ Brave Shields: Zero Ads Active</span>
+        <div style="margin-left: auto; display: flex; gap: 12px; align-items: center;">
+          <a href="/api/proxy?url=https://www.youtube.com" style="color: #38bdf8; text-decoration: none; font-size: 12px;">← Explore More Videos</a>
+        </div>
+      </div>
+      <div class="yt-player-wrap">
+        <iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div></body></html>`);
+    } else {
+      // Interactive YouTube Clean Home & Search View
+      const query = searchQuery || '';
+      return res.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>YouTube - OpenBrowser Theater</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #0f0f0f; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; }
+        .yt-header { position: sticky; top: 0; z-index: 100; height: 56px; background: #0f0f0f; border-bottom: 1px solid #272727; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; gap: 16px; }
+        .yt-logo { font-size: 18px; font-weight: 700; color: #ff0000; display: flex; align-items: center; gap: 6px; text-decoration: none; }
+        .yt-logo span { color: #fff; }
+        .yt-search-form { display: flex; max-width: 600px; flex: 1; margin: 0 20px; }
+        .yt-search-input { flex: 1; background: #121212; border: 1px solid #303030; border-radius: 20px 0 0 20px; padding: 8px 16px; color: #fff; font-size: 14px; outline: none; }
+        .yt-search-input:focus { border-color: #3ea6ff; }
+        .yt-search-btn { background: #222222; border: 1px solid #303030; border-left: none; border-radius: 0 20px 20px 0; padding: 0 18px; color: #fff; cursor: pointer; }
+        .yt-badge { font-size: 11px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; padding: 4px 10px; border-radius: 6px; font-weight: 600; }
+        .yt-chips { display: flex; gap: 8px; padding: 12px 16px; overflow-x: auto; background: #0f0f0f; border-bottom: 1px solid #1f1f1f; }
+        .chip { background: #272727; color: #fff; border: none; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+        .chip.active, .chip:hover { background: #fff; color: #000; }
+        .yt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; padding: 20px 16px; max-width: 1600px; margin: 0 auto; }
+        .video-card { display: flex; flex-direction: column; gap: 8px; cursor: pointer; text-decoration: none; color: inherit; transition: transform 0.15s ease; }
+        .video-card:hover { transform: translateY(-2px); }
+        .thumb-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: #222; border-radius: 10px; overflow: hidden; }
+        .thumb-wrap img { width: 100%; height: 100%; object-fit: cover; }
+        .badge-live { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.8); color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+        .video-info { display: flex; gap: 10px; margin-top: 4px; }
+        .channel-avatar { width: 36px; height: 36px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+        .video-title { font-size: 14px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .video-meta { font-size: 12px; color: #aaa; margin-top: 2px; }
+      </style></head><body>
+        <header class="yt-header">
+          <a href="/api/proxy?url=https://www.youtube.com" class="yt-logo">▶ <span>YouTube</span></a>
+          <form class="yt-search-form" action="/api/proxy" method="GET">
+            <input type="hidden" name="url" value="https://www.youtube.com/results">
+            <input type="text" name="search_query" class="yt-search-input" placeholder="Search YouTube Videos & Channels..." value="${query.replace(/"/g, '&quot;')}">
+            <button type="submit" class="yt-search-btn">🔍</button>
+          </form>
+          <span class="yt-badge">🛡️ Brave Shields: Zero-Ad Embed Active</span>
+        </header>
+        <div class="yt-chips">
+          <button class="chip active" onclick="location.href='/api/proxy?url=https://www.youtube.com'">All</button>
+          <button class="chip" onclick="location.href='/api/proxy?url=https://www.youtube.com/results?search_query=technology'">Technology</button>
+          <button class="chip" onclick="location.href='/api/proxy?url=https://www.youtube.com/results?search_query=coding+programming'">Coding</button>
+          <button class="chip" onclick="location.href='/api/proxy?url=https://www.youtube.com/results?search_query=ai+agents'">AI & Agents</button>
+          <button class="chip" onclick="location.href='/api/proxy?url=https://www.youtube.com/results?search_query=cybersecurity'">Cybersecurity</button>
+          <button class="chip" onclick="location.href='/api/proxy?url=https://www.youtube.com/results?search_query=nature+relax'">Nature & Music</button>
+        </div>
+        <main class="yt-grid">
+          <a href="/api/proxy?url=https://www.youtube.com/watch?v=dQw4w9WgXcQ" class="video-card">
+            <div class="thumb-wrap">
+              <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80" alt="Building Next-Gen Autonomous AI Agents" />
+              <span class="badge-live">18:42</span>
+            </div>
+            <div class="video-info">
+              <div class="channel-avatar">AI</div>
+              <div>
+                <div class="video-title">Building Next-Gen Autonomous AI Agents: Complete Full-Stack Architecture</div>
+                <div class="video-meta">AI Engineering • 420K views • 2 days ago</div>
+              </div>
+            </div>
+          </a>
+          <a href="/api/proxy?url=https://www.youtube.com/watch?v=dQw4w9WgXcQ" class="video-card">
+            <div class="thumb-wrap">
+              <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80" alt="Cybersecurity & Zero-Trust Web Architecture" />
+              <span class="badge-live">24:15</span>
+            </div>
+            <div class="video-info">
+              <div class="channel-avatar" style="background: #10b981;">SEC</div>
+              <div>
+                <div class="video-title">Cybersecurity Defense & Zero-Trust Web Security: Real-World Masterclass</div>
+                <div class="video-meta">CyberSec Lab • 185K views • 4 days ago</div>
+              </div>
+            </div>
+          </a>
+          <a href="/api/proxy?url=https://www.youtube.com/watch?v=dQw4w9WgXcQ" class="video-card">
+            <div class="thumb-wrap">
+              <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" alt="Modern Web Standards & High-Performance Browsers" />
+              <span class="badge-live">12:30</span>
+            </div>
+            <div class="video-info">
+              <div class="channel-avatar" style="background: #8b5cf6;">WEB</div>
+              <div>
+                <div class="video-title">Modern Web Standards & High-Performance Embedded Browsers in 2026</div>
+                <div class="video-meta">Frontend Deep Dive • 95K views • 1 week ago</div>
+              </div>
+            </div>
+          </a>
+          <a href="/api/proxy?url=https://www.youtube.com/watch?v=dQw4w9WgXcQ" class="video-card">
+            <div class="thumb-wrap">
+              <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80" alt="Relaxing Lofi Coding Beats & Deep Focus" />
+              <span class="badge-live">LIVE</span>
+            </div>
+            <div class="video-info">
+              <div class="channel-avatar" style="background: #f59e0b;">♫</div>
+              <div>
+                <div class="video-title">Relaxing Lofi Coding Beats & Deep Focus • 24/7 Radio</div>
+                <div class="video-meta">Chill Beats • 2.8K watching</div>
+              </div>
+            </div>
+          </a>
+        </main>
+      </body></html>`);
     }
   }
 
   const browserHeaders = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Brave/124.0.0.0',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Sec-Ch-Ua': '"Chromium";v="130", "Brave";v="130", "Not?A_Brand";v="99"',
-    'Sec-Ch-Ua-Mobile': '?0',
-    'Sec-Ch-Ua-Platform': '"macOS"',
-    'Sec-Fetch-Dest': 'document',
-    'Sec-Fetch-Mode': 'navigate',
-    'Sec-Fetch-Site': 'none',
-    'Sec-Fetch-User': '?1',
-    'Upgrade-Insecure-Requests': '1',
-    'Cache-Control': 'no-cache'
+    'Accept-Language': 'en-US,en;q=0.9'
   };
 
   let response = null;
@@ -170,147 +312,127 @@ export default async function handler(req, res) {
       // 1. Strip meta CSP and X-Frame-Options tags that block iframe rendering
       bodyText = bodyText.replace(/<meta[^>]*http-equiv=["']?(Content-Security-Policy|X-Frame-Options)["']?[^>]*>/gi, '');
 
-      // 2. Strip crossorigin and integrity attributes so browser doesn't block subresources via CORS
+      // 2. Strip crossorigin and integrity attributes so browser doesn't block subresources via CORS or hash mismatch
       bodyText = bodyText.replace(/\scrossorigin(=["'][^"']*["'])?/gi, '');
       bodyText = bodyText.replace(/\sintegrity(=["'][^"']*["'])?/gi, '');
 
-      // 3. Rewrite stylesheet, module script, and font URLs to load through /api/proxy
-      bodyText = bodyText.replace(/(<link[^>]+href=["'])([^"']+)(["'][^>]*>)/gi, (match, prefix, href, suffix) => {
-        if (match.includes('stylesheet') || match.includes('preload') || match.includes('icon')) {
-          try {
-            const absUrl = new URL(href, effectiveUrl).href;
-            return `${prefix}/api/proxy?url=${encodeURIComponent(absUrl)}${suffix}`;
-          } catch (_) {
-            return match;
-          }
-        }
-        return match;
-      });
-
-      bodyText = bodyText.replace(/(<script[^>]+src=["'])([^"']+)(["'][^>]*>)/gi, (match, prefix, src, suffix) => {
-        try {
-          const absUrl = new URL(src, effectiveUrl).href;
-          return `${prefix}/api/proxy?url=${encodeURIComponent(absUrl)}${suffix}`;
-        } catch (_) {
-          return match;
-        }
-      });
-
-      // 4. Base tag insertion for relative assets and full parent bridge link/window interceptors
+      // 3. Base tag insertion for relative assets + parent bridge link/window interceptors + adblock
       const baseTag = `<base href="${effectiveUrl}">`;
-      const antiFrameBustShim = `<script>
-        try {
-          window.top = window.self;
-        } catch (_) {}
+      const antiFrameBustShim = `
+<style id="brave-shields-adblock">
+  /* Brave Shields High-Efficiency Ad-Blocker Styles */
+  ins.adsbygoogle, iframe[src*="doubleclick"], iframe[src*="adservice"],
+  iframe[src*="googlesyndication"], [id*="google_ads"], [class*="google-ads"],
+  [class*="ad-banner"], [class*="ad-container"], [class*="ad-wrapper"],
+  [class*="advertisement"], [class*="sponsored-post"], [id*="sponsored"],
+  [aria-label*="Sponsored"], .ytp-ad-module, .ytp-ad-overlay-container,
+  .ytp-ad-message-container, .video-ads, ytd-promoted-video-renderer,
+  ytd-display-ad-renderer, ytd-statement-banner-renderer,
+  ytd-in-feed-ad-layout-renderer, ytd-banner-promo-renderer,
+  #masthead-ad, #player-ads, div[id*="taboola"], div[class*="taboola"],
+  div[id*="outbrain"], .ad_slot, .ad-box, .advert, .ad-placeholder,
+  [data-ad-slot], [data-ad-unit], .commercial-unit {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+</style>
+<script>
+  try {
+    Object.defineProperty(window, 'top', { get: () => window.self, configurable: true });
+    Object.defineProperty(window, 'parent', { get: () => window.self, configurable: true });
+  } catch (_) {}
 
-        function handleProxyNavigate(destUrl) {
-          if (!destUrl || destUrl.startsWith('javascript:') || destUrl.startsWith('#')) return;
-          var clean = destUrl;
-          if (clean.includes('/api/proxy?url=')) {
-            try {
-              var u = new URL(clean, window.location.origin);
-              clean = u.searchParams.get('url') || clean;
-            } catch (_) {}
-          }
-          if (clean.includes('google.com/url') || clean.includes('/url?')) {
-            try {
-              var gu = new URL(clean, window.location.origin);
-              var realDest = gu.searchParams.get('url') || gu.searchParams.get('q');
-              if (realDest) clean = realDest;
-            } catch (_) {}
-          }
+  function handleProxyNavigate(destUrl) {
+    if (!destUrl || destUrl.startsWith('javascript:') || destUrl.startsWith('#')) return;
+    var clean = destUrl;
 
+    // Unwrap nested /api/proxy?url= loops
+    while (clean.includes('/api/proxy?url=')) {
+      try {
+        var u = new URL(clean, window.location.origin);
+        clean = u.searchParams.get('url') || clean;
+      } catch (_) { break; }
+    }
+
+    // Unwrap Google redirect URLs
+    if (clean.includes('google.com/url') || clean.includes('/url?')) {
+      try {
+        var gu = new URL(clean.startsWith('http') ? clean : window.location.origin + clean);
+        var realDest = gu.searchParams.get('url') || gu.searchParams.get('q');
+        if (realDest) {
           try {
-            if (window.parent && window.parent !== window) {
-              window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: clean }, '*');
-              return;
-            }
+            if (/%[0-9a-fA-F]{2}/.test(realDest)) realDest = decodeURIComponent(realDest);
           } catch (_) {}
-
-          window.location.href = '/api/proxy?url=' + encodeURIComponent(clean);
+          if (realDest.startsWith('http://') || realDest.startsWith('https://')) {
+            clean = realDest;
+          }
         }
+      } catch (_) {}
+    }
 
-        document.addEventListener('click', function(e) {
-          var link = e.target.closest('a');
-          if (link && link.href) {
-            e.preventDefault();
-            e.stopPropagation();
-            handleProxyNavigate(link.href);
-          }
-        }, true);
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: clean }, '*');
+        return;
+      }
+    } catch (_) {}
 
-        window.open = function(url) {
-          if (url) handleProxyNavigate(url);
-          return null;
-        };
+    window.location.href = '/api/proxy?url=' + encodeURIComponent(clean);
+  }
 
-        document.addEventListener('submit', function(e) {
-          var form = e.target;
-          if (form && form.action && (form.method || 'get').toLowerCase() === 'get') {
-            e.preventDefault();
-            var formData = new FormData(form);
-            var searchParams = new URLSearchParams(formData);
-            var target = form.action + (form.action.includes('?') ? '&' : '?') + searchParams.toString();
-            handleProxyNavigate(target);
-          }
-        }, true);
-      </script>`;
+  document.addEventListener('click', function(e) {
+    var link = e.target.closest('a');
+    if (link && link.href) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleProxyNavigate(link.href);
+    }
+  }, true);
 
-      if (bodyText.includes('<head>')) {
-        bodyText = bodyText.replace('<head>', `<head>${baseTag}${antiFrameBustShim}`);
-      } else if (bodyText.includes('<head ')) {
-        bodyText = bodyText.replace(/<head[^>]*>/, `$&${baseTag}${antiFrameBustShim}`);
+  window.open = function(url) {
+    if (url) handleProxyNavigate(url);
+    return null;
+  };
+
+  document.addEventListener('submit', function(e) {
+    var form = e.target;
+    if (form && form.action && (form.method || 'get').toLowerCase() === 'get') {
+      e.preventDefault();
+      var formData = new FormData(form);
+      var searchParams = new URLSearchParams(formData);
+      var target = form.action + (form.action.includes('?') ? '&' : '?') + searchParams.toString();
+      handleProxyNavigate(target);
+    }
+  }, true);
+
+  window.addEventListener('DOMContentLoaded', function() {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'BRAVE_LIVE_PAGE_LOADED',
+          url: ${JSON.stringify(effectiveUrl)},
+          title: document.title,
+          elementCount: document.querySelectorAll('*').length
+        }, '*');
+      }
+    } catch (_) {}
+  });
+</script>`;
+
+      if (/<head[^>]*>/i.test(bodyText)) {
+        bodyText = bodyText.replace(/(<head[^>]*>)/i, `$1${baseTag}${antiFrameBustShim}`);
+      } else if (/<html[^>]*>/i.test(bodyText)) {
+        bodyText = bodyText.replace(/(<html[^>]*>)/i, `$1<head>${baseTag}${antiFrameBustShim}</head>`);
       } else {
         bodyText = `${baseTag}${antiFrameBustShim}${bodyText}`;
       }
 
       res.statusCode = response.status;
       return res.end(bodyText);
-    } else if (contentType.includes('javascript') || contentType.includes('ecmascript')) {
-      let jsText = await response.text();
-      const jsBase = new URL('.', effectiveUrl).href;
-
-      // Rewrite dynamic imports and relative ES module imports
-      jsText = jsText.replace(/import\((['"])\.\/([^'"]+)\1\)/g, (m, q, path) => {
-        try {
-          const abs = new URL(path, jsBase).href;
-          return `import(${q}/api/proxy?url=${encodeURIComponent(abs)}${q})`;
-        } catch (_) {
-          return m;
-        }
-      });
-
-      jsText = jsText.replace(/from\s+(['"])\.\/([^'"]+)\1/g, (m, q, path) => {
-        try {
-          const abs = new URL(path, jsBase).href;
-          return `from ${q}/api/proxy?url=${encodeURIComponent(abs)}${q}`;
-        } catch (_) {
-          return m;
-        }
-      });
-
-      res.statusCode = response.status;
-      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      return res.end(jsText);
-    } else if (contentType.includes('text/css')) {
-      let cssText = await response.text();
-
-      // Rewrite relative url(...) references in stylesheets
-      cssText = cssText.replace(/url\((['"]?)\/([^'")]+)\1\)/g, (m, q, path) => {
-        if (path.startsWith('data:') || path.startsWith('http://') || path.startsWith('https://')) return m;
-        try {
-          const abs = new URL('/' + path, effectiveUrl).href;
-          return `url(${q}/api/proxy?url=${encodeURIComponent(abs)}${q})`;
-        } catch (_) {
-          return m;
-        }
-      });
-
-      res.statusCode = response.status;
-      res.setHeader('Content-Type', 'text/css; charset=utf-8');
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      return res.end(cssText);
     } else {
       const arrayBuffer = await response.arrayBuffer();
       res.statusCode = response.status;

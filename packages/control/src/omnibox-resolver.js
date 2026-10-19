@@ -141,9 +141,14 @@ export function normalizeGoogleUrl(rawUrl) {
   try {
     const parsed = new URL(str.startsWith('http://') || str.startsWith('https://') ? str : `https://${str}`);
     if (parsed.hostname === 'google.com' || parsed.hostname === 'www.google.com' || parsed.hostname.endsWith('.google.com')) {
-      const destParam = parsed.searchParams.get('url') || parsed.searchParams.get('q');
-      if (destParam && (destParam.startsWith('http://') || destParam.startsWith('https://'))) {
-        return destParam;
+      let destParam = parsed.searchParams.get('url') || parsed.searchParams.get('q');
+      if (destParam) {
+        try {
+          if (/%[0-9a-fA-F]{2}/.test(destParam)) destParam = decodeURIComponent(destParam);
+        } catch (_) {}
+        if (destParam.startsWith('http://') || destParam.startsWith('https://')) {
+          return destParam;
+        }
       }
       if (parsed.pathname === '/' || parsed.pathname === '' || parsed.pathname === '/webhp') {
         return 'https://www.google.com/webhp?igu=1';

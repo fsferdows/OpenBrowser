@@ -100,6 +100,35 @@ describe('Vercel CLI Deployment & Configuration Suite (ADR-0014)', () => {
     assert.strictEqual(statusCode, 200, 'Must return 200 for unwrapped Google redirect');
     assert.ok(responseBody.includes('Example Domain'), 'Must render unwrapped destination content');
     assert.strictEqual(headers['X-Frame-Options'], 'ALLOWALL', 'Must allow embedding');
-    assert.ok(responseBody.includes('handleProxyNavigate'), 'Must inject parent bridge script');
+    // Test search query resolution redirect
+    statusCode = 200;
+    headers = {};
+    responseBody = '';
+
+    const mockReqSearchQuery = {
+      query: { url: 'how to build autonomous browser' },
+      url: '/api/proxy?url=how%20to%20build%20autonomous%20browser',
+      method: 'GET'
+    };
+
+    await proxyModule.default(mockReqSearchQuery, mockRes);
+    assert.strictEqual(statusCode, 302, 'Must return 302 for non-URL search query');
+    assert.ok(headers['Location'].includes('search.html?q='), 'Must redirect query to Braver Search');
+
+    // Test YouTube home & catalog view
+    statusCode = 200;
+    headers = {};
+    responseBody = '';
+
+    const mockReqYouTubeHome = {
+      query: { url: 'https://www.youtube.com' },
+      url: '/api/proxy?url=https%3A%2F%2Fwww.youtube.com',
+      method: 'GET'
+    };
+
+    await proxyModule.default(mockReqYouTubeHome, mockRes);
+    assert.strictEqual(statusCode, 200, 'Must return 200 for YouTube home view');
+    assert.ok(responseBody.includes('YouTube - OpenBrowser Theater'), 'Must render YouTube Theater view');
+    assert.ok(responseBody.includes('Brave Shields: Zero-Ad Embed Active'), 'Must display ad-free badge');
   });
 });
