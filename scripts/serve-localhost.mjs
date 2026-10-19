@@ -1078,6 +1078,46 @@ const server = createServer(async (req, res) => {
                 }
               } catch (_) {}
             }
+          } else if (contentType.includes('javascript') || contentType.includes('ecmascript')) {
+            let jsText = await fetchRes.text();
+            const jsBase = new URL('.', finalUrl).href;
+            jsText = jsText.replace(/import\((['"])\.\/([^'"]+)\1\)/g, (m, q, path) => {
+              try {
+                const abs = new URL(path, jsBase).href;
+                return `import(${q}/api/proxy?url=${encodeURIComponent(abs)}${q})`;
+              } catch (_) { return m; }
+            });
+            jsText = jsText.replace(/from\s+(['"])\.\/([^'"]+)\1/g, (m, q, path) => {
+              try {
+                const abs = new URL(path, jsBase).href;
+                return `from ${q}/api/proxy?url=${encodeURIComponent(abs)}${q}`;
+              } catch (_) { return m; }
+            });
+            res.setHeader('X-Frame-Options', 'ALLOWALL');
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.writeHead(200, {
+              'Content-Type': 'application/javascript; charset=utf-8',
+              'Access-Control-Allow-Origin': '*'
+            });
+            res.end(jsText);
+            return;
+          } else if (contentType.includes('text/css')) {
+            let cssText = await fetchRes.text();
+            cssText = cssText.replace(/url\((['"]?)\/([^'")]+)\1\)/g, (m, q, path) => {
+              if (path.startsWith('data:') || path.startsWith('http://') || path.startsWith('https://')) return m;
+              try {
+                const abs = new URL('/' + path, finalUrl).href;
+                return `url(${q}/api/proxy?url=${encodeURIComponent(abs)}${q})`;
+              } catch (_) { return m; }
+            });
+            res.setHeader('X-Frame-Options', 'ALLOWALL');
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.writeHead(200, {
+              'Content-Type': 'text/css; charset=utf-8',
+              'Access-Control-Allow-Origin': '*'
+            });
+            res.end(cssText);
+            return;
           } else {
             const buffer = await fetchRes.arrayBuffer();
             res.setHeader('X-Frame-Options', 'ALLOWALL');
@@ -1094,6 +1134,28 @@ const server = createServer(async (req, res) => {
 
       // 1. Strip meta CSP and X-Frame-Options tags that block iframe rendering
       html = html.replace(/<meta[^>]*http-equiv=["']?(Content-Security-Policy|X-Frame-Options)["']?[^>]*>/gi, '');
+
+      // 1b. Strip crossorigin and integrity attributes so browser doesn't block subresources via CORS
+      html = html.replace(/\scrossorigin(=["'][^"']*["'])?/gi, '');
+      html = html.replace(/\sintegrity(=["'][^"']*["'])?/gi, '');
+
+      // 1c. Rewrite stylesheet, preload, and script tags
+      html = html.replace(/(<link[^>]+href=["'])([^"']+)(["'][^>]*>)/gi, (match, prefix, href, suffix) => {
+        if (match.includes('stylesheet') || match.includes('preload') || match.includes('icon')) {
+          try {
+            const absUrl = new URL(href, finalUrl).href;
+            return `${prefix}/api/proxy?url=${encodeURIComponent(absUrl)}${suffix}`;
+          } catch (_) { return match; }
+        }
+        return match;
+      });
+
+      html = html.replace(/(<script[^>]+src=["'])([^"']+)(["'][^>]*>)/gi, (match, prefix, src, suffix) => {
+        try {
+          const absUrl = new URL(src, finalUrl).href;
+          return `${prefix}/api/proxy?url=${encodeURIComponent(absUrl)}${suffix}`;
+        } catch (_) { return match; }
+      });
 
       // 2. Filter out known ad network scripts (Brave Shields Engine)
       html = html.replace(/<script[^>]+src=["'][^"']*(googlesyndication|doubleclick|adservice|adnxs|taboola|outbrain|criteo|popads|moatads|adform)[^"']*["'][^>]*>[\s\S]*?<\/script>/gi, '');

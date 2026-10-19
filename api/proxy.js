@@ -96,7 +96,36 @@ export default async function handler(req, res) {
     if (contentType.includes('text/html')) {
       let bodyText = await response.text();
 
-      // Base tag insertion for relative assets and link/form interceptors
+      // 1. Strip meta CSP and X-Frame-Options tags that block iframe rendering
+      bodyText = bodyText.replace(/<meta[^>]*http-equiv=["']?(Content-Security-Policy|X-Frame-Options)["']?[^>]*>/gi, '');
+
+      // 2. Strip crossorigin and integrity attributes so browser doesn't block subresources via CORS
+      bodyText = bodyText.replace(/\scrossorigin(=["'][^"']*["'])?/gi, '');
+      bodyText = bodyText.replace(/\sintegrity(=["'][^"']*["'])?/gi, '');
+
+      // 3. Rewrite stylesheet, module script, and font URLs to load through /api/proxy
+      bodyText = bodyText.replace(/(<link[^>]+href=["'])([^"']+)(["'][^>]*>)/gi, (match, prefix, href, suffix) => {
+        if (match.includes('stylesheet') || match.includes('preload') || match.includes('icon')) {
+          try {
+            const absUrl = new URL(href, finalUrl).href;
+            return `${prefix}/api/proxy?url=${encodeURIComponent(absUrl)}${suffix}`;
+          } catch (_) {
+            return match;
+          }
+        }
+        return match;
+      });
+
+      bodyText = bodyText.replace(/(<script[^>]+src=["'])([^"']+)(["'][^>]*>)/gi, (match, prefix, src, suffix) => {
+        try {
+          const absUrl = new URL(src, finalUrl).href;
+          return `${prefix}/api/proxy?url=${encodeURIComponent(absUrl)}${suffix}`;
+        } catch (_) {
+          return match;
+        }
+      });
+
+      // 4. Base tag insertion for relative assets and link/form interceptors
       const baseTag = `<base href="${finalUrl}">`;
       const antiFrameBustShim = `<script>
         try {
@@ -133,9 +162,55 @@ export default async function handler(req, res) {
 
       res.statusCode = response.status;
       return res.end(bodyText);
+    } else if (contentType.includes('javascript') || contentType.includes('ecmascript')) {
+      let jsText = await response.text();
+      const jsBase = new URL('.', finalUrl).href;
+
+      // Rewrite dynamic imports and relative ES module imports
+      jsText = jsText.replace(/import\((['"])\.\/([^'"]+)\1\)/g, (m, q, path) => {
+        try {
+          const abs = new URL(path, jsBase).href;
+          return `import(${q}/api/proxy?url=${encodeURIComponent(abs)}${q})`;
+        } catch (_) {
+          return m;
+        }
+      });
+
+      jsText = jsText.replace(/from\s+(['"])\.\/([^'"]+)\1/g, (m, q, path) => {
+        try {
+          const abs = new URL(path, jsBase).href;
+          return `from ${q}/api/proxy?url=${encodeURIComponent(abs)}${q}`;
+        } catch (_) {
+          return m;
+        }
+      });
+
+      res.statusCode = response.status;
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.end(jsText);
+    } else if (contentType.includes('text/css')) {
+      let cssText = await response.text();
+
+      // Rewrite relative url(...) references in stylesheets
+      cssText = cssText.replace(/url\((['"]?)\/([^'")]+)\1\)/g, (m, q, path) => {
+        if (path.startsWith('data:') || path.startsWith('http://') || path.startsWith('https://')) return m;
+        try {
+          const abs = new URL('/' + path, finalUrl).href;
+          return `url(${q}/api/proxy?url=${encodeURIComponent(abs)}${q})`;
+        } catch (_) {
+          return m;
+        }
+      });
+
+      res.statusCode = response.status;
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.end(cssText);
     } else {
       const arrayBuffer = await response.arrayBuffer();
       res.statusCode = response.status;
+      res.setHeader('Access-Control-Allow-Origin', '*');
       return res.end(Buffer.from(arrayBuffer));
     }
   } catch (err) {
