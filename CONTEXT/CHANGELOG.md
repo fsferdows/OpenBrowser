@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Blank Screen & Connection Refusal Elimination:
+  - `public/app.js`: Updated `navigateLiveUrl()` so that YouTube homepage and channel links seamlessly load the interactive YouTube Theater & Video Catalog (`portal.html?url=...&site=youtube`), while individual video URLs stream via the ad-free nocookie embed player, completely eliminating YouTube's blank white skeleton screen. Routed Facebook and GitHub directly to their dedicated interactive shielded portals across all hosting environments. Bumped Service Worker registration to `sw.js?v=4`.
+  - `api/proxy.js`: Added automatic HTTP 302 redirects for YouTube homepage/channel URLs, Facebook, and GitHub destinations directly to their dedicated portals, ensuring that even direct proxy requests for complex walled gardens never render blank or broken error states. Set `res.statusCode = 200` with `X-Frame-Options: ALLOWALL` on proxy catch blocks so network failures render a friendly recovery card instead of a browser 502 error screen.
+  - `public/portal.html`: Added a dedicated YouTube search bar and `[ ↗ Open YouTube.com ]` action button into `#view-youtube`. Added `handleYtSearch` allowing users to search videos or paste URLs directly into the theater view.
+  - `public/sw.js`: Bumped cache name to `openbrowser-backend-v4` for instant asset invalidation.
+  - `public/index.html`: Bumped cache-busting query strings on `style.css` and `app.js` to `?v=1.0.5`.
+
 - Vercel CLI Deployment & Universal Live Web Proxy Pipeline (ADR-0014):
   - `vercel.json`: Created Vercel configuration setting `outputDirectory: "public"`, enabling clean URLs, and setting `Service-Worker-Allowed: /` and security headers for `sw.js`.
   - `.vercelignore`: Configured ignore rules to exclude heavy vendor source trees (`chromium-main/`, `OmniRoute-release-v3.8.52/`, `freellmapi-main/`, `rea-main/`, `vendor/`) and media assets (`1.mp4`), reducing deployment payload from >6.3 GB to ~3.5 MB to strictly comply with Vercel upload and serverless limits.

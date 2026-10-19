@@ -163,12 +163,17 @@
       "id": "phase8-task19",
       "description": "Vercel CLI Deployment & Universal Live Web Proxy Pipeline (ADR-0014): Add vercel.json (outputDirectory: public, cleanUrls, Service-Worker-Allowed: /), .vercelignore (excluding >6GB of vendor sources and heavy media assets to comply with Vercel upload limits), and api/proxy.js (zero-dependency edge serverless proxy stripping X-Frame-Options/CSP frame-ancestors, injecting base href and link/form interceptors). Fix isStaticOnlyHosting in public/app.js to eliminate unwanted portal redirects on Vercel deployments, allowing users to visit and browse every URL live without issues.",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task20",
+      "description": "Blank Screen & Connection Refusal Elimination: Fix YouTube blank white skeleton screen on Vercel deployments by routing YouTube homepage and channels to the interactive YouTube Theater & Video Catalog (portal.html?url=...&site=youtube), while routing specific video URLs directly to the ad-free nocookie embed player. In api/proxy.js, add automatic 302 redirects for YouTube home, Facebook, and GitHub; rewrite subresource assets (CSS, JS modules) to eliminate CORS blocks; and set status 200 with ALLOWALL on proxy error responses to prevent browser 502 error screens. Bump Service Worker to v4 and cache busters to v=1.0.5.",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
     "OQ-001: Host filesystem capacity is constrained; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Deploy via Vercel CLI (`vercel` or `vercel --prod`) and verify live browsing on openbrowser-eosin.vercel.app.",
-  "last_commit": "c34d0be"
+  "next_action": "Monitor user feedback on YouTube Theater catalog and live web browsing on openbrowser-eosin.vercel.app.",
+  "last_commit": "8c9f46a"
 }

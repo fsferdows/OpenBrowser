@@ -29,7 +29,7 @@
   // Service Worker Registration for In-Browser Standalone GitHub Execution
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js?v=3', { scope: './' })
+      navigator.serviceWorker.register('sw.js?v=4', { scope: './' })
         .then((reg) => {
           reg.update().catch(() => {});
           console.log('🦁 OpenBrowser In-Browser Backend Service Worker registered:', reg.scope);
@@ -951,24 +951,16 @@
       } catch (_) {}
       if (videoId) {
         effectiveSrc = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
-      } else if (isStaticOnlyHosting) {
+      } else {
         effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=youtube`;
-      } else {
-        effectiveSrc = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
       }
-    } else if (isStaticOnlyHosting) {
-      if (lower.includes('facebook.com') || lower.includes('fb.com')) {
-        effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=facebook`;
-      } else if (lower.includes('github.com')) {
-        effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=github`;
-      } else if (lower.includes('google.com') || lower.includes('search.html')) {
-        effectiveSrc = targetUrl;
-      } else {
-        // Attempt direct load on static hosting; if framing error occurs, onerror falls back to portal.html
-        effectiveSrc = targetUrl;
-      }
+    } else if (lower.includes('facebook.com') || lower.includes('fb.com')) {
+      effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=facebook`;
+    } else if (lower.includes('github.com')) {
+      effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=github`;
+    } else if (lower.includes('google.com') || lower.includes('search.html')) {
+      effectiveSrc = targetUrl;
     } else {
-      // Vercel and Localhost: unblocks EVERY site in the live web via /api/proxy!
       effectiveSrc = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
     }
 

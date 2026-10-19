@@ -59,7 +59,25 @@ export default async function handler(req, res) {
   <iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0" allowfullscreen allow="autoplay; encrypted-media"></iframe>
 </body>
 </html>`);
+    } else {
+      res.statusCode = 302;
+      res.setHeader('Location', `/portal.html?url=${encodeURIComponent(finalUrl)}&site=youtube`);
+      return res.end();
     }
+  }
+
+  // Facebook interactive portal redirection
+  if (finalUrl.includes('facebook.com') || finalUrl.includes('fb.com')) {
+    res.statusCode = 302;
+    res.setHeader('Location', `/portal.html?url=${encodeURIComponent(finalUrl)}&site=facebook`);
+    return res.end();
+  }
+
+  // GitHub portal redirection for non-raw destinations
+  if (finalUrl.includes('github.com') && !finalUrl.includes('raw.githubusercontent.com') && !finalUrl.includes('/raw/')) {
+    res.statusCode = 302;
+    res.setHeader('Location', `/portal.html?url=${encodeURIComponent(finalUrl)}&site=github`);
+    return res.end();
   }
 
   try {
@@ -214,8 +232,10 @@ export default async function handler(req, res) {
       return res.end(Buffer.from(arrayBuffer));
     }
   } catch (err) {
-    res.statusCode = 502;
+    res.statusCode = 200;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('X-Frame-Options', 'ALLOWALL');
+    res.setHeader('Access-Control-Allow-Origin', '*');
     return res.end(`<!DOCTYPE html>
 <html>
 <head>

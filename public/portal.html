@@ -1029,6 +1029,18 @@
          YOUTUBE LIVE INTERACTIVE PLAYER & CATALOG
          ===================================================================== -->
     <div id="view-youtube" class="yt-app-wrapper" style="display: none;">
+      <!-- YouTube Search & Quick Action Bar -->
+      <div style="display: flex; gap: 10px; margin-bottom: 16px; align-items: center; max-width: 1400px; margin: 0 auto 16px auto; width: 100%;">
+        <div style="display: flex; flex: 1; background: #18181b; border: 1px solid #27272a; border-radius: 24px; padding: 4px 16px; align-items: center;">
+          <span style="color: #71717a; margin-right: 8px;">🔍</span>
+          <input type="text" id="yt-search-input" placeholder="Search YouTube or paste video URL..." style="flex: 1; background: transparent; border: none; color: #fff; padding: 8px 0; font-size: 14px; outline: none;" />
+          <button type="button" id="btn-yt-search-go" class="btn-action" style="padding: 6px 14px; border-radius: 18px; font-size: 12px; background: #dc2626;">Search</button>
+        </div>
+        <a href="https://www.youtube.com" target="_blank" rel="noopener" class="btn-action" style="background: #27272a; padding: 10px 18px; border-radius: 20px; text-decoration: none; font-size: 13px;">
+          <span>↗ Open YouTube.com</span>
+        </a>
+      </div>
+
       <!-- Main Theater Player -->
       <div class="yt-player-container">
         <div class="yt-main-player">
@@ -1387,6 +1399,33 @@
       document.querySelectorAll('.yt-chip').forEach(c => c.classList.remove('active'));
       event.target.classList.add('active');
       showPortalToast(`Filtering YouTube by: ${event.target.textContent}`);
+    }
+
+    document.getElementById('btn-yt-search-go')?.addEventListener('click', handleYtSearch);
+    document.getElementById('yt-search-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleYtSearch();
+    });
+
+    function handleYtSearch() {
+      const input = document.getElementById('yt-search-input');
+      const val = (input?.value || '').trim();
+      if (!val) return;
+
+      let vId = null;
+      try {
+        const u = new URL(val);
+        if (u.pathname.includes('/watch')) vId = u.searchParams.get('v');
+        else if (u.pathname.includes('/embed/')) vId = u.pathname.split('/embed/')[1];
+        else if (u.hostname.includes('youtu.be')) vId = u.pathname.slice(1);
+      } catch (_) {}
+
+      if (vId) {
+        playYtVideo(vId, 'Playing YouTube Video', 'YouTube Stream');
+        return;
+      }
+
+      showPortalToast(`Searching YouTube for: ${val}`);
+      navigateToSearch(`site:youtube.com ${val}`);
     }
   </script>
 </body>
