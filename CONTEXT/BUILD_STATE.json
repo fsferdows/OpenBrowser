@@ -138,12 +138,17 @@
       "id": "phase8-task14",
       "description": "In-browser autonomous backend engine running via Service Worker (sw.js) and transparent client-side fetch router, eliminating localhost requirements on GitHub Pages; and universal web unblocker providing active interactive experiences for YouTube, Facebook, and search results without frame connection refusal errors (ADR-0012).",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task15",
+      "description": "Skill cryptographic signing and verification (ADR-0013) using Node.js native Ed25519 signatures, canonical JSON payload digest verification, SkillKeyring trust management, and import review gating (resolving OQ-004); plus Web Speech API voice search integration in search.html (resolving OQ-003).",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
     "OQ-001: Host filesystem capacity is 475MB free; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Push in-browser backend engine and universal web unblocker to main and deploy to gh-pages; verify standalone execution on GitHub Pages without localhost.",
+  "next_action": "Deploy updated packages and search.html to main and gh-pages; run periodic continuous sustainment regression tests.",
   "last_commit": "HEAD"
 }

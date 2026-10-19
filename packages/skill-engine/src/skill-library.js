@@ -1,9 +1,20 @@
 import { validateSkill, ValidationError } from '@agentic-browser/shared';
 import { SkillMigrator } from './skill-migrator.js';
+import { SkillKeyring, SkillCryptoEngine } from './skill-crypto.js';
 
 export class SkillLibrary {
-  constructor() {
+  constructor(keyring = new SkillKeyring()) {
     this.skills = new Map();
+    this.keyring = keyring;
+    this.cryptoEngine = new SkillCryptoEngine(this.keyring, this);
+  }
+
+  importSignedSkill(skill, options = {}) {
+    return this.cryptoEngine.importSkill(skill, options);
+  }
+
+  exportSignedSkill(skillId, privateKey, publicKey) {
+    return this.cryptoEngine.exportSkill(skillId, privateKey, publicKey);
   }
 
   registerSkill(skill) {

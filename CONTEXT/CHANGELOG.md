@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Ed25519 Skill Cryptographic Signing, Keyring Trust Profiles & Voice Input Integration (ADR-0013):
+  - `packages/skill-engine/src/skill-crypto.js`: Implemented complete zero-dependency Ed25519 skill signing and verification engine using Node.js native `crypto`. Provides deterministic canonical JSON serialization (`canonicalizeSkill`) omitting signature fields, cryptographic signature generation (`signSkill`), signature verification (`verifySkillSignature`), and trust keyring management (`SkillKeyring`), definitively resolving `OQ-004`.
+  - `packages/skill-engine/src/skill-library.js` & `packages/skill-engine/src/index.js`: Integrated `SkillCryptoEngine` directly into `SkillLibrary`, providing `importSignedSkill` and `exportSignedSkill`. Enforces mandatory human-in-the-loop interactive review (`onReviewRequired`) when skills are signed by untrusted keys or declare high/critical risk levels, preventing malicious or tampered skill execution.
+  - `packages/skill-engine/tests/skill-crypto.test.js`: Created 12-assertion acceptance test suite validating key generation, deterministic canonicalization, tamper detection, signature forgery prevention, keyring trust management, and human review gating.
+  - `public/search.html`: Connected `#btn-voice` to `window.SpeechRecognition` / `window.webkitSpeechRecognition` with active `.listening` pulse styling, non-blocking glassmorphic toast notifications, and automated search query dispatch, definitively resolving `OQ-003`.
+
 - In-Browser GitHub Pages Backend Engine & Universal Web Unblocker (ADR-0012):
   - `public/sw.js`: Created autonomous in-browser backend Service Worker registered at scope `./`. Intercepts all `/api/*` network requests (`/api/ai/chat`, `/api/search`, `/api/run-task`, `/api/proxy`, `/api/status`, `/api/shields/*`, `/api/gateway/*`, `/api/skills`, `/api/settings`) and services them with complete parity directly inside the browser on GitHub Pages, eliminating any dependency on a local Node.js process (`npm start`).
   - `public/app.js`: Built transparent in-memory client-side fetch router wrapping `window.fetch`. Guarantees immediate fallback and zero latency even if Service Workers are restricted by private browsing or file origins.

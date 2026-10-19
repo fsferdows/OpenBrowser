@@ -66,7 +66,7 @@ graph TD
 ### 1. Browser Shell and Side Panel UI
 - **Host**: Chromium-based shell (Google Chrome / Chromium) running a Manifest V3 extension.
 - **Side Panel**: Persistent webview interface providing user task inputs, live progress visualization, step-by-step diff inspection, human-in-the-loop approval dialogs, and manual control overrides.
-- **Command Palette & Voice**: Fast modal interface supporting keyboard shortcuts and externalized speech-to-text input.
+- **Command Palette & Voice Input (ADR-0013)**: Fast modal interface supporting keyboard shortcuts and Web Speech API speech-to-text recognition across both the Side Panel command bar and Braver Search SERP (`search.html`), with bilingual English (`en-US`) and Bangla (`bn-BD`) transcription and non-blocking toast notifications.
 
 ### 2. Browser Control Layer
 - **Interface**: Chrome DevTools Protocol (CDP) WebSocket connection (`chrome.debugger` or local CDP port `9222`).
@@ -113,6 +113,7 @@ graph TD
 - **Specification**: Skills are declarative JSON files conforming to `skill.schema.json`.
 - **Demonstration Recorder**: Observes human browsing sessions via CDP event logging; automatically redacts passwords, masked inputs, and token cookies; extracts parameterized flows.
 - **Self-Repair Loop**: When a skill step fails on a target site, the repairer analyzes semantic drift, evaluates candidate selectors against cached AX models, runs local tests, and issues an updated semver skill.
+- **Cryptographic Signing and Verification (ADR-0013)**: Skills support native Ed25519 digital signatures (`ed25519:<sigHex>:<pubHex>`) calculated over canonically ordered JSON payloads (omitting the `signature` field). The `SkillKeyring` manages trusted signers. When importing third-party skills, the `SkillCryptoEngine` verifies cryptographic integrity and requires mandatory human-in-the-loop interactive review for untrusted signers or high/critical risk actions before library registration or execution.
 
 ### 5. Model Gateway
 - **Boundary**: All model interactions pass through an abstracted gateway client implementing an OpenAI-compatible interface.
