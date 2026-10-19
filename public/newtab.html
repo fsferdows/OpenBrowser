@@ -3,22 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Braver</title>
+  <title>New tab</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='20' font-size='20'>🦁</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg-color: #202124;
-      --surface-color: #303134;
-      --surface-hover: #3c4043;
-      --border-color: #5f6368;
-      --text-primary: #e8eaed;
-      --text-secondary: #9aa0a6;
-      --link-blue: #8ab4f8;
-      --ai-purple: #c084fc;
-      --ai-gradient: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+      --bg-overlay: rgba(0, 0, 0, 0.35);
+      --card-bg: rgba(18, 22, 18, 0.78);
+      --card-border: rgba(255, 255, 255, 0.09);
+      --text-white: #ffffff;
+      --text-muted: #9ca3af;
+      --stat-coral: #ff5533;
+      --stat-blue: #38bdf8;
+      --vpn-btn-bg: #8d7a58;
+      --vpn-btn-hover: #a38f6b;
+      --brave-orange: #ff5500;
     }
 
     * {
@@ -27,857 +28,680 @@
       padding: 0;
     }
 
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-primary);
-      font-family: 'Roboto', Arial, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      overflow-x: hidden;
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       user-select: none;
     }
 
-    /* Top Navigation */
-    .top-nav {
+    body {
+      background: #0f1410 url('/assets/brave_wallpaper.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: var(--text-white);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Ambient Subtle Vignette */
+    .ambient-vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.45) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Top Right Customize Gear */
+    .top-actions-bar {
+      position: relative;
+      z-index: 10;
       display: flex;
       justify-content: flex-end;
-      align-items: center;
-      padding: 16px 24px;
-      gap: 18px;
-      font-size: 13px;
+      padding: 20px 24px;
     }
 
-    .top-nav a {
-      color: #ffffff;
-      text-decoration: none;
-      font-weight: 400;
-      opacity: 0.9;
-      transition: opacity 0.15s ease;
-    }
-
-    .top-nav a:hover {
-      text-decoration: underline;
-      opacity: 1;
-    }
-
-    .apps-icon-btn {
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      color: #bdc1c6;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 38px;
-      height: 38px;
+    .btn-customize-gear {
+      background: rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      transition: background-color 0.15s ease, color 0.15s ease;
-    }
-
-    .apps-icon-btn:hover {
-      background-color: rgba(255, 255, 255, 0.08);
-      color: #ffffff;
-    }
-
-    .user-profile-badge {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #7c3aed;
-      border: 2px solid #38bdf8;
-      color: #ffffff;
-      font-weight: 700;
-      font-size: 13px;
-      letter-spacing: 0.5px;
+      color: #e5e7eb;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      font-size: 16px;
+      transition: all 0.2s ease;
     }
 
-    .user-profile-badge:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+    .btn-customize-gear:hover {
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      transform: rotate(45deg);
     }
 
-    /* Main Center Section */
-    .center-container {
+    /* Main Center Search Widget */
+    .center-content-section {
+      position: relative;
+      z-index: 10;
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin: auto;
-      width: 100%;
-      max-width: 684px;
-      padding: 0 20px;
-      text-align: center;
-    }
-
-    /* Braver Logo */
-    .brand-hero {
-      margin-bottom: 26px;
-      display: flex;
-      align-items: center;
       justify-content: center;
-      gap: 12px;
-    }
-
-    .brand-name {
-      font-size: 88px;
-      font-weight: 500;
-      letter-spacing: -1.5px;
-      color: #ffffff;
-      line-height: 1;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-    }
-
-    /* Pill Search Bar */
-    .search-pill-container {
+      margin: auto 0;
       width: 100%;
-      position: relative;
+      padding: 0 20px;
     }
 
-    .search-pill {
+    .search-widget-pill {
       width: 100%;
+      max-width: 580px;
       height: 48px;
-      background-color: var(--bg-color);
-      border: 1px solid var(--border-color);
+      background: rgba(22, 23, 27, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 24px;
       display: flex;
       align-items: center;
-      padding: 0 12px 0 16px;
+      padding: 0 16px;
       gap: 12px;
-      transition: background-color 0.15s, box-shadow 0.15s, border-color 0.15s;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      transition: all 0.2s ease;
     }
 
-    .search-pill:hover {
-      background-color: var(--surface-color);
-      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
-      border-color: rgba(223, 225, 229, 0);
+    .search-widget-pill:focus-within {
+      background: rgba(18, 19, 23, 0.96);
+      border-color: rgba(255, 85, 0, 0.6);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 0 2px rgba(255, 85, 0, 0.3);
     }
 
-    .search-pill:focus-within {
-      background-color: var(--surface-color);
-      box-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
-      border-color: transparent;
+    .search-lion-icon {
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
 
-    .btn-plus-icon {
+    .search-widget-input {
+      flex: 1;
       background: transparent;
       border: none;
-      color: #9aa0a6;
+      outline: none;
+      color: #ffffff;
+      font-size: 14.5px;
+      font-weight: 400;
+      letter-spacing: 0.2px;
+    }
+
+    .search-widget-input::placeholder {
+      color: #9ca3af;
+      font-weight: 400;
+    }
+
+    .search-actions-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-ask-ai-quick {
+      background: rgba(168, 85, 247, 0.18);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      color: #d8b4fe;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-ask-ai-quick:hover {
+      background: rgba(168, 85, 247, 0.35);
+      color: #fff;
+    }
+
+    /* Bottom Widgets Area */
+    .bottom-widgets-area {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 0 32px 32px 32px;
+      width: 100%;
+    }
+
+    /* Left: Photo Attribution & STATS Card */
+    .bottom-left-column {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .photo-credit-text {
+      font-size: 11.5px;
+      color: rgba(255, 255, 255, 0.85);
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    .stats-card-container {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 20px 24px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 380px;
+    }
+
+    .stats-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    .stats-metrics-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 32px;
+    }
+
+    .stat-metric-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-value {
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+    }
+
+    .stat-value.coral {
+      color: var(--stat-coral);
+    }
+
+    .stat-value.blue {
+      color: var(--stat-blue);
+    }
+
+    .stat-value.white {
+      color: #ffffff;
+    }
+
+    .stat-value .unit {
+      font-size: 14px;
+      font-weight: 600;
+      margin-left: 2px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #9ca3af;
+      font-weight: 400;
+      margin-top: 4px;
+    }
+
+    /* Right: BRAVE VPN Widget */
+    .bottom-right-column {
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .vpn-widget-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 18px 22px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      min-width: 440px;
+    }
+
+    .vpn-side-icons {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-right: 14px;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .vpn-icon-btn {
+      background: transparent;
+      border: none;
+      color: #9ca3af;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       width: 24px;
       height: 24px;
-      border-radius: 50%;
-      transition: color 0.15s ease, background 0.15s ease;
+      transition: color 0.15s ease;
     }
 
-    .btn-plus-icon:hover {
+    .vpn-icon-btn.active, .vpn-icon-btn:hover {
       color: #ffffff;
-      background: rgba(255, 255, 255, 0.1);
     }
 
-    .search-input {
+    .vpn-info-content {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
       flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: #ffffff;
-      font-size: 16px;
-      font-family: inherit;
-      padding: 0 4px;
-      user-select: text;
     }
 
-    .pill-actions {
+    .vpn-title-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-    }
-
-    .icon-action-btn {
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      transition: color 0.15s ease, background-color 0.15s ease;
-    }
-
-    .icon-action-btn:hover {
+      gap: 8px;
+      font-size: 13.5px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
       color: #ffffff;
-      background-color: rgba(255, 255, 255, 0.08);
     }
 
-    .ai-mode-pill-btn {
-      background: rgba(168, 85, 247, 0.12);
-      border: 1px solid rgba(168, 85, 247, 0.35);
-      color: var(--ai-purple);
-      border-radius: 16px;
-      padding: 5px 12px;
-      font-size: 13px;
-      font-weight: 500;
+    .vpn-powered-tag {
+      font-size: 10px;
+      font-weight: 400;
+      color: #9ca3af;
+      margin-left: 2px;
+    }
+
+    .vpn-features-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-size: 11px;
+      color: #cbd5e1;
+    }
+
+    .vpn-features-list li {
       display: flex;
       align-items: center;
       gap: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      white-space: nowrap;
     }
 
-    .ai-mode-pill-btn:hover {
-      background: rgba(168, 85, 247, 0.24);
-      border-color: #c084fc;
-      color: #ffffff;
-      box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+    .vpn-features-list li::before {
+      content: "✓";
+      color: #10b981;
+      font-weight: 700;
+      font-size: 10px;
     }
 
-    .sparkle-icon {
-      font-size: 13px;
-    }
-
-    /* Buttons Row */
-    .buttons-row {
+    .vpn-action-col {
       display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin-top: 28px;
-    }
-
-    .search-action-btn {
-      background-color: var(--surface-color);
-      border: 1px solid var(--surface-color);
-      color: var(--text-primary);
-      border-radius: 4px;
-      padding: 0 16px;
-      height: 36px;
-      font-size: 14px;
-      font-family: inherit;
-      cursor: pointer;
-      transition: border-color 0.15s, background-color 0.15s, color 0.15s;
-    }
-
-    .search-action-btn:hover {
-      background-color: var(--surface-hover);
-      border-color: var(--border-color);
-      color: #ffffff;
-    }
-
-    /* Language Selection */
-    .lang-row {
-      margin-top: 28px;
-      font-size: 13px;
-      color: #bdc1c6;
-    }
-
-    .lang-link {
-      color: var(--link-blue);
-      text-decoration: none;
-      margin-left: 6px;
-      cursor: pointer;
-    }
-
-    .lang-link:hover {
-      text-decoration: underline;
-    }
-
-    /* Footer */
-    .page-footer {
-      background-color: #171717;
-      border-top: 1px solid #303134;
-      color: var(--text-secondary);
-      font-size: 14px;
-    }
-
-    .footer-location {
-      padding: 14px 28px;
-      border-bottom: 1px solid #303134;
-    }
-
-    .footer-links-row {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      padding: 12px 28px;
-      gap: 16px;
-    }
-
-    .footer-links-group {
-      display: flex;
-      gap: 24px;
-      flex-wrap: wrap;
-    }
-
-    .footer-links-group a {
-      color: var(--text-secondary);
-      text-decoration: none;
-    }
-
-    .footer-links-group a:hover {
-      text-decoration: underline;
-      color: var(--text-primary);
-    }
-
-    /* Autocomplete dropdown */
-    .autocomplete-box {
-      position: absolute;
-      top: 52px;
-      left: 0;
-      right: 0;
-      background: var(--surface-color);
-      border-radius: 12px;
-      border: 1px solid #3c4043;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-      overflow: hidden;
-      z-index: 50;
-      display: none;
-      text-align: left;
-    }
-
-    .autocomplete-box.active {
-      display: block;
-    }
-
-    .ac-item {
-      padding: 10px 16px;
-      display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
+    }
+
+    .btn-vpn-trial {
+      background: var(--vpn-btn-bg);
+      color: #ffffff;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
       cursor: pointer;
-      color: var(--text-primary);
-      transition: background-color 0.1s ease;
+      white-space: nowrap;
+      transition: background 0.15s ease, transform 0.15s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
-    .ac-item:hover {
-      background-color: var(--surface-hover);
+    .btn-vpn-trial:hover {
+      background: var(--vpn-btn-hover);
+      transform: translateY(-1px);
     }
 
-    .ac-item .ac-icon {
-      font-size: 16px;
-      color: var(--text-secondary);
+    .vpn-purchased-link {
+      font-size: 10.5px;
+      color: #9ca3af;
+      text-decoration: underline;
+      cursor: pointer;
+      transition: color 0.15s ease;
     }
 
-    /* Slide-out AI Mode Chat Drawer */
-    .ai-drawer-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(4px);
-      z-index: 998;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease;
+    .vpn-purchased-link:hover {
+      color: #ffffff;
     }
 
-    .ai-drawer-overlay.open {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .ai-drawer {
+    /* Slide-out AI Copilot Drawer */
+    .ai-chat-drawer {
       position: fixed;
       top: 0;
       right: 0;
       width: 440px;
-      max-width: 90vw;
       height: 100vh;
-      background: #18191c;
-      border-left: 1px solid #3c4043;
+      background: #18191e;
+      border-left: 1px solid #333642;
       box-shadow: -8px 0 32px rgba(0, 0, 0, 0.6);
+      transform: translateX(100%);
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 9999;
       display: flex;
       flex-direction: column;
-      transform: translateX(100%);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      z-index: 999;
-      user-select: text;
     }
 
-    .ai-drawer.open {
+    .ai-chat-drawer.open {
       transform: translateX(0);
     }
 
     .drawer-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid #2d2e33;
+      padding: 18px 20px;
+      background: #1e2027;
+      border-bottom: 1px solid #333642;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #1e1f23;
     }
 
-    .drawer-title-group {
+    .drawer-header h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
       display: flex;
       align-items: center;
-      gap: 10px;
-    }
-
-    .drawer-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .engine-tag {
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 10px;
-      background: rgba(168, 85, 247, 0.2);
-      color: #c084fc;
-      border: 1px solid rgba(168, 85, 247, 0.3);
-      font-weight: 500;
+      gap: 8px;
     }
 
     .btn-close-drawer {
       background: transparent;
       border: none;
-      color: var(--text-secondary);
+      color: #9ca3af;
       font-size: 20px;
       cursor: pointer;
-      padding: 4px;
-      border-radius: 4px;
-      transition: color 0.15s;
-    }
-
-    .btn-close-drawer:hover {
-      color: #ffffff;
     }
 
     .drawer-messages {
       flex: 1;
       overflow-y: auto;
-      padding: 20px;
+      padding: 18px;
       display: flex;
       flex-direction: column;
       gap: 14px;
     }
 
     .chat-bubble {
-      max-width: 85%;
       padding: 12px 16px;
-      border-radius: 16px;
-      font-size: 13.5px;
-      line-height: 1.5;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.55;
+      max-width: 90%;
     }
 
     .chat-bubble.user {
       align-self: flex-end;
       background: #2563eb;
-      color: #ffffff;
-      border-bottom-right-radius: 4px;
+      color: #fff;
     }
 
     .chat-bubble.assistant {
       align-self: flex-start;
-      background: #232429;
+      background: #232530;
       color: #e2e8f0;
-      border: 1px solid #333640;
-      border-bottom-left-radius: 4px;
+      border: 1px solid #333642;
     }
 
-    .action-card {
-      margin-top: 8px;
-      padding: 8px 12px;
-      border-radius: 8px;
-      background: rgba(168, 85, 247, 0.12);
-      border: 1px solid rgba(168, 85, 247, 0.25);
-      font-size: 12px;
+    .drawer-footer {
+      padding: 14px 18px;
+      background: #1e2027;
+      border-top: 1px solid #333642;
       display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .action-card .act-type {
-      color: #c084fc;
-      font-weight: 700;
-    }
-
-    .action-card code {
-      font-family: monospace;
-      color: #93c5fd;
-      word-break: break-all;
-    }
-
-    .drawer-chips {
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      padding: 8px 16px;
-      border-top: 1px solid #2d2e33;
-      background: #1a1b1f;
-    }
-
-    .chat-chip {
-      background: #25262c;
-      border: 1px solid #3c4043;
-      color: var(--text-secondary);
-      border-radius: 12px;
-      padding: 5px 10px;
-      font-size: 12px;
-      white-space: nowrap;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .chat-chip:hover {
-      background: #32343c;
-      color: #ffffff;
-      border-color: #5f6368;
-    }
-
-    .drawer-input-row {
-      padding: 14px 16px;
-      border-top: 1px solid #2d2e33;
-      display: flex;
-      align-items: center;
       gap: 10px;
-      background: #1e1f23;
     }
 
     .drawer-input {
       flex: 1;
-      background: #2b2c31;
-      border: 1px solid #3c4043;
+      background: #2b2c36;
+      border: 1px solid #3f4252;
       border-radius: 20px;
-      padding: 10px 16px;
-      color: #ffffff;
-      font-size: 13.5px;
+      padding: 8px 16px;
+      color: #fff;
+      font-size: 13px;
       outline: none;
-      transition: border-color 0.15s ease;
     }
 
-    .drawer-input:focus {
-      border-color: #a855f7;
-    }
-
-    .btn-send-chat {
-      background: var(--ai-gradient);
+    .btn-drawer-send {
+      background: var(--brave-orange);
       border: none;
-      color: #ffffff;
+      color: #fff;
       width: 36px;
       height: 36px;
       border-radius: 50%;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      transition: transform 0.15s ease, opacity 0.15s ease;
     }
 
-    .btn-send-chat:hover {
-      transform: scale(1.05);
-      opacity: 0.95;
+    /* Responsive Breakpoints */
+    @media (max-width: 992px) {
+      .bottom-widgets-area {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        padding: 0 16px 16px 16px;
+      }
+      .stats-card-container, .vpn-widget-card {
+        min-width: 100%;
+      }
+      .photo-credit-text {
+        text-align: center;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Right Navigation Bar (Exact Replica of Image 2) -->
-  <header class="top-nav" role="navigation" aria-label="Quick links">
-    <a href="https://mail.google.com" target="_blank" rel="noopener">Gmail</a>
-    <a href="/search.html?q=images&tab=images">Images</a>
-    <button class="apps-icon-btn" aria-label="Braver apps" title="Braver apps">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM6 4c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 12c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-      </svg>
-    </button>
-    <div class="user-profile-badge" title="Braver Account: Faisal (FS)">FS</div>
+  <div class="ambient-vignette"></div>
+
+  <!-- Top Actions Bar -->
+  <header class="top-actions-bar">
+    <button class="btn-customize-gear" id="btn-settings-gear" title="Customize Dashboard">⚙️</button>
   </header>
 
-  <!-- Center Content: Logo, Search Pill, Buttons, Language Row -->
-  <main class="center-container">
-    <div class="brand-hero">
-      <h1 class="brand-name">Braver</h1>
-    </div>
-
-    <form class="search-pill-container" id="search-form" action="/search.html" method="GET">
-      <div class="search-pill">
-        <button type="button" class="btn-plus-icon" id="btn-plus" title="New task or tab">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-          </svg>
-        </button>
-
-        <input
-          type="text"
-          id="search-input"
-          name="q"
-          class="search-input"
-          autocomplete="off"
-          autofocus
-          aria-label="Search"
-          placeholder=""
-        />
-
-        <div class="pill-actions">
-          <!-- Voice Search Mic Icon -->
-          <button type="button" class="icon-action-btn" id="btn-mic" title="Search by voice">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
-            </svg>
-          </button>
-
-          <!-- Google Lens / Camera Icon -->
-          <button type="button" class="icon-action-btn" id="btn-lens" title="Search by image">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M21 6h-3.17L16 4H8L6.17 6H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-9 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.65 0-3 1.35-3 3s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z"/>
-            </svg>
-          </button>
-
-          <!-- AI Mode Pill Button -->
-          <button type="button" class="ai-mode-pill-btn" id="btn-ai-mode" title="Chat with AI in Refusal-Free Heretic Mode">
-            <span class="sparkle-icon">✨</span>
-            <span>AI Mode</span>
-          </button>
-        </div>
+  <!-- Center Search Widget: Faithful to Screenshot -->
+  <main class="center-content-section">
+    <form class="search-widget-pill" id="search-form" action="/search.html" method="GET">
+      <div class="search-lion-icon" title="Brave Search Engine">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 6V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V6L12 2Z" fill="#ff5500"/>
+          <path d="M12 5L6 8V12C6 15.5 8.5 18.8 12 20C15.5 18.8 18 15.5 18 12V8L12 5Z" fill="#ffffff" fill-opacity="0.3"/>
+          <circle cx="12" cy="12" r="3" fill="#ffffff"/>
+        </svg>
       </div>
 
-      <!-- Real-Time Autocomplete suggestions -->
-      <div class="autocomplete-box" id="autocomplete-box"></div>
+      <input
+        type="text"
+        id="search-input"
+        name="q"
+        class="search-widget-input"
+        autocomplete="off"
+        autofocus
+        aria-label="Ask anything, find anything..."
+        placeholder="Ask anything, find anything..."
+      />
+
+      <div class="search-actions-group">
+        <button type="button" class="btn-ask-ai-quick" id="btn-open-ai-chat" title="Autonomous AI Copilot">
+          <span>✨</span>
+          <span>Ask AI</span>
+        </button>
+      </div>
     </form>
-
-    <!-- Center Buttons -->
-    <div class="buttons-row">
-      <button type="submit" form="search-form" class="search-action-btn" id="btn-braver-search">Braver Search</button>
-      <button type="button" class="search-action-btn" id="btn-lucky">I'm Feeling Lucky</button>
-    </div>
-
-    <!-- Language Selector (Exact match to Image 2: "Google offered in: বাংলা" -> "Braver offered in: বাংলা") -->
-    <div class="lang-row">
-      Braver offered in: <a href="?hl=bn" class="lang-link" id="btn-bangla">বাংলা</a>
-    </div>
   </main>
 
-  <!-- Bottom Footer (Exact match to Image 2: "Bangladesh") -->
-  <footer class="page-footer">
-    <div class="footer-location" id="footer-country">Bangladesh</div>
-    <div class="footer-links-row">
-      <div class="footer-links-group">
-        <a href="/about.html">About</a>
-        <a href="/advertising.html">Advertising</a>
-        <a href="/business.html">Business</a>
-        <a href="/howsearchworks.html">How Search works</a>
+  <!-- Bottom Widgets Area: Exact Match with Screenshot -->
+  <footer class="bottom-widgets-area">
+    <!-- Left: Photo Credit + STATS Card -->
+    <div class="bottom-left-column">
+      <div class="photo-credit-text">Photo by Ngoc Nguyen Phuong</div>
+      <div class="stats-card-container">
+        <div class="stats-title">STATS</div>
+        <div class="stats-metrics-row">
+          <div class="stat-metric-block">
+            <span class="stat-value coral" id="stat-trackers-val">212,393</span>
+            <span class="stat-label">Trackers & ads blocked</span>
+          </div>
+          <div class="stat-metric-block">
+            <span class="stat-value blue" id="stat-bandwidth-val">5.79 <span class="unit">GB</span></span>
+            <span class="stat-label">Bandwidth saved</span>
+          </div>
+          <div class="stat-metric-block">
+            <span class="stat-value white" id="stat-time-val">3 <span class="unit">Hours</span></span>
+            <span class="stat-label">Time saved</span>
+          </div>
+        </div>
       </div>
-      <div class="footer-links-group">
-        <a href="/privacy.html">Privacy</a>
-        <a href="/terms.html">Terms</a>
-        <a href="/settings.html">Settings</a>
+    </div>
+
+    <!-- Right: BRAVE VPN Widget -->
+    <div class="bottom-right-column">
+      <div class="vpn-widget-card">
+        <div class="vpn-side-icons">
+          <button class="vpn-icon-btn active" title="VPN Shield">🛡️</button>
+          <button class="vpn-icon-btn" title="Leo AI Assistant">✨</button>
+          <button class="vpn-icon-btn" title="Brave Talk Video">📹</button>
+        </div>
+        <div class="vpn-info-content">
+          <div class="vpn-title-row">
+            <span>🛡️ BRAVE VPN</span>
+            <span class="vpn-powered-tag">Powered by <strong>Guardian</strong></span>
+          </div>
+          <ul class="vpn-features-list">
+            <li>Extra privacy & security online</li>
+            <li>Hide your IP & change your location</li>
+            <li>Protect every app on your device</li>
+          </ul>
+        </div>
+        <div class="vpn-action-col">
+          <button class="btn-vpn-trial" id="btn-vpn-trial">Start free trial</button>
+          <a class="vpn-purchased-link" id="btn-vpn-purchased">Already purchased?</a>
+        </div>
       </div>
     </div>
   </footer>
 
-  <!-- Slide-out AI Mode Chat Drawer (Heretic + OmniRoute + FreeLLMAPI) -->
-  <div class="ai-drawer-overlay" id="drawer-overlay"></div>
-  <aside class="ai-drawer" id="ai-drawer" aria-label="Braver AI Mode">
+  <!-- Slide-out AI Copilot Drawer -->
+  <aside class="ai-chat-drawer" id="ai-chat-drawer">
     <div class="drawer-header">
-      <div class="drawer-title-group">
-        <span style="font-size: 20px;">✨</span>
-        <h2 class="drawer-title">Braver AI Mode</h2>
-        <span class="engine-tag">Heretic + OmniRoute</span>
-      </div>
-      <button class="btn-close-drawer" id="btn-close-drawer" aria-label="Close AI Mode">&times;</button>
+      <h3><span>🦁</span> Brave Autonomous AI Copilot</h3>
+      <button class="btn-close-drawer" id="btn-close-drawer">×</button>
     </div>
-
     <div class="drawer-messages" id="drawer-messages">
       <div class="chat-bubble assistant">
-        <strong>🦁 Braver AI Agent</strong>
-        <p style="margin-top: 4px;">Welcome to refusal-free autonomous mode powered by Heretic and OmniRoute/FreeLLMAPI gateways.</p>
-        <p style="margin-top: 4px; color: #94a3b8; font-size: 12px;">Ask anything, request real-time live data, or command browser tasks (e.g. "Open Facebook and prepare login", "Search latest tech").</p>
+        <strong>🦁 Braver Autonomous AI Copilot</strong>
+        <div style="margin-top: 6px;">Hello! I am ready to automate tasks, research live websites, or answer technical questions with deep breakdown support. What can I do for you today?</div>
       </div>
     </div>
-
-    <div class="drawer-chips">
-      <button class="chat-chip" data-task="Open Facebook and navigate to login">Open Facebook</button>
-      <button class="chat-chip" data-task="Search real-time technology news">Latest Tech News</button>
-      <button class="chat-chip" data-task="Explain how Braver uses FreeLLMAPI and OmniRoute">Architecture Info</button>
-      <button class="chat-chip" data-task="Summarize Meta Platforms and Quest 3">Meta Quest 3 Info</button>
-    </div>
-
-    <div class="drawer-input-row">
-      <input
-        type="text"
-        class="drawer-input"
-        id="drawer-input"
-        placeholder="Ask Braver AI or instruct browser action..."
-        autocomplete="off"
-      />
-      <button class="btn-send-chat" id="btn-send-chat" title="Send message">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-        </svg>
-      </button>
+    <div class="drawer-footer">
+      <input type="text" class="drawer-input" id="drawer-input" placeholder="Ask anything, automate browser tasks..." />
+      <button class="btn-drawer-send" id="btn-drawer-send">➤</button>
     </div>
   </aside>
 
   <script>
     const searchForm = document.getElementById('search-form');
     const searchInput = document.getElementById('search-input');
-    const autocompleteBox = document.getElementById('autocomplete-box');
-    const btnAiMode = document.getElementById('btn-ai-mode');
-    const btnLucky = document.getElementById('btn-lucky');
-    const btnBangla = document.getElementById('btn-bangla');
-    const aiDrawer = document.getElementById('ai-drawer');
-    const drawerOverlay = document.getElementById('drawer-overlay');
+    const aiDrawer = document.getElementById('ai-chat-drawer');
+    const btnOpenAi = document.getElementById('btn-open-ai-chat');
     const btnCloseDrawer = document.getElementById('btn-close-drawer');
-    const drawerInput = document.getElementById('drawer-input');
-    const btnSendChat = document.getElementById('btn-send-chat');
     const drawerMessages = document.getElementById('drawer-messages');
+    const drawerInput = document.getElementById('drawer-input');
+    const btnDrawerSend = document.getElementById('btn-drawer-send');
 
-    // Language handling
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('hl') === 'bn') {
-      document.getElementById('btn-braver-search').textContent = 'ব্রেভার অনুসন্ধান';
-      document.getElementById('btn-lucky').textContent = 'আমি ভাগ্যবান মনে করছি';
-      document.querySelector('.lang-row').innerHTML = 'Braver offered in: <a href="?hl=en" class="lang-link">English</a>';
-    }
-
-    // Autocomplete dictionary for popular queries
-    const SUGGESTIONS = [
-      { q: 'facebook', icon: '🌐', label: 'facebook — Social networking service' },
-      { q: 'facebook login', icon: '🔍', label: 'facebook login' },
-      { q: 'youtube', icon: '📺', label: 'youtube — Video sharing platform' },
-      { q: 'meta quest 3', icon: '🥽', label: 'meta quest 3 vr' },
-      { q: 'github', icon: '🐙', label: 'github — Software repository' },
-      { q: 'chatgpt', icon: '🤖', label: 'chatgpt — AI assistant' }
-    ];
-
-    searchInput.addEventListener('input', () => {
-      const val = searchInput.value.trim().toLowerCase();
-      if (!val) {
-        autocompleteBox.classList.remove('active');
-        return;
-      }
-
-      const matches = SUGGESTIONS.filter(s => s.q.includes(val));
-      if (matches.length > 0) {
-        autocompleteBox.innerHTML = matches.map(m => `
-          <div class="ac-item" data-query="${m.q}">
-            <span class="ac-icon">${m.icon}</span>
-            <span>${m.label}</span>
-          </div>
-        `).join('');
-        autocompleteBox.classList.add('active');
-      } else {
-        autocompleteBox.innerHTML = `
-          <div class="ac-item" data-query="${val}">
-            <span class="ac-icon">🔍</span>
-            <span>Search Braver for "<strong>${val}</strong>"</span>
-          </div>
-        `;
-        autocompleteBox.classList.add('active');
-      }
-    });
-
-    autocompleteBox.addEventListener('click', (e) => {
-      const item = e.target.closest('.ac-item');
-      if (item) {
-        const q = item.getAttribute('data-query');
-        searchInput.value = q;
-        autocompleteBox.classList.remove('active');
-        executeSearch(q);
-      }
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!searchForm.contains(e.target)) {
-        autocompleteBox.classList.remove('active');
-      }
-    });
-
-    function executeSearch(query) {
-      const q = (query || searchInput.value || '').trim();
-      if (!q) return;
-
-      // Check if user specifically requested AI mode via prefix
-      if (q.startsWith('ai:') || q.startsWith('agent:')) {
-        openAiMode();
-        sendChatMessage(q.replace(/^(ai:|agent:)\s*/i, ''));
-        return;
-      }
-
-      // Direct URL navigation for HTTPS / HTTP URLs and valid web domains
-      if (q.startsWith('http://') || q.startsWith('https://')) {
-        if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: q }, '*');
-        } else {
-          window.location.href = q;
-        }
-        return;
-      }
-      if (/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?$/.test(q) && !q.includes(' ')) {
-        const dest = `https://${q}`;
-        if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: dest }, '*');
-        } else {
-          window.location.href = dest;
-        }
-        return;
-      }
-
-      const targetUrl = `/search.html?q=${encodeURIComponent(q)}`;
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: targetUrl }, '*');
-      } else {
-        window.location.href = targetUrl;
-      }
-    }
-
+    // Navigation and Search Routing
     searchForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      executeSearch();
+      const query = (searchInput.value || '').trim();
+      if (!query) return;
+
+      // Direct URL check
+      const isUrl = /^https?:\/\//i.test(query) || /^www\./i.test(query) || /^[\w-]+\.(com|org|net|io|dev|edu|gov|tv|ai|app)/i.test(query);
+      if (isUrl) {
+        let destUrl = query;
+        if (!destUrl.startsWith('http://') && !destUrl.startsWith('https://')) destUrl = 'https://' + destUrl;
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: destUrl }, '*');
+        } else {
+          window.location.href = destUrl;
+        }
+        return;
+      }
+
+      // If user starts with ai: or asks conversational question
+      if (/^(ai:|agent:|\?)/i.test(query)) {
+        toggleAiDrawer(true);
+        sendChatMessage(query.replace(/^(ai:|agent:)\s*/i, ''));
+        return;
+      }
+
+      // Default: Navigate to search results page
+      const searchUrl = `/search.html?q=${encodeURIComponent(query)}`;
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: searchUrl }, '*');
+      } else {
+        window.location.href = searchUrl;
+      }
     });
 
-    btnLucky.addEventListener('click', () => {
-      const q = searchInput.value.trim() || 'facebook';
-      executeSearch(q);
-    });
-
-    // AI Mode Drawer Handlers
-    function openAiMode() {
-      aiDrawer.classList.add('open');
-      drawerOverlay.classList.add('open');
-      drawerInput.focus();
+    // Toggle AI Chat Drawer
+    function toggleAiDrawer(open) {
+      if (open) {
+        aiDrawer.classList.add('open');
+        drawerInput.focus();
+      } else {
+        aiDrawer.classList.remove('open');
+      }
     }
 
-    function closeAiMode() {
-      aiDrawer.classList.remove('open');
-      drawerOverlay.classList.remove('open');
-    }
+    btnOpenAi.addEventListener('click', () => toggleAiDrawer(true));
+    btnCloseDrawer.addEventListener('click', () => toggleAiDrawer(false));
 
-    btnAiMode.addEventListener('click', openAiMode);
-    btnCloseDrawer.addEventListener('click', closeAiMode);
-    drawerOverlay.addEventListener('click', closeAiMode);
-
+    // Send AI Chat Message
     async function sendChatMessage(msgText) {
       const text = (msgText || drawerInput.value || '').trim();
       if (!text) return;
       drawerInput.value = '';
 
-      // User Bubble
       const userBubble = document.createElement('div');
       userBubble.className = 'chat-bubble user';
       userBubble.textContent = text;
       drawerMessages.appendChild(userBubble);
       drawerMessages.scrollTop = drawerMessages.scrollHeight;
 
-      // Assistant Thinking Bubble
       const assistantBubble = document.createElement('div');
       assistantBubble.className = 'chat-bubble assistant';
-      assistantBubble.innerHTML = `<em>Thinking with Heretic & OmniRoute/FreeLLMAPI...</em>`;
+      assistantBubble.innerHTML = `<em>Consulting Heretic Refusal-Free Intelligence...</em>`;
       drawerMessages.appendChild(assistantBubble);
       drawerMessages.scrollTop = drawerMessages.scrollHeight;
 
@@ -889,54 +713,7 @@
         });
         const data = await res.json();
 
-        let actionHtml = '';
-        if (data.action && data.action.type && data.action.type !== 'none') {
-          const actType = data.action.type.toUpperCase();
-          const actTarget = data.action.target || data.action.goal || text;
-
-          actionHtml = `
-            <div class="action-card" style="margin-top: 10px; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 8px; padding: 10px 14px; font-size: 13px;">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px;">
-                <span style="font-weight: 700; color: #d8b4fe; letter-spacing: 0.5px;">⚡ AUTONOMOUS AGENT: ${actType}</span>
-                <span style="background: #10b981; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">EXECUTING</span>
-              </div>
-              <div style="color: #cbd5e1; word-break: break-all;">Target: <code style="color: #38bdf8;">${actTarget}</code></div>
-            </div>
-          `;
-
-          // Autonomous Action Execution Pipeline
-          if (data.action.type === 'navigate' && data.action.target) {
-            setTimeout(() => {
-              if (window.parent && window.parent !== window) {
-                window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: data.action.target }, '*');
-              } else {
-                window.location.href = data.action.target;
-              }
-            }, 900);
-          } else if (data.action.type === 'search' && data.action.target) {
-            setTimeout(() => {
-              const searchUrl = `/search.html?q=${encodeURIComponent(data.action.target)}`;
-              if (window.parent && window.parent !== window) {
-                window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: searchUrl }, '*');
-              } else {
-                window.location.href = searchUrl;
-              }
-            }, 900);
-          } else if (data.action.type === 'task' || data.action.type === 'click' || data.action.type === 'type' || data.autonomous) {
-            setTimeout(() => {
-              if (window.parent && window.parent !== window) {
-                window.parent.postMessage({
-                  type: 'BRAVE_RUN_TASK',
-                  goal: data.action.goal || text,
-                  scenario: data.action.scenario || 'live',
-                  action: data.action
-                }, '*');
-              }
-            }, 600);
-          }
-        }
-
-        const formattedReply = (data.reply || 'Task completed.').replace(/\n/g, '<br>');
+        const formattedReply = (data.reply || 'Task processed.').replace(/\n/g, '<br>');
         const detailsId = `newtab-details-${Date.now()}`;
         let detailsHtml = '';
         if (data.details) {
@@ -951,15 +728,25 @@
               <button class="btn-see-more-chat" data-target="${detailsId}" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #93c5fd; padding: 4px 10px; border-radius: 6px; font-size: 11.5px; cursor: pointer; font-weight: 500;">
                 📖 See More (Deep Breakdown)
               </button>
-              <div id="${detailsId}" class="chat-details-panel hidden" style="margin-top: 8px; padding: 10px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; font-size: 12.5px; line-height: 1.55; color: #cbd5e1;">
+              <div id="${detailsId}" class="chat-details-panel hidden" style="margin-top: 8px; padding: 10px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; font-size: 12.5px; line-height: 1.55; color: #cbd5e1; display: none;">
                 ${formattedDetails}
               </div>
             </div>
           `;
         }
 
+        let actionHtml = '';
+        if (data.action && data.action.type && data.action.type !== 'none') {
+          actionHtml = `
+            <div style="margin-top: 10px; padding: 8px 12px; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 6px; font-size: 12px;">
+              <span style="color: #d8b4fe; font-weight: 700;">⚡ ACTION DETECTED: ${data.action.type.toUpperCase()}</span>
+              <button class="btn-run-action" style="margin-left: 10px; background: #2563eb; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">▶ Run Now</button>
+            </div>
+          `;
+        }
+
         assistantBubble.innerHTML = `
-          <strong style="color: #c084fc;">🦁 Braver AI Copilot</strong>
+          <strong style="color: #c084fc;">🦁 Braver Autonomous AI</strong>
           <div style="margin-top: 6px; line-height: 1.55; color: #f1f5f9;">${formattedReply}</div>
           ${detailsHtml}
           ${actionHtml}
@@ -969,32 +756,36 @@
         assistantBubble.querySelector('.btn-see-more-chat')?.addEventListener('click', (e) => {
           const targetEl = document.getElementById(detailsId);
           if (targetEl) {
-            const isHidden = targetEl.classList.contains('hidden');
-            targetEl.classList.toggle('hidden', !isHidden);
+            const isHidden = targetEl.style.display === 'none';
+            targetEl.style.display = isHidden ? 'block' : 'none';
             e.target.textContent = isHidden ? '📖 Show Less' : '📖 See More (Deep Breakdown)';
             drawerMessages.scrollTop = drawerMessages.scrollHeight;
           }
         });
+
+        assistantBubble.querySelector('.btn-run-action')?.addEventListener('click', () => {
+          if (data.action.type === 'navigate' && data.action.target) {
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: data.action.target }, '*');
+            } else {
+              window.location.href = data.action.target;
+            }
+          }
+        });
       } catch (err) {
-        assistantBubble.innerHTML = `<span style="color:#ef4444;">Failed to communicate with AI gateway: ${err.message}</span>`;
+        assistantBubble.innerHTML = `<span style="color:#ef4444;">Failed to communicate with AI: ${err.message}</span>`;
       }
       drawerMessages.scrollTop = drawerMessages.scrollHeight;
     }
 
-    btnSendChat.addEventListener('click', () => sendChatMessage());
+    btnDrawerSend.addEventListener('click', () => sendChatMessage());
     drawerInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') sendChatMessage();
     });
 
-    document.querySelectorAll('.chat-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        sendChatMessage(chip.getAttribute('data-task'));
-      });
-    });
-
     // Report user moves to parent window for AI Skill Learning
     document.addEventListener('click', function(e) {
-      const target = e.target.closest('button, a, input, [role="button"], select, textarea') || e.target;
+      const target = e.target.closest('button, a, input') || e.target;
       if (target && window.parent && window.parent !== window) {
         let sel = target.id ? '#' + target.id : (target.className && typeof target.className === 'string' ? target.tagName.toLowerCase() + '.' + target.className.split(' ').filter(Boolean).slice(0, 2).join('.') : target.tagName.toLowerCase());
         const label = (target.innerText || target.value || target.title || '').trim().slice(0, 30);
@@ -1003,22 +794,6 @@
           action: 'click',
           selector: sel,
           details: { label: label },
-          url: window.location.href,
-          timestamp: Date.now()
-        }, '*');
-      }
-    }, true);
-
-    document.addEventListener('change', function(e) {
-      const el = e.target;
-      if (!el || !['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) return;
-      if (window.parent && window.parent !== window) {
-        let sel = el.id ? '#' + el.id : (el.name ? '[name="' + el.name + '"]' : el.tagName.toLowerCase());
-        window.parent.postMessage({
-          type: 'BRAVE_USER_ACTION',
-          action: 'type',
-          selector: sel,
-          details: { value: el.value ? el.value.slice(0, 40) : '' },
           url: window.location.href,
           timestamp: Date.now()
         }, '*');

@@ -3,11 +3,10 @@ set -euo pipefail
 
 # Launch Google Chrome with remote debugging port 9222 for live REA observation
 CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-USER_DATA_DIR="${TMPDIR:-/tmp}/chrome-cdp-agent-profile"
+USER_DATA_DIR="/tmp/chrome-real-user-profile"
 PORT="${CDP_PORT:-9222}"
 
 if [[ ! -f "$CHROME_BIN" ]]; then
-  # Fallback to linux paths if on Linux
   if command -v google-chrome-stable &>/dev/null; then
     CHROME_BIN="google-chrome-stable"
   elif command -v google-chrome &>/dev/null; then
@@ -21,7 +20,21 @@ if [[ ! -f "$CHROME_BIN" ]]; then
 fi
 
 echo "🚀 Launching Google Chrome on CDP port ${PORT}..."
-mkdir -p "$USER_DATA_DIR"
+mkdir -p "$USER_DATA_DIR/Default"
+
+# Sync cookies from real Chrome profile if present, or Brave profile
+CHROME_REAL_PROFILE="$HOME/Library/Application Support/Google/Chrome/Default"
+BRAVE_REAL_PROFILE="$HOME/Library/Application Support/BraveSoftware/Brave-Browser/Default"
+
+if [[ -d "$CHROME_REAL_PROFILE" ]]; then
+  cp -f "$CHROME_REAL_PROFILE/Cookies" "$USER_DATA_DIR/Default/Cookies" 2>/dev/null || true
+  cp -f "$CHROME_REAL_PROFILE/Preferences" "$USER_DATA_DIR/Default/Preferences" 2>/dev/null || true
+  cp -f "$CHROME_REAL_PROFILE/Login Data" "$USER_DATA_DIR/Default/Login Data" 2>/dev/null || true
+elif [[ -d "$BRAVE_REAL_PROFILE" ]]; then
+  cp -f "$BRAVE_REAL_PROFILE/Cookies" "$USER_DATA_DIR/Default/Cookies" 2>/dev/null || true
+  cp -f "$BRAVE_REAL_PROFILE/Preferences" "$USER_DATA_DIR/Default/Preferences" 2>/dev/null || true
+  cp -f "$BRAVE_REAL_PROFILE/Login Data" "$USER_DATA_DIR/Default/Login Data" 2>/dev/null || true
+fi
 
 exec "$CHROME_BIN" \
   --headless=new \
