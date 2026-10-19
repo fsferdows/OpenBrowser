@@ -210,6 +210,6 @@
     "OQ-001: Host filesystem capacity is constrained; Phase A strategy avoids local C++ Chromium compilation."
   ],
   "next_action": "Verify Vercel production deployment and GitHub Pages sync.",
-  "last_commit": "4321484"
+  "last_commit": "1d83ba9"
 }
 
