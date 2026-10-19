@@ -37,6 +37,16 @@ function sanitizeAndRepairUrl(rawUrl) {
     url = 'https:' + url;
   }
 
+  // Strip any accidental https:// or http:// prepended to local internal HTML pages
+  url = url.replace(/^https?:\/\/(search|newtab|portal|catalog|form|auth-hand-off|index)\.html(\/)?/i, '$1.html');
+
+  // If it is an internal local HTML page, do not treat it as an external host
+  const isInternalPage = /^(\/)?(search|newtab|portal|catalog|form|auth-hand-off|index)\.html([?#].*)?$/i.test(url) ||
+                         /^[a-zA-Z0-9_-]+\.html([?#].*)?$/i.test(url);
+  if (isInternalPage) {
+    return url.startsWith('/') ? url.slice(1) : url;
+  }
+
   const lower = url.toLowerCase();
   if (TOP_SITE_MAP[lower]) {
     url = TOP_SITE_MAP[lower];
@@ -135,6 +145,21 @@ export default async function handler(req, res) {
         }
       }
     } catch (_) {}
+  }
+
+  // Internal local HTML page redirection
+  if (/^(https?:\/\/)?(\/)?search\.html/i.test(finalUrl)) {
+    const qMatch = finalUrl.match(/[?&]q=([^&]*)/);
+    const q = qMatch ? qMatch[1] : '';
+    res.statusCode = 302;
+    res.setHeader('Location', `/search.html${q ? '?q=' + q : ''}`);
+    return res.end();
+  }
+  if (/^(https?:\/\/)?(\/)?(newtab|portal|catalog|form|auth-hand-off)\.html/i.test(finalUrl)) {
+    const clean = finalUrl.replace(/^https?:\/\//i, '').replace(/^\//, '');
+    res.statusCode = 302;
+    res.setHeader('Location', `/${clean}`);
+    return res.end();
   }
 
   // Search query / non-URL detection (e.g. user typed "apple" or "news query" instead of URL)

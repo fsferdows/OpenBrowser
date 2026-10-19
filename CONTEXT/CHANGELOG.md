@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Local Internal Page Isolation and Omnibox Search Scheme Protection (ADR-0021):
+  - `packages/control/src/omnibox-resolver.js`: Updated `sanitizeAndRepairUrl` to strip accidental `https?://` schemes from internal HTML pages (`search.html`, `newtab.html`, `portal.html`, `catalog.html`, `form.html`, `auth-hand-off.html`, `index.html`) and prevent prepending `https://` to internal relative routes. Updated `resolveOmniboxDestination` to recognize internal HTML files and query strings as `{ type: 'internal', url: cleanInternal }`.
+  - `public/app.js`: Updated `resolveOmniboxDestination`, `sanitizeAndRepairUrl`, and `navigateLiveUrl` to preserve relative internal routes, clean corrupted `https://search.html` inputs back to `search.html`, and reliably load the native dark-mode Braver Search SERP without DNS resolution errors.
+  - `api/proxy.js` & `scripts/serve-localhost.mjs`: Added internal page isolation to `sanitizeAndRepairUrl` and added 302 redirection for any incoming `/api/proxy` requests targeting internal `.html` files directly to their static paths.
+  - `public/index.html`: Bumped cache-busting query strings on `style.css` and `app.js` to `?v=1.0.7`.
+  - `packages/control/tests/omnibox-resolver.test.js`: Added acceptance tests asserting that internal relative HTML pages and corrupted `https://search.html` entries resolve to internal destinations without protocol corruption.
+
 - Live Chrome Primary Viewport and CDP Brave Shields Ad-Blocking Pipeline (ADR-0020):
   - `packages/control/src/chromium-client.js`: Exported `BRAVE_SHIELDS_BLOCKED_URLS` (blocking 32 major ad and tracker networks) and `BRAVE_SHIELDS_CDP_SCRIPT` (injecting `#brave-shields-cdp-adblock` stylesheet, GPT/CMP defusers, and YouTube video ad fast-forward & skip daemon). Implemented `enableBraveShields(targetId)` which invokes `Network.setBlockedURLs` at the CDP socket layer and registers `Page.addScriptToEvaluateOnNewDocument`. Automatically attached Brave Shields during target navigation.
   - `packages/control/src/index.js`: Re-exported `BRAVE_SHIELDS_BLOCKED_URLS` and `BRAVE_SHIELDS_CDP_SCRIPT`.

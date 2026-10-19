@@ -189,3 +189,9 @@ The Agent Core executes outside of the web page renderer context to prevent mali
 - **Anti-Adblock Defusers**: Injects dummy stubs for `window.googletag`, `window.adsbygoogle`, and `window.__tcfapi` to defuse anti-adblock detection routines before publisher scripts execute.
 - **Double-Buffered Self-Pacing Screencast**: Uses an asynchronous `onload`-driven rendering pipeline with a 60ms pacing cadence and a 20-frame resilience threshold, preventing visual flicker or premature fallback cards during heavy page navigation.
 - **Capped Resource Footprint**: Restricts disk and media cache sizes to 20MB (`--disk-cache-size=20971520`, `--media-cache-size=20971520`) in `scripts/launch-chrome-cdp.sh` to prevent host disk exhaustion.
+
+### 15. Local Internal Page Isolation & Omnibox Search Scheme Protection (ADR-0021)
+- **Local Route Shielding**: `sanitizeAndRepairUrl` guards all relative internal `.html` files (`search.html`, `newtab.html`, `portal.html`, `catalog.html`, `form.html`, `auth-hand-off.html`, `index.html`) from being treated as external top-level domains, preventing protocol corruption into `https://search.html`.
+- **Corrupted URL Auto-Healing**: Strips any accidental `https://` or `http://` prefixes from internal page names and restores clean relative paths.
+- **Omnibox Destination Classification**: Explicitly resolves internal HTML pages (with or without query strings) as `{ type: 'internal', url: cleanInternal }` in `resolveOmniboxDestination`.
+- **Proxy Redirection Layer**: In both serverless (`api/proxy.js`) and local dev (`scripts/serve-localhost.mjs`), incoming proxy requests targeting internal HTML files are immediately answered with HTTP 302 redirects to their respective static relative paths, eliminating DNS resolution errors (`ENOTFOUND search.html`) in deployed cloud environments.

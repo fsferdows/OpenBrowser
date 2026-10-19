@@ -198,13 +198,18 @@
       "id": "phase8-task26",
       "description": "Live Chrome Primary Viewport and CDP Brave Shields Ad-Blocking Pipeline (ADR-0020): Configure Live Chrome (CDP) as primary default viewport mode on localhost with direct auto-activation on startup. Implement enableBraveShields in ChromiumCdpClient with CDP socket-layer Network.setBlockedURLs (blocking 32 ad/tracker patterns) and Page.addScriptToEvaluateOnNewDocument (injecting #brave-shields-cdp-adblock stylesheet, GPT/CMP defuser stubs, and continuous YouTube video ad skip daemon). Implement self-pacing double-buffered screencast stream in public/app.js with scheduleNextFrame and failure threshold tolerance (20+), eliminating stream flicker, stutters, and forced webview reversions on navigation.",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task27",
+      "description": "Local Internal Page Isolation and Omnibox Search Scheme Protection (ADR-0021): Fix search.html DNS resolution error ('search.html IP address could not be found') on deployed environments (Vercel/GitHub Pages). Guard sanitizeAndRepairUrl to prevent prepending https:// to internal relative html pages (search.html, portal.html, newtab.html, etc.), strip accidental https:// prefixes, classify relative html inputs as internal type in resolveOmniboxDestination, add 302 redirects in api/proxy.js and serve-localhost.mjs, and bump cache busters to v=1.0.7.",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
     "OQ-001: Host filesystem capacity is constrained; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Monitor real-time Live Chrome screencast and ad-free navigation.",
-  "last_commit": "d8be19d"
+  "next_action": "Verify Vercel production deployment and GitHub Pages sync.",
+  "last_commit": "4321484"
 }
 

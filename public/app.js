@@ -381,7 +381,8 @@
     const input = (rawInput || '').trim();
     if (!input) return { type: 'internal', url: 'brave://newtab' };
 
-    if (/^(\/)?(search|newtab|portal|catalog|form|auth-hand-off)\.html(\?.*)?$/i.test(input)) {
+    if (/^(\/)?(search|newtab|portal|catalog|form|auth-hand-off|index)\.html([?#].*)?$/i.test(input) ||
+        /^[a-zA-Z0-9_-]+\.html([?#].*)?$/i.test(input)) {
       const cleanInternal = input.startsWith('/') ? input.slice(1) : input;
       return { type: 'internal', url: cleanInternal };
     }
@@ -822,6 +823,15 @@
     let url = rawUrl.trim().replace(/^["']+|["']+$/g, '');
     if (!url) return '';
     if (url.startsWith('//')) url = 'https:' + url;
+ 
+    // Strip accidental https:// or http:// prepended to local internal HTML pages
+    url = url.replace(/^https?:\/\/(search|newtab|portal|catalog|form|auth-hand-off|index)\.html(\/)?/i, '$1.html');
+
+    // If it is an internal local HTML page, never prepend http(s)://
+    if (/^(\/)?(search|newtab|portal|catalog|form|auth-hand-off|index)\.html([?#].*)?$/i.test(url) ||
+        /^[a-zA-Z0-9_-]+\.html([?#].*)?$/i.test(url)) {
+      return url.startsWith('/') ? url.slice(1) : url;
+    }
 
     const lower = url.toLowerCase();
     if (typeof TOP_SITE_MAP !== 'undefined' && TOP_SITE_MAP[lower]) {
@@ -860,11 +870,13 @@
     }
 
     // Check if destination is internal search SERP
-    const isSearchPage = /^\/?search\.html/i.test(targetUrl) || targetUrl.startsWith('brave://search');
+    const isSearchPage = /^(https?:\/\/)?(\/)?search\.html/i.test(targetUrl) || targetUrl.startsWith('brave://search');
     if (isSearchPage) {
       const qMatch = targetUrl.match(/[?&]q=([^&]*)/);
       const query = qMatch ? decodeURIComponent(qMatch[1].replace(/\+/g, ' ')) : '';
-      const cleanSrc = (targetUrl.startsWith('/') ? targetUrl.slice(1) : targetUrl).replace('brave://search', 'search.html');
+      const cleanSrc = (targetUrl.startsWith('/') ? targetUrl.slice(1) : targetUrl)
+        .replace(/^https?:\/\/search\.html\/?/i, 'search.html')
+        .replace('brave://search', 'search.html');
       
       state.activeUrl = cleanSrc;
       state.activeScenario = 'live';
@@ -891,9 +903,10 @@
     }
 
     // Check if other internal page
-    const isInternalPage = /^\/?(portal|catalog|form|auth-hand-off|newtab)\.html/i.test(targetUrl);
+    const isInternalPage = /^(https?:\/\/)?(\/)?(portal|catalog|form|auth-hand-off|newtab)\.html/i.test(targetUrl);
     if (isInternalPage) {
-      const cleanSrc = targetUrl.startsWith('/') ? targetUrl.slice(1) : targetUrl;
+      const cleanSrc = (targetUrl.startsWith('/') ? targetUrl.slice(1) : targetUrl)
+        .replace(/^https?:\/\/(portal|catalog|form|auth-hand-off|newtab)\.html\/?/i, '$1.html');
       state.activeUrl = cleanSrc;
       state.activeScenario = 'live';
       dom.omnibox.value = `brave://${cleanSrc.replace('.html', '')}`;

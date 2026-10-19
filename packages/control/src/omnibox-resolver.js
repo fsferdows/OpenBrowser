@@ -50,6 +50,16 @@ export function sanitizeAndRepairUrl(rawUrl) {
     url = 'https:' + url;
   }
 
+  // Strip any accidental https:// or http:// prepended to local internal HTML pages
+  url = url.replace(/^https?:\/\/(search|newtab|portal|catalog|form|auth-hand-off|index)\.html(\/)?/i, '$1.html');
+
+  // If it is an internal local HTML page, do not treat it as an external host
+  const isInternalPage = /^(\/)?(search|newtab|portal|catalog|form|auth-hand-off|index)\.html([?#].*)?$/i.test(url) ||
+                         /^[a-zA-Z0-9_-]+\.html([?#].*)?$/i.test(url);
+  if (isInternalPage) {
+    return url.startsWith('/') ? url.slice(1) : url;
+  }
+
   const lower = url.toLowerCase();
   if (TOP_SITE_MAP[lower]) {
     url = TOP_SITE_MAP[lower];
@@ -104,6 +114,13 @@ export function resolveOmniboxDestination(rawInput, options = {}) {
   // 1. Explicit internal schemes
   if (input.startsWith('brave://') || input.startsWith('chrome://') || input.startsWith('about:')) {
     return { type: 'internal', url: input };
+  }
+
+  // 1b. Internal local HTML pages (e.g. search.html?q=..., portal.html, or accidentally prefixed https://search.html)
+  if (/^(https?:\/\/)?(\/)?(search|newtab|portal|catalog|form|auth-hand-off|index)\.html([?#].*)?$/i.test(input) ||
+      /^(https?:\/\/)?(\/)?[a-zA-Z0-9_-]+\.html([?#].*)?$/i.test(input)) {
+    const cleanInternal = input.replace(/^https?:\/\//i, '').replace(/^\//, '');
+    return { type: 'internal', url: cleanInternal };
   }
 
   // 2. Explicit Agent Directives

@@ -954,6 +954,22 @@ const server = createServer(async (req, res) => {
       } else if (finalUrl.includes('google.com') || finalUrl.toLowerCase() === 'google') {
         finalUrl = normalizeGoogleUrl(finalUrl);
       }
+
+      // Internal local HTML page redirection
+      if (/^(https?:\/\/)?(\/)?search\.html/i.test(finalUrl)) {
+        const qMatch = finalUrl.match(/[?&]q=([^&]*)/);
+        const q = qMatch ? qMatch[1] : '';
+        res.statusCode = 302;
+        res.setHeader('Location', `/search.html${q ? '?q=' + q : ''}`);
+        return res.end();
+      }
+      if (/^(https?:\/\/)?(\/)?(newtab|portal|catalog|form|auth-hand-off)\.html/i.test(finalUrl)) {
+        const clean = finalUrl.replace(/^https?:\/\//i, '').replace(/^\//, '');
+        res.statusCode = 302;
+        res.setHeader('Location', `/${clean}`);
+        return res.end();
+      }
+
       if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
         finalUrl = `https://${finalUrl}`;
       }

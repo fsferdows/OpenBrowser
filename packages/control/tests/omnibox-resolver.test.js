@@ -104,4 +104,32 @@ describe('Omnibox Destination & Search Resolution Tests', () => {
     assert.strictEqual(yt5.type, 'url');
     assert.strictEqual(yt5.url, 'https://www.youtube.com/?themeRefresh=1&another=2');
   });
+
+  it('preserves internal local HTML pages without prepending https:// (ADR-0021)', () => {
+    // Relative internal pages must resolve to internal type
+    const s1 = resolveOmniboxDestination('search.html?q=hello');
+    assert.strictEqual(s1.type, 'internal');
+    assert.strictEqual(s1.url, 'search.html?q=hello');
+
+    const s2 = resolveOmniboxDestination('/search.html?q=agentic%20browser');
+    assert.strictEqual(s2.type, 'internal');
+    assert.strictEqual(s2.url, 'search.html?q=agentic%20browser');
+
+    const p1 = resolveOmniboxDestination('portal.html');
+    assert.strictEqual(p1.type, 'internal');
+    assert.strictEqual(p1.url, 'portal.html');
+
+    const n1 = resolveOmniboxDestination('newtab.html');
+    assert.strictEqual(n1.type, 'internal');
+    assert.strictEqual(n1.url, 'newtab.html');
+
+    // Repair corrupted https://search.html?q=hello back to search.html?q=hello
+    const s3 = resolveOmniboxDestination('https://search.html?q=hello');
+    assert.strictEqual(s3.type, 'internal');
+    assert.strictEqual(s3.url, 'search.html?q=hello');
+
+    const s4 = resolveOmniboxDestination('http://search.html?q=hello');
+    assert.strictEqual(s4.type, 'internal');
+    assert.strictEqual(s4.url, 'search.html?q=hello');
+  });
 });
