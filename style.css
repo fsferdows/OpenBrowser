@@ -437,8 +437,9 @@ body {
 .shields-popover {
   position: absolute;
   top: 88px;
-  left: calc(100vw - 640px);
+  right: 460px;
   width: 320px;
+  max-width: calc(100vw - 32px);
   background: var(--bg-toolbar);
   border: 1px solid var(--border-card);
   border-radius: 14px;
@@ -2279,5 +2280,362 @@ input:checked + .slider:before {
   width: 100% !important;
   opacity: 0;
   transition: width 0.2s ease, opacity 0.4s ease 0.15s;
+}
+
+/* ==========================================================================
+   Live User Move Tracker & Skill Memory Component
+   ========================================================================== */
+.user-moves-recorder {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.moves-recorder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.recording-pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulseDot 1.4s infinite;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.moves-count-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-family: var(--font-mono);
+}
+
+.moves-recorder-subtext {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.moves-list-box {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.empty-moves-notice {
+  color: #64748b;
+  font-style: italic;
+  text-align: center;
+  padding: 10px 0;
+  font-size: 11px;
+}
+
+.recorded-move-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+  color: #e2e8f0;
+}
+
+.recorded-move-item .move-num {
+  color: #38bdf8;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 14px;
+}
+
+.recorded-move-item .move-icon {
+  font-size: 12px;
+}
+
+.recorded-move-item .move-desc {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recorded-move-item .move-time {
+  font-size: 9.5px;
+  color: #64748b;
+}
+
+.moves-actions-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.btn-save-recorded-skill,
+.btn-replay-recorded-moves,
+.btn-clear-recorded-moves {
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.btn-save-recorded-skill {
+  background: var(--brave-orange-gradient);
+  color: #fff;
+  flex: 1;
+}
+
+.btn-save-recorded-skill:disabled,
+.btn-replay-recorded-moves:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-replay-recorded-moves {
+  background: #2563eb;
+  color: #fff;
+  flex: 1;
+}
+
+.btn-clear-recorded-moves {
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+.btn-clear-recorded-moves:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+/* ==========================================================================
+   AI Copilot Chat Bubble & See More Expansion Styles
+   ========================================================================== */
+.ai-copilot-bubble {
+  border-left: 3px solid #c084fc !important;
+  background: rgba(88, 28, 135, 0.15) !important;
+}
+
+.copilot-details-panel {
+  animation: fadeIn 0.15s ease-in-out;
+}
+
+.copilot-details-panel.hidden {
+  display: none !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   Comprehensive Responsive Layout & Mobile/Tablet Design System
+   ========================================================================== */
+
+/* Large Tablets / Small Laptops (max-width: 1200px) */
+@media (max-width: 1200px) {
+  .brave-sidebar-pane {
+    width: 330px;
+  }
+
+  .shields-popover {
+    right: 360px;
+  }
+
+  .omnibox-wrapper {
+    max-width: 600px;
+  }
+}
+
+/* Medium Tablets & Narrow Desktops (max-width: 992px) */
+@media (max-width: 992px) {
+  .navigation-toolbar {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 0 8px;
+  }
+
+  .action-btn .btn-text {
+    display: none;
+  }
+
+  .action-btn {
+    padding: 6px 8px;
+  }
+
+  .brave-sidebar-pane {
+    width: 300px;
+  }
+
+  .shields-popover {
+    right: 20px;
+    top: 86px;
+  }
+
+  .rewards-popover {
+    right: 20px;
+  }
+
+  .ssl-popover {
+    left: 20px;
+  }
+
+  .tabs-container {
+    max-width: calc(100vw - 180px);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tabs-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-item {
+    max-width: 160px;
+  }
+}
+
+/* Small Tablets and Mobile Viewports (max-width: 768px) */
+@media (max-width: 768px) {
+  body {
+    overflow: auto;
+  }
+
+  .brave-workspace {
+    flex-direction: column;
+  }
+
+  .browser-viewport-pane {
+    height: 60vh;
+    flex: none;
+  }
+
+  .brave-sidebar-pane {
+    width: 100% !important;
+    height: 40vh;
+    border-left: none;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .sidebar-dock {
+    width: 42px;
+    padding: 8px 0;
+  }
+
+  .dock-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+  }
+
+  .navigation-toolbar {
+    height: auto;
+    padding: 6px 8px;
+  }
+
+  .nav-arrows {
+    gap: 2px;
+  }
+
+  .omnibox-wrapper {
+    max-width: 100%;
+    flex: 1;
+  }
+
+  .security-badge .cert-text {
+    display: none;
+  }
+
+  .bookmarks-bar {
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    padding: 4px 8px;
+  }
+
+  .bookmarks-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .shields-popover,
+  .ssl-popover,
+  .rewards-popover,
+  #cdp-popover {
+    position: fixed;
+    top: 92px;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: calc(100vw - 24px) !important;
+    box-sizing: border-box;
+  }
+
+  .viewport-status-bar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .cdp-telemetry-badge {
+    display: none;
+  }
+}
+
+/* Very Small Mobile Screens (max-width: 480px) */
+@media (max-width: 480px) {
+  .window-extra-actions {
+    display: none;
+  }
+
+  .traffic-lights {
+    display: none;
+  }
+
+  .tab-item {
+    max-width: 110px;
+    font-size: 11px;
+    padding: 0 8px;
+  }
+
+  .action-icons {
+    gap: 3px;
+  }
+
+  .action-btn {
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+
+  .scenario-chips {
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+  }
 }
 

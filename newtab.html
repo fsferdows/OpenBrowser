@@ -937,13 +937,44 @@
         }
 
         const formattedReply = (data.reply || 'Task completed.').replace(/\n/g, '<br>');
+        const detailsId = `newtab-details-${Date.now()}`;
+        let detailsHtml = '';
+        if (data.details) {
+          const formattedDetails = data.details
+            .replace(/### (.*?)\n/g, '<h4 style="color:#c084fc;margin:8px 0 4px;font-size:13.5px;">$1</h4>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.4);color:#38bdf8;padding:1px 4px;border-radius:4px;">$1</code>')
+            .replace(/\n/g, '<br>');
+
+          detailsHtml = `
+            <div style="margin-top: 10px;">
+              <button class="btn-see-more-chat" data-target="${detailsId}" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #93c5fd; padding: 4px 10px; border-radius: 6px; font-size: 11.5px; cursor: pointer; font-weight: 500;">
+                📖 See More (Deep Breakdown)
+              </button>
+              <div id="${detailsId}" class="chat-details-panel hidden" style="margin-top: 8px; padding: 10px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; font-size: 12.5px; line-height: 1.55; color: #cbd5e1;">
+                ${formattedDetails}
+              </div>
+            </div>
+          `;
+        }
 
         assistantBubble.innerHTML = `
           <strong style="color: #c084fc;">🦁 Braver AI Copilot</strong>
           <div style="margin-top: 6px; line-height: 1.55; color: #f1f5f9;">${formattedReply}</div>
+          ${detailsHtml}
           ${actionHtml}
           <div style="margin-top: 8px; font-size: 11px; color: #94a3b8; border-top: 1px solid #334155; padding-top: 6px;">Provider: ${data.provider || 'OmniRoute & FreeLLMAPI'} (${data.latencyMs || 18}ms) • Autonomous Ready</div>
         `;
+
+        assistantBubble.querySelector('.btn-see-more-chat')?.addEventListener('click', (e) => {
+          const targetEl = document.getElementById(detailsId);
+          if (targetEl) {
+            const isHidden = targetEl.classList.contains('hidden');
+            targetEl.classList.toggle('hidden', !isHidden);
+            e.target.textContent = isHidden ? '📖 Show Less' : '📖 See More (Deep Breakdown)';
+            drawerMessages.scrollTop = drawerMessages.scrollHeight;
+          }
+        });
       } catch (err) {
         assistantBubble.innerHTML = `<span style="color:#ef4444;">Failed to communicate with AI gateway: ${err.message}</span>`;
       }
@@ -960,6 +991,39 @@
         sendChatMessage(chip.getAttribute('data-task'));
       });
     });
+
+    // Report user moves to parent window for AI Skill Learning
+    document.addEventListener('click', function(e) {
+      const target = e.target.closest('button, a, input, [role="button"], select, textarea') || e.target;
+      if (target && window.parent && window.parent !== window) {
+        let sel = target.id ? '#' + target.id : (target.className && typeof target.className === 'string' ? target.tagName.toLowerCase() + '.' + target.className.split(' ').filter(Boolean).slice(0, 2).join('.') : target.tagName.toLowerCase());
+        const label = (target.innerText || target.value || target.title || '').trim().slice(0, 30);
+        window.parent.postMessage({
+          type: 'BRAVE_USER_ACTION',
+          action: 'click',
+          selector: sel,
+          details: { label: label },
+          url: window.location.href,
+          timestamp: Date.now()
+        }, '*');
+      }
+    }, true);
+
+    document.addEventListener('change', function(e) {
+      const el = e.target;
+      if (!el || !['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) return;
+      if (window.parent && window.parent !== window) {
+        let sel = el.id ? '#' + el.id : (el.name ? '[name="' + el.name + '"]' : el.tagName.toLowerCase());
+        window.parent.postMessage({
+          type: 'BRAVE_USER_ACTION',
+          action: 'type',
+          selector: sel,
+          details: { value: el.value ? el.value.slice(0, 40) : '' },
+          url: window.location.href,
+          timestamp: Date.now()
+        }, '*');
+      }
+    }, true);
   </script>
 </body>
 </html>
