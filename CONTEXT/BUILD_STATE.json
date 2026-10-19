@@ -195,6 +195,6 @@
     "OQ-001: Host filesystem capacity is constrained; Phase A strategy avoids local C++ Chromium compilation."
   ],
   "next_action": "Verify YouTube live browsing and TechCrunch anti-adblock bypass in browser window.",
-  "last_commit": "4af390c"
+  "last_commit": "24954ef"
 }
 
