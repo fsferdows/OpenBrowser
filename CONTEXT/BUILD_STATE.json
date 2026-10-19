@@ -165,5 +165,5 @@
     "OQ-001: Host filesystem capacity is 475MB free; Phase A strategy avoids local C++ Chromium compilation."
   ],
   "next_action": "Verify GitHub Pages deployment workflow run and monitor live static webview navigation.",
-  "last_commit": "HEAD"
+  "last_commit": "c34d0be"
 }
