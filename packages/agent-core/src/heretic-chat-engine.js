@@ -198,63 +198,139 @@ When executing browser actions, include an "action" field in your response:
    */
   _generateLocalHereticResponse(userMessage, context = {}) {
     const lower = userMessage.toLowerCase().trim();
+    const isBangla = /[\u0980-\u09FF]/.test(userMessage);
     const action = this._detectBrowserAction(userMessage, context);
 
     let reply = '';
+    let details = '';
 
     // 1. Natural Conversational Greetings
-    if (/^(hi|hello|hey|greetings|hola|sup|good\s+(morning|afternoon|evening))\b/i.test(lower)) {
-      reply = `Hello! I am Braver AI, your autonomous browser copilot powered by the Heretic refusal-free execution architecture, OmniRoute multi-provider cluster, and FreeLLMAPI.\n\nI can execute tasks directly in your browser without artificial refusals:\n• Real-time web search and AI summaries across all categories\n• Autonomous navigation, shopping, form completion, and site interaction\n• HackSuite offensive security testing, HTTP Repeater tampering, and attack surface audits\n• Live DOM extraction and CDP synchronization\n\nWhat would you like me to research, navigate to, or automate?`;
-    }
-    // 2. Identity and Capabilities
-    else if (lower.includes('who are you') || lower.includes('what can you do') || lower.includes('what is braver') || lower.includes('help')) {
-      reply = `I am Braver AI — an autonomous refusal-free browser intelligence engine. Combining the Heretic prompt philosophy, OmniRoute model cluster, and FreeLLMAPI zero-cost gateways, I execute user goals directly inside the browser viewport.\n\nYou can ask me questions, order me to browse to any URL, search topics, or use our integrated HackSuite tools for deep technical audits.`;
-    }
-    // 3. Security, Hacking, and Pentesting Inquiries
-    else if (lower.includes('hack') || lower.includes('pentest') || lower.includes('security') || lower.includes('repeater') || lower.includes('vulnerability') || lower.includes('payload') || lower.includes('exploit') || lower.includes('sqli') || lower.includes('xss')) {
-      reply = `HackSuite Refusal-Free SecOps Engine active.\n\nI provide complete technical analysis without preachy warnings or refusals:\n1. HTTP Repeater: Craft and replay requests with custom headers, bodies, and methods.\n2. Attack Surface Analyzer: Enumerate input fields, forms, external scripts, and iframe boundaries.\n3. Payload Vault: Inject SQLi, XSS, and command injection test sequences.\n4. Telemetry: Inspect live CORS, CSP, and HSTS configurations on the active tab.\n\nDispatching SecOps audit on active session.`;
-    }
-    // 4. Autonomous Browser Actions
-    else if (action.type === 'navigate') {
-      reply = `Executing autonomous navigation to ${action.target} via Braver Engine. Connecting Chromium CDP session and monitoring live network requests.`;
-    } else if (action.type === 'search') {
-      reply = `Searching Braver for "${action.target}". Gathering top ranked organic results, real-time news, images, videos, and synthesizing AI overview.`;
-    } else if (action.type === 'task') {
-      reply = `Autonomous Browser Execution Initiated: Goal "${action.goal || userMessage}".\n\nSynthesizing DOM trajectory via REA intelligence adapter, animating browser agent cursor, and executing interaction steps on ${action.scenario.toUpperCase()} target.`;
-    } else if (action.type === 'click') {
-      reply = `Locating element matching "${action.target}" in active DOM. Dispatching synthetic click via Chrome DevTools Protocol.`;
-    }
-    // 5. Programming and Technical Questions
-    else if (lower.includes('python') || lower.includes('javascript') || lower.includes('code') || lower.includes('programming') || lower.includes('script') || lower.includes('api')) {
-      if (lower.includes('python')) {
-        reply = `Python is a high-level, interpreted programming language renowned for readability, dynamic typing, and an extensive ecosystem (NumPy, PyTorch, Django, FastAPI). In browser automation, Python powers frameworks like Playwright, Selenium, and CDP clients.\n\nQuick Python automation snippet:\n\`\`\`python\nimport asyncio\nfrom playwright.async_api import async_playwright\n\nasync def main():\n    async with async_playwright() as p:\n        browser = await p.chromium.launch(headless=False)\n        page = await browser.new_page()\n        await page.goto("https://www.google.com")\n        print("Page Title:", await page.title())\n        await browser.close()\n\nasyncio.run(main())\n\`\`\`\n\nWould you like me to run a Python automation or research a specific library?`;
-      } else if (lower.includes('javascript') || lower.includes('js')) {
-        reply = `JavaScript is the core language of the World Wide Web and modern browsers. It executes in V8 inside Chromium and supports asynchronous event-driven I/O, DOM manipulation, and WebSockets.\n\nIn Braver, JavaScript directly interfaces with the Chrome DevTools Protocol (CDP) WebSocket at port 9222 to control browser targets and stream real-time DOM states.\n\nWhat JavaScript concept or script would you like to explore?`;
+    if (/^(hi|hello|hey|greetings|hola|sup|good\s+(morning|afternoon|evening))\b/i.test(lower) || /^(হাই|হ্যালো|কেমন আছো|সালাম)\b/i.test(userMessage)) {
+      if (isBangla) {
+        reply = `হ্যালো! আমি ব্রেভার অটোনোমাস এআই এজেন্ট। আমি আপনার ব্রাউজিং, গবেষণা ও অটোমেশন কাজে সম্পূর্ণ সহায়তা করতে প্রস্তুত।\n\nআপনি আমাকে যেকোনো প্রশ্ন করতে পারেন, কোনো ওয়েব টাস্ক অটোমেট করতে বলতে পারেন, অথবা রিয়েল-টাইম রিসার্চ করাতে পারেন।`;
+        details = `### ব্রেভার এআই এজেন্টের প্রধান সক্ষমতাসমূহ:
+1. **স্বয়ংক্রিয় ব্রাউজিং ও অ্যাকশন:** ফর্ম পূরণ, শপিং কার্ট অটোমেশন, তথ্য স্ক্র্যাপ এবং কাস্টম ওয়ার্কফ্লো।
+2. **লাইভ ইন্ট্যারাকশন ট্র্যাকিং:** আপনি ব্রাউজারে যে পদক্ষেপগুলো নিচ্ছেন তা রেকর্ড করে ভবিষ্যৎ স্কিল হিসেবে সংরক্ষণ করা।
+3. **হ্যাকস্যুট নিরাপত্তা বিশ্লেষণ:** রিকোয়েস্ট ট্যাম্পারিং, অ্যাটাক সারফেস স্ক্যান এবং নিরাপত্তা রিপোর্ট তৈরি।
+4. **শিল্ডস ও অ্যাড-ব্লকিং:** ক্ষতিকারক ট্র্যাকার, পপআপ এবং বিজ্ঞাপন সম্পূর্ণ ব্লক করে দ্রুততম ব্রাউজিং নিশ্চিত করা।`;
       } else {
-        reply = `Braver AI Technical Advisor: Ready to write, debug, or optimize code. I support full-stack languages (JavaScript/TypeScript, Python, Rust, Go, C/C++, Shell) and web automation frameworks.\n\nWhat code or technical challenge are you working on?`;
+        reply = `Hello! I am Braver Autonomous AI Agent. Combining refusal-free Heretic intelligence, OmniRoute multi-model cluster, and FreeLLMAPI zero-cost gateways, I execute your browser workflows and provide in-depth technical answers without artificial barriers.\n\nWhat would you like me to research, automate, or explain?`;
+        details = `### Braver Agent Autonomous Capabilities:
+1. **Interactive Workflow Execution:** Automate web forms, navigation, shopping, and real-time research with animated cursor visualization.
+2. **Real-time User Action Recording:** Automatically observes your clicks and inputs, saving them into reusable versioned skills.
+3. **HackSuite Security Operations:** Full-suite HTTP Repeater, CORS verification, JWT debugging, and attack surface audits.
+4. **Brave Shields Ad & Tracker Neutralization:** Strict cross-site tracker blocking and clean distraction-free DOM rendering.`;
       }
     }
-    // 6. Web Explanations and Factual Queries
-    else if (lower.startsWith('what is ') || lower.startsWith('how to ') || lower.startsWith('why is ') || lower.startsWith('explain ') || lower.startsWith('tell me about ')) {
-      const topic = userMessage.replace(/^(what is|how to|why is|explain|tell me about)\s+/i, '').replace(/\?+$/, '').trim();
-      reply = `Detailed Analysis: **${topic.toUpperCase()}**\n\n${topic} represents a key topic in technology and digital systems. Here is the direct breakdown:\n\n1. Core Definition: Fundamental principles and operational structure governing ${topic}.\n2. Real-World Applications: Implementation across modern distributed networks, browser environments, and computational workflows.\n3. Practical Integration: How developers, security analysts, and engineers leverage ${topic} in production.\n\nWould you like me to perform an in-depth Braver live web search for "${topic}" to pull the latest documentation, articles, and research papers?`;
-      // Also provide a search action so user can seamlessly navigate if desired
-      action.type = 'search';
-      action.target = topic;
+    // 2. Identity and Capabilities
+    else if (lower.includes('who are you') || lower.includes('what can you do') || lower.includes('help') || lower.includes('কে তুমি') || lower.includes('কি করতে পার')) {
+      if (isBangla) {
+        reply = `আমি ব্রেভার অটোনোমাস এআই ব্রাউজার এজেন্ট। আমি ওয়েব সার্ফিং, ডেটা এক্সট্র্যাকশন, সাইবার সিকিউরিটি ও ডেভেলপার কাজগুলো সরাসরি ব্রাউজারের ভেতর স্বয়ংক্রিয়ভাবে পরিচালনা করতে পারি।`;
+        details = `### আমি আপনার জন্য কী কী করতে পারি:
+• **স্বয়ংক্রিয় নেভিগেশন ও কাজ:** ইউটিউব, গুগল, উইকিপিডিয়া বা যেকোনো সাইটে অনুসন্ধান ও অটোমেশন।
+• **মুভ ফলোয়ার ও স্কিল লার্নিং:** আপনার মাউস ক্লিক এবং টেক্সট ইনপুট মনে রেখে স্কিল ফাইল তৈরি করা, যা পরে এক ক্লিকে বা কমান্ড দিয়ে পুনরায় চালানো যায়।
+• **বিজ্ঞাপন ও ট্র্যাকার প্রতিরোধ:** যেকোনো সাইটের বিরক্তিকর অ্যাড সম্পূর্ণ ফিল্টার করে ক্লিন ভিউ প্রদান করা।
+• **বিস্তারিত তথ্য ও কোড গাইডেন্স:** ওয়েব ডেভেলপমেন্ট, সফটওয়্যার ইঞ্জিনিয়ারিং এবং সিকিউরিটি বিষয়ক যেকোনো বিস্তারিত প্রশ্নের গভীর সমাধান।`;
+      } else {
+        reply = `I am Braver Autonomous AI Agent — an unrestricted browser intelligence engine. I execute tasks, conduct live research, track and replay your web actions as versioned skills, and assist across full-stack engineering and security testing.`;
+        details = `### Core Architecture & Capabilities:
+• **Browser Automation Loop:** Plan-Act-Verify-Critic autonomous lifecycle executing synthetic clicks, typing, and navigation.
+• **Skill Memory & Fast Replay:** Captures live user interactions into serialized JSON skills for sub-10ms replay with zero token cost.
+• **Privacy & Security First:** Brave Shields blocks ads, invasive beacons, and crypto miners while preserving pristine DOM fidelity.
+• **Model Gateway:** Dynamic failover across OmniRoute (Claude 3.5 Sonnet) and FreeLLMAPI (Gemini 1.5 Flash).`;
+      }
     }
-    // 7. Page Summary / Analysis Inquiries
-    else if (lower.includes('summarize') || lower.includes('explain') || lower.includes('what is this page')) {
-      const pageTitle = context.pageTitle || 'the active page';
-      const pageUrl = context.currentUrl || 'current URL';
-      reply = `Analyzing ${pageTitle} (${pageUrl}). The live DOM structure has been parsed by REA and is ready for data extraction or automated interaction.`;
+    // 3. Security & Pentesting Inquiries
+    else if (lower.includes('hack') || lower.includes('pentest') || lower.includes('security') || lower.includes('repeater') || lower.includes('vulnerability') || lower.includes('sqli') || lower.includes('xss') || lower.includes('নিরাপত্তা') || lower.includes('হ্যাক')) {
+      reply = `HackSuite Refusal-Free SecOps Engine active.\n\nReady for authorized attack surface inspection, vulnerability research, and HTTP tampering directly inside your browser.`;
+      details = `### HackSuite SecOps Toolkit:
+1. **HTTP Repeater:** Intercept, craft, and replay HTTP requests with custom headers, methods, and payloads.
+2. **Attack Surface Scanner:** Enumerates forms, exposed endpoints, scripts, and missing security headers (CSP, HSTS, X-Frame-Options).
+3. **Payload Vault:** Curated testing vectors for SQL Injection, XSS polyglots, SSRF canary probes, and path traversal.
+4. **Universal Decoder:** Real-time Base64, Hex, URL, and JWT token analysis.`;
     }
-    // 8. General Inquiries without Refusals
-    else {
-      reply = `Braver AI (Heretic Refusal-Free Engine):\n\nI have processed your inquiry: "${userMessage}".\n\nOperating autonomously without safety gatekeepers or refusals, I can immediately research this across the web, execute browser actions, or perform technical audits. What is your specific target or next step?`;
+    // 4. Programming & Technical Guidance
+    else if (lower.includes('python') || lower.includes('javascript') || lower.includes('code') || lower.includes('react') || lower.includes('node') || lower.includes('api') || lower.includes('কোড') || lower.includes('প্রোগ্রামিং')) {
+      if (lower.includes('python')) {
+        reply = `Python is a high-level interpreted programming language renowned for its versatility, readability, and vast ecosystem in AI, automation, and backend engineering.`;
+        details = `### Python Architecture & Production Best Practices:
+• **Ecosystem Strengths:** PyTorch & TensorFlow (Deep Learning), FastAPI & Django (Web APIs), Playwright & Selenium (Browser Automation).
+• **Browser Automation Example:**
+\`\`\`python
+from playwright.sync_api import sync_playwright
+
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=False)
+    page = browser.new_page()
+    page.goto('https://news.ycombinator.com')
+    print("Top Story:", page.title())
+    browser.close()
+\`\`\`
+• **Optimization Tip:** Use asynchronous event loops (\`asyncio\` + \`aiohttp\`) for high-concurrency scraping without thread blocking.`;
+      } else {
+        reply = `JavaScript and Node.js power the modern interactive web, providing asynchronous non-blocking I/O, V8 execution speed, and universal client/server runtime compatibility.`;
+        details = `### Modern JavaScript / Node.js Highlights:
+• **Event Loop:** Microtasks (Promises) execute ahead of macrotasks (setTimeout, I/O) to ensure predictable UI updates.
+• **Chrome DevTools Protocol (CDP):** Direct JSON-RPC WebSocket communication at port 9222 enables precise control over DOM, network inspection, and screenshot capture.
+• **Clean Modular Architecture:** Strict ES Modules (\`import / export\`) with isolated state management guarantee maintainability.`;
+      }
+    }
+    // 5. In-Depth Web Explanations and Factual Queries
+    else if (lower.startsWith('what is ') || lower.startsWith('how to ') || lower.startsWith('why is ') || lower.startsWith('explain ') || lower.startsWith('tell me about ') || lower.includes('কী') || lower.includes('কিভাবে') || lower.includes('বিস্তারিত')) {
+      const topic = userMessage.replace(/^(what is|how to|why is|explain|tell me about|কী|কিভাবে|বিস্তারিত)\s+/i, '').replace(/\?+$/, '').trim() || userMessage;
+      if (isBangla) {
+        reply = `**${topic}** সম্পর্কে বিস্তারিত সারসংক্ষেপ:\n\n${topic} আধুনিক প্রযুক্তি ও ডিজিটাল ব্যবস্থার একটি গুরুত্বপূর্ণ বিষয়। নিচে এর কার্যপ্রণালী, স্থাপত্য এবং ব্যবহারের বিস্তারিত ব্যাখ্যা দেওয়া হলো:`;
+        details = `### ${topic} এর বিস্তারিত প্রযুক্তিগত বিশ্লেষণ:
+1. **মূল ধারণা (Core Definition):** ${topic} কীভাবে কাজ করে এবং এর পেছনের মৌলিক প্রযুক্তি ও নিয়মাবলী।
+2. **বাস্তব প্রয়োগ (Practical Use Cases):** আধুনিক সফটওয়্যার, ওয়েব আর্কিটেকচার এবং ইন্ডাস্ট্রিতে এর সরাসরি ব্যবহার।
+3. **কাজের ধাপসমূহ (Step-by-Step Implementation):**
+   • প্রাথমিক সেটআপ এবং কনফিগারেশন।
+   • সঠিক টুলস ও লাইব্রেরি নির্বাচন।
+   • নিরাপত্তা ও পারফরম্যান্স নিশ্চিতকরণ।
+4. **সুপারিশ:** আপনি চাইলে আমি ব্রাউজারে এটি সরাসরি সার্চ করে আরও রিসোর্স ও ডকুমেন্টেশন নিয়ে আসতে পারি।`;
+      } else {
+        reply = `**Comprehensive Breakdown for "${topic.toUpperCase()}":**\n\n${topic} is an essential concept in modern computational and web systems. Here is the architectural overview and structured breakdown:`;
+        details = `### Architectural & Technical Deep Dive: ${topic}
+1. **Core Mechanism & Theoretical Foundations:**
+   • Primary principles governing ${topic}, data flow models, and protocol standards.
+   • Interoperability within distributed systems and web browser runtimes.
+2. **Production Engineering & Real-World Implementation:**
+   • High-availability design patterns and latency optimization techniques.
+   • Resiliency safeguards, caching strategies, and fault tolerance.
+3. **Security Posture & Boundary Enforcement:**
+   • Threat modeling (STRIDE analysis) and secure default configurations.
+   • Defense-in-depth isolation preventing unauthorized privilege escalation.
+4. **Actionable Next Steps:**
+   • Execute autonomous research across official documentation and GitHub repositories.
+   • Test implementation vectors using integrated Braver automation tools.`;
+      }
+    }
+    // 6. Autonomous Browser Tasks
+    else if (action.type === 'navigate') {
+      reply = `Autonomous navigation prepared for: ${action.target}. Running seamless Web View rendering with Brave Shields tracker & ad blocking.`;
+      details = `### Navigation Telemetry:
+• **Destination:** \`${action.target}\`
+• **Viewport Rendering:** Native Web View with frame-busting protection and HTTPS upgrade.
+• **Shields Protection:** Invasive ad containers and third-party trackers automatically stripped.`;
+    } else if (action.type === 'search') {
+      reply = `Searching Braver for: "${action.target}". Gathering top ranked organic results, real-time news, images, videos, and AI overview.`;
+      details = `### Search Query Telemetry:
+• **Query:** \`${action.target}\`
+• **Search Engines:** Braver Multi-Source Engine + Wikipedia Knowledge Panel.
+• **AI Synthesis:** Structured key points with citations and interactive follow-ups.`;
+    } else {
+      reply = isBangla
+        ? `আমি আপনার বার্তা পেয়েছি: "${userMessage}"।\n\nব্রেভার অটোনোমাস এআই হিসেবে আমি আপনাকে যেকোনো তথ্য অনুসন্ধান, সাইট অটোমেশন বা কোডিং বিষয়ে সহায়তা করতে প্রস্তুত।`
+        : `Braver AI (Autonomous Engine):\n\nI have received your request: "${userMessage}". Operating with full technical depth and zero artificial refusals, I am ready to research, explain, or execute your browser goals.`;
+      details = `### Available Actions:
+• **Ask for Details:** Request code examples, technical architecture, or step-by-step guides.
+• **Automate Navigation:** Type any URL or web destination to browse with active ad-blocking.
+• **Learn User Moves:** Perform actions in the browser window — the agent on the right records them into versioned skills for instant replay.`;
     }
 
     return {
       reply,
+      details,
       action,
       autonomous: action.type !== 'none',
       provider: 'OmniRoute & FreeLLMAPI (Heretic Engine)',

@@ -211,6 +211,39 @@
       document.getElementById('cart-count').textContent = `${cartCount} items`;
       alert(`Added ${item} to your shopping cart!`);
     }
+
+    // Telemetry: Report user moves to parent AI Agent
+    document.addEventListener('click', function(e) {
+      const target = e.target.closest('button, a, input, [role="button"]') || e.target;
+      if (target && window.parent && window.parent !== window) {
+        let sel = target.id ? '#' + target.id : (target.className && typeof target.className === 'string' ? target.tagName.toLowerCase() + '.' + target.className.split(' ').filter(Boolean).slice(0, 2).join('.') : target.tagName.toLowerCase());
+        const label = (target.innerText || target.value || target.title || '').trim().slice(0, 30);
+        window.parent.postMessage({
+          type: 'BRAVE_USER_ACTION',
+          action: 'click',
+          selector: sel,
+          details: { label: label },
+          url: window.location.href,
+          timestamp: Date.now()
+        }, '*');
+      }
+    }, true);
+
+    document.addEventListener('change', function(e) {
+      const el = e.target;
+      if (!el || !['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) return;
+      if (window.parent && window.parent !== window) {
+        let sel = el.id ? '#' + el.id : (el.name ? '[name="' + el.name + '"]' : el.tagName.toLowerCase());
+        window.parent.postMessage({
+          type: 'BRAVE_USER_ACTION',
+          action: 'type',
+          selector: sel,
+          details: { value: el.value ? el.value.slice(0, 40) : '' },
+          url: window.location.href,
+          timestamp: Date.now()
+        }, '*');
+      }
+    }, true);
   </script>
 </body>
 </html>

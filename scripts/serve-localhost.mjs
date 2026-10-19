@@ -855,20 +855,57 @@ const server = createServer(async (req, res) => {
         finalUrl = `https://${finalUrl}`;
       }
 
-      const isCdp = parsedUrl.searchParams.get('mode') === 'cdp' ||
-                    finalUrl.includes('facebook.com') ||
-                    finalUrl.includes('youtube.com') ||
-                    finalUrl.includes('x.com') ||
-                    finalUrl.includes('twitter.com') ||
-                    finalUrl.includes('instagram.com');
-
+      // Only use CDP if explicitly requested via mode=cdp query param
+      const isCdp = parsedUrl.searchParams.get('mode') === 'cdp';
       const isConnected = await chromiumClient.isCdpConnected();
 
       let html = null;
       let effectiveUrl = finalUrl;
 
-      // For bot-protected SPAs like Facebook and YouTube, prefer Google Chrome CDP rendering
-      if (isCdp && isConnected) {
+      // Special high-fidelity embedded view for YouTube video playback and clean navigation
+      if (finalUrl.includes('youtube.com') || finalUrl.includes('youtu.be')) {
+        let videoId = null;
+        let searchQuery = null;
+        try {
+          const u = new URL(finalUrl);
+          if (u.pathname.includes('/watch')) {
+            videoId = u.searchParams.get('v');
+          } else if (u.pathname.includes('/embed/')) {
+            videoId = u.pathname.split('/embed/')[1];
+          } else if (u.hostname.includes('youtu.be')) {
+            videoId = u.pathname.slice(1);
+          } else if (u.pathname.includes('/results')) {
+            searchQuery = u.searchParams.get('search_query');
+          }
+        } catch (_) {}
+
+        if (videoId) {
+          html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>YouTube Video Player - Braver Web View</title>
+          <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { background: #0f0f0f; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+            .yt-topbar { height: 48px; background: #0f0f0f; border-bottom: 1px solid #272727; display: flex; align-items: center; padding: 0 16px; gap: 12px; }
+            .yt-logo { font-size: 16px; font-weight: 700; color: #ff0000; display: flex; align-items: center; gap: 6px; }
+            .yt-logo span { color: #fff; }
+            .yt-badge { font-size: 11px; background: #272727; color: #38bdf8; padding: 2px 8px; border-radius: 4px; }
+            .yt-player-wrap { flex: 1; width: 100%; height: calc(100vh - 48px); background: #000; }
+            iframe { width: 100%; height: 100%; border: none; }
+          </style></head><body>
+          <div class="yt-topbar">
+            <div class="yt-logo">▶ <span>YouTube</span></div>
+            <span class="yt-badge">🛡️ Brave Shields: Zero Ads Active</span>
+            <div style="margin-left: auto; display: flex; gap: 8px;">
+              <a href="/api/proxy?url=https://www.youtube.com" style="color: #38bdf8; text-decoration: none; font-size: 12px;">← Back to YouTube Home</a>
+            </div>
+          </div>
+          <div class="yt-player-wrap">
+            <iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          </div></body></html>`;
+        }
+      }
+
+      // If CDP rendering was requested explicitly
+      if (isCdp && isConnected && !html) {
         try {
           const renderPromise = chromiumClient.navigateAndRender(finalUrl, 1800);
           const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 3000));
@@ -880,7 +917,7 @@ const server = createServer(async (req, res) => {
         } catch (_) {}
       }
 
-      // If CDP rendering was not used or did not produce HTML, fetch via proxy
+      // Fetch via standard HTTP Proxy for native Web View
       if (!html) {
         // Sync active Chrome CDP tab to this URL if connected
         if (isConnected) {
@@ -899,7 +936,6 @@ const server = createServer(async (req, res) => {
             }
           });
         } catch (fetchErr) {
-          // If fetch threw an error (DNS, socket hangup, refusal), fallback to Chrome CDP rendering
           if (isConnected) {
             try {
               const cdpFallback = await chromiumClient.navigateAndRender(finalUrl, 2000);
@@ -919,11 +955,9 @@ const server = createServer(async (req, res) => {
           if (contentType.includes('text/html')) {
             html = await fetchRes.text();
 
-            // Check for anti-bot blocks, 400/403/429 status, or Facebook/Cloudflare blocks
             const isBlockedOrError = !fetchRes.ok ||
                                      html.includes('Sorry, something went wrong') ||
-                                     html.includes('challenge-running') ||
-                                     (html.includes('<title>Error</title>') && html.includes('facebook'));
+                                     html.includes('challenge-running');
 
             if (isBlockedOrError && isConnected) {
               try {
@@ -950,11 +984,35 @@ const server = createServer(async (req, res) => {
       // 1. Strip meta CSP and X-Frame-Options tags that block iframe rendering
       html = html.replace(/<meta[^>]*http-equiv=["']?(Content-Security-Policy|X-Frame-Options)["']?[^>]*>/gi, '');
 
-      // 2. Inject anti-frame-busting shim, base href, and link interceptor
+      // 2. Filter out known ad network scripts (Brave Shields Engine)
+      html = html.replace(/<script[^>]+src=["'][^"']*(googlesyndication|doubleclick|adservice|adnxs|taboola|outbrain|criteo|popads|moatads|adform)[^"']*["'][^>]*>[\s\S]*?<\/script>/gi, '');
+
+      // 3. Inject Brave Shields AdBlock CSS + Live User Move Tracker + Link Interceptor
       const baseHref = `<base href="${effectiveUrl}">`;
       const bridgeScript = `
+<style id="brave-shields-adblock">
+  /* Brave Shields High-Efficiency Ad-Blocker Styles */
+  ins.adsbygoogle, iframe[src*="doubleclick"], iframe[src*="adservice"],
+  iframe[src*="googlesyndication"], [id*="google_ads"], [class*="google-ads"],
+  [class*="ad-banner"], [class*="ad-container"], [class*="ad-wrapper"],
+  [class*="advertisement"], [class*="sponsored-post"], [id*="sponsored"],
+  [aria-label*="Sponsored"], .ytp-ad-module, .ytp-ad-overlay-container,
+  .ytp-ad-message-container, .video-ads, ytd-promoted-video-renderer,
+  ytd-display-ad-renderer, ytd-statement-banner-renderer,
+  ytd-in-feed-ad-layout-renderer, ytd-banner-promo-renderer,
+  #masthead-ad, #player-ads, div[id*="taboola"], div[class*="taboola"],
+  div[id*="outbrain"], .ad_slot, .ad-box, .advert, .ad-placeholder,
+  [data-ad-slot], [data-ad-unit], .commercial-unit {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+</style>
 <script>
-  // Brave Autonomous Browser Bridge & Frame Protection
+  // Brave Autonomous Browser Bridge & Live User Move Tracker
   const __BRAVE_HOST__ = (window.parent && window.parent !== window) ? window.parent : null;
   try {
     Object.defineProperty(window, 'top', { get: () => window.self, configurable: true });
@@ -963,11 +1021,39 @@ const server = createServer(async (req, res) => {
 
   window.__BRAVE_PROXY_URL__ = ${JSON.stringify(effectiveUrl)};
 
-  // Intercept links to keep navigation inside the Brave Autonomous Browser
+  // Live User Move Telemetry Reporter: Learns user actions and transmits to Autonomous Agent
+  function reportUserMove(action, selector, details) {
+    if (__BRAVE_HOST__) {
+      __BRAVE_HOST__.postMessage({
+        type: 'BRAVE_USER_ACTION',
+        action: action,
+        selector: selector,
+        details: details || {},
+        url: window.__BRAVE_PROXY_URL__ || window.location.href,
+        timestamp: Date.now()
+      }, '*');
+    }
+  }
+
+  // Intercept and record clicks
   document.addEventListener('click', function(e) {
+    const target = e.target.closest('button, a, input, [role="button"], select, textarea') || e.target;
+    if (target) {
+      let sel = '';
+      if (target.id) sel = '#' + target.id;
+      else if (target.getAttribute('aria-label')) sel = '[' + 'aria-label="' + target.getAttribute('aria-label') + '"]';
+      else if (target.name) sel = '[name="' + target.name + '"]';
+      else if (target.className && typeof target.className === 'string') sel = target.tagName.toLowerCase() + '.' + target.className.split(' ').filter(Boolean).slice(0, 2).join('.');
+      else sel = target.tagName.toLowerCase();
+
+      const label = (target.innerText || target.value || target.title || target.getAttribute('aria-label') || '').trim().slice(0, 35);
+      reportUserMove('click', sel, { label: label, tagName: target.tagName });
+    }
+
     const a = e.target.closest('a');
     if (a && a.href && !a.href.startsWith('javascript:') && !a.href.startsWith('#')) {
       e.preventDefault();
+      reportUserMove('navigate', a.href, { label: a.innerText?.trim() || a.href });
       if (__BRAVE_HOST__) {
         __BRAVE_HOST__.postMessage({ type: 'BRAVE_NAVIGATE', url: a.href }, '*');
       } else {
@@ -976,9 +1062,19 @@ const server = createServer(async (req, res) => {
     }
   }, true);
 
+  // Intercept and record inputs
+  document.addEventListener('change', function(e) {
+    const el = e.target;
+    if (!el || !['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) return;
+    let sel = el.id ? '#' + el.id : (el.name ? '[name="' + el.name + '"]' : el.tagName.toLowerCase());
+    const val = el.type === 'password' ? '••••••••' : (el.value || '').slice(0, 40);
+    reportUserMove('type', sel, { value: val, inputType: el.type });
+  }, true);
+
   // Intercept window.open
   window.open = function(url) {
     if (url && __BRAVE_HOST__) {
+      reportUserMove('navigate', url, { source: 'window.open' });
       __BRAVE_HOST__.postMessage({ type: 'BRAVE_NAVIGATE', url: url }, '*');
     } else if (url) {
       window.location.href = '/api/proxy?url=' + encodeURIComponent(url);
@@ -991,6 +1087,8 @@ const server = createServer(async (req, res) => {
     const form = e.target;
     if (form && form.action) {
       e.preventDefault();
+      let sel = form.id ? '#' + form.id : (form.name ? '[name="' + form.name + '"]' : 'form');
+      reportUserMove('submit', sel, { actionUrl: form.action });
       const method = (form.method || 'GET').toUpperCase();
       if (method === 'GET') {
         const formData = new FormData(form);

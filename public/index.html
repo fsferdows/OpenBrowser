@@ -573,10 +573,30 @@
             </div>
           </div>
 
+          <!-- Live Interaction Learning & Move Tracker Card -->
+          <div class="user-moves-recorder" id="user-moves-recorder">
+            <div class="moves-recorder-header">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span class="recording-pulse-dot"></span>
+                <h4 style="font-size: 11.5px; font-weight: 700; color: #f8fafc; text-transform: uppercase; letter-spacing: 0.5px;">Live Move Tracker & Skill Memory</h4>
+              </div>
+              <span class="moves-count-badge" id="moves-count-badge">0 Moves</span>
+            </div>
+            <p class="moves-recorder-subtext">Every move you make (clicks, typing, navigation) is tracked to learn reusable skills you can command the AI to execute.</p>
+            <div class="moves-list-box" id="moves-list-box">
+              <div class="empty-moves-notice">Interact with any web page to record your workflow...</div>
+            </div>
+            <div class="moves-actions-row">
+              <button class="btn-save-recorded-skill" id="btn-save-recorded-skill" title="Save recorded moves as reusable skill" disabled>💾 Save as Skill</button>
+              <button class="btn-replay-recorded-moves" id="btn-replay-recorded-moves" title="Replay recorded moves autonomously" disabled>▶ Replay Workflow</button>
+              <button class="btn-clear-recorded-moves" id="btn-clear-recorded-moves" title="Clear recorded moves">Clear</button>
+            </div>
+          </div>
+
           <!-- Telemetry & State Machine Stream -->
           <div class="telemetry-section">
             <div class="telemetry-header">
-              <h4>Autonomous Telemetry Stream</h4>
+              <h4>Autonomous Telemetry &amp; AI Chat Stream</h4>
               <span class="telemetry-meta" id="telemetry-meta">Plan-Act-Verify-Critic</span>
             </div>
             <div class="log-stream-container" id="telemetry-stream" role="log" aria-live="polite">
