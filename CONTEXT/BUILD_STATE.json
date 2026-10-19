@@ -150,5 +150,5 @@
     "OQ-001: Host filesystem capacity is 475MB free; Phase A strategy avoids local C++ Chromium compilation."
   ],
   "next_action": "Deploy updated packages and search.html to main and gh-pages; run periodic continuous sustainment regression tests.",
-  "last_commit": "HEAD"
+  "last_commit": "db88146"
 }
