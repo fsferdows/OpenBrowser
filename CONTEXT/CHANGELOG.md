@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Native Braver SERP Search & Bot Captcha Elimination:
+  - `public/search.html`: Removed forced Google `igu=1` redirection in `loadSearchData()`, restoring native Braver SERP with AI Overview, Knowledge Panel, and multi-category media tabs (Images, Videos, News, Forums). Added external unblocked Google search launcher (`↗ Google` via `window.open`) and in-webview DuckDuckGo proxy button (`🦆 DuckDuckGo`). Updated form submit handler to execute queries locally via `window.location.search = '?q=...'`.
+  - `public/app.js`: Updated omnibox resolution and search autocomplete to route directly to `search.html?q=...`. Updated `navigateLiveUrl()` to recognize and preserve internal pages (`search.html`, `newtab.html`, `portal.html`, `catalog.html`, `form.html`, `auth-hand-off.html`) without prepending `https://` or proxying, and route explicit external visits to `google.com` through `/api/proxy` to eliminate cross-site iframe captcha triggers. Set default search engine to `braver`.
+  - `public/newtab.html`: Changed center search widget form action and submit routing from Google `igu=1` to native `search.html?q=...`. Updated Copilot search action trigger to open `search.html?q=...`.
+  - `public/portal.html`: Updated `navigateToSearch()` helper to resolve queries to `search.html?q=...`.
+  - `public/index.html`: Updated omnibox security badge and default search engine display to Braver Search (`🦁`).
+
 - Universal Web Unblocker Proxy Pipeline & Connection Refusal Elimination:
   - `public/app.js`: Updated `navigateLiveUrl()` so that any external website not supporting direct framing routes automatically through the unblocking proxy (`/api/proxy?url=...`), completely eliminating Chromium cross-origin iframe embedding errors ("refused to connect"). Removed the premature blank iframe DOM inspector (`bodyText.length < 5`) that aborted SPA script hydration, and updated iframe error event handling to seamlessly fall back to `/api/proxy`.
   - `public/sw.js`: Updated Service Worker `/api/*` fetch handler with Network-First resolution, ensuring that requests to the high-performance Node proxy server (`localhost:3000/api/proxy`) take precedence and strip framing headers before falling back to in-browser synthetic responses.

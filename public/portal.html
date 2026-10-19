@@ -1196,11 +1196,11 @@
 
     // Navigation and Search helper
     function navigateToSearch(query) {
-      const googleUrl = `https://www.google.com/search?igu=1&q=${encodeURIComponent(query)}`;
+      const searchUrl = `search.html?q=${encodeURIComponent(query)}`;
       if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: googleUrl }, '*');
+        window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: searchUrl }, '*');
       } else {
-        window.location.href = googleUrl;
+        window.location.href = searchUrl;
       }
     }
 

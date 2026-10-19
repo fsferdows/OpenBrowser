@@ -148,12 +148,17 @@
       "id": "phase8-task16",
       "description": "Universal Web Unblocker Proxy Pipeline: Fix Chromium 'refused to connect' connection refusal on arbitrary external URLs by routing non-embeddable destinations through high-performance /api/proxy (stripping X-Frame-Options and CSP frame-ancestors, neutralizing frame busting, injecting base href and live telemetry bridge), updating Service Worker /api/* fetch handler to Network-First so Node.js proxy is utilized on localhost:3000, configuring process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0' and expanding fetch timeout to 10s, and removing premature blank iframe portal hijacker.",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task17",
+      "description": "Search Bot & Captcha Elimination: Route web searches to native Braver Search SERP (search.html) with full AI Overview, Knowledge Panel, and multi-category media tabs, removing forced Google igu=1 redirects that trigger 'unusual traffic detected' reCAPTCHA challenges. Add unblocked DuckDuckGo webview search and clean external Google tab launch, and preserve internal pages without protocol or proxy mangling.",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
     "OQ-001: Host filesystem capacity is 475MB free; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Verify proxy streaming in live browser across diverse domains and run automated end-to-end integration tests.",
-  "last_commit": "6029656"
+  "next_action": "Conduct continuous regression verification and test live multi-category SERP queries across desktop and mobile.",
+  "last_commit": "035f5fe"
 }

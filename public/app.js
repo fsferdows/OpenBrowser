@@ -13,7 +13,7 @@
     activeUrl: 'brave://newtab',
     activeScenario: 'newtab',
     currentLanguage: 'en',
-    searchEngine: 'google',
+    searchEngine: 'braver',
     shieldsActive: true,
     agentRunning: false,
     killSwitchActivated: false,
@@ -371,6 +371,10 @@
     const input = (rawInput || '').trim();
     if (!input) return { type: 'internal', url: 'brave://newtab' };
 
+    if (/^(\/)?(search|newtab|portal|catalog|form|auth-hand-off)\.html(\?.*)?$/i.test(input)) {
+      const cleanInternal = input.startsWith('/') ? input.slice(1) : input;
+      return { type: 'internal', url: cleanInternal };
+    }
     if (input.startsWith('brave://') || input.startsWith('chrome://') || input.startsWith('about:')) {
       return { type: 'internal', url: input };
     }
@@ -403,12 +407,12 @@
       return { type: 'domain', url: normalized };
     }
 
-    // Default Web Search: Direct Google search with igu=1
+    // Default Web Search: Native Braver Search SERP
     const encodedQuery = encodeURIComponent(input);
     return {
       type: 'search',
-      url: `https://www.google.com/search?igu=1&q=${encodedQuery}`,
-      searchEngine: 'google',
+      url: `search.html?q=${encodedQuery}`,
+      searchEngine: 'braver',
       query: input
     };
   }
@@ -759,9 +763,9 @@
       }
 
       html += `
-        <div class="autocomplete-item search-action" data-url="https://www.google.com/search?igu=1&q=${encodeURIComponent(val)}">
+        <div class="autocomplete-item search-action" data-url="search.html?q=${encodeURIComponent(val)}">
           <span class="auto-icon">🔍</span>
-          <span class="auto-label">Search Google for "<strong>${val}</strong>"</span>
+          <span class="auto-label">Search Braver for "<strong>${val}</strong>"</span>
         </div>
         <div class="autocomplete-item agent-action" data-goal="${val}">
           <span class="auto-icon">✨</span>
@@ -806,15 +810,48 @@
   function navigateLiveUrl(rawUrl) {
     let targetUrl = (rawUrl || '').trim();
 
-    // Direct search.html requests directly to Google Search with igu=1
-    if (targetUrl.startsWith('/search.html') || targetUrl.startsWith('search.html')) {
-      const localUrl = targetUrl.startsWith('/') ? targetUrl.slice(1) : targetUrl;
-      const qMatch = localUrl.match(/[?&]q=([^&]*)/);
-      const query = qMatch ? decodeURIComponent(qMatch[1]) : '';
-      if (query) {
-        navigateLiveUrl(`https://www.google.com/search?igu=1&q=${encodeURIComponent(query)}`);
-        return;
+    // Check if destination is internal search SERP
+    const isSearchPage = /^\/?search\.html/i.test(targetUrl) || targetUrl.startsWith('brave://search');
+    if (isSearchPage) {
+      const qMatch = targetUrl.match(/[?&]q=([^&]*)/);
+      const query = qMatch ? decodeURIComponent(qMatch[1].replace(/\+/g, ' ')) : '';
+      const cleanSrc = (targetUrl.startsWith('/') ? targetUrl.slice(1) : targetUrl).replace('brave://search', 'search.html');
+      
+      state.activeUrl = cleanSrc;
+      state.activeScenario = 'live';
+
+      dom.omnibox.value = query;
+      dom.viewportTitle.textContent = query ? `${query} - Braver Search` : 'Braver Search';
+      dom.viewportUrlBadge.textContent = 'brave://search';
+      dom.shieldsHostname.textContent = 'search.brave.internal';
+      dom.sslPopoverHost.textContent = 'search.brave.internal';
+
+      const activeTabTitle = document.querySelector('.tab-item.active .tab-title');
+      if (activeTabTitle) activeTabTitle.textContent = dom.viewportTitle.textContent;
+      const activeTabIcon = document.querySelector('.tab-item.active .tab-icon');
+      if (activeTabIcon) activeTabIcon.textContent = '🦁';
+
+      dom.webview.src = cleanSrc;
+      appendLog('system', query ? `🔍 Searching via Braver SERP: "${query}"` : '🔍 Loaded Braver Search Engine');
+
+      if (TAB_DATA[state.activeTabId]) {
+        TAB_DATA[state.activeTabId].url = cleanSrc;
+        TAB_DATA[state.activeTabId].iframeSrc = cleanSrc;
       }
+      return;
+    }
+
+    // Check if other internal page
+    const isInternalPage = /^\/?(portal|catalog|form|auth-hand-off|newtab)\.html/i.test(targetUrl);
+    if (isInternalPage) {
+      const cleanSrc = targetUrl.startsWith('/') ? targetUrl.slice(1) : targetUrl;
+      state.activeUrl = cleanSrc;
+      state.activeScenario = 'live';
+      dom.omnibox.value = `brave://${cleanSrc.replace('.html', '')}`;
+      dom.viewportTitle.textContent = cleanSrc;
+      dom.viewportUrlBadge.textContent = `brave://${cleanSrc.replace('.html', '')}`;
+      dom.webview.src = cleanSrc;
+      return;
     }
 
     const dest = resolveOmniboxDestination(targetUrl);
@@ -824,7 +861,7 @@
     }
     targetUrl = dest.url || targetUrl;
 
-    // Normalize any Google URLs to embeddable igu=1 format to prevent "refused to connect"
+    // Normalize any Google URLs to embeddable igu=1 format
     targetUrl = normalizeGoogleUrl(targetUrl);
 
     if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
@@ -889,15 +926,12 @@
     }
 
     // Determine iframe source:
-    // 1. Google with igu=1 renders directly and cleanly in iframe
-    // 2. YouTube videos render directly in ad-free nocookie embed player
-    // 3. EVERY OTHER URL ON THE INTERNET routes through universal unblocker proxy (/api/proxy)
-    //    which strips X-Frame-Options and CSP frame-ancestors, eliminating "refused to connect" errors!
+    // 1. YouTube videos render directly in ad-free nocookie embed player
+    // 2. EVERY OTHER URL (including Google, Facebook, Wikipedia, etc.) routes through universal unblocker proxy (/api/proxy)
+    //    which strips X-Frame-Options and CSP frame-ancestors, eliminating "refused to connect" and bot detection!
     const lower = targetUrl.toLowerCase();
     let effectiveSrc;
-    if (isGoogle) {
-      effectiveSrc = targetUrl;
-    } else if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
+    if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
       let videoId = '';
       try {
         const u = new URL(targetUrl);
@@ -913,7 +947,7 @@
     }
 
     dom.webview.src = effectiveSrc;
-    appendLog('system', isGoogle ? '🟢 Connected to Google Search Engine (Live IFrame)' : `🌐 Navigating to destination: ${targetUrl}`);
+    appendLog('system', isGoogle ? '🟢 Connected to Google via Unblocker Proxy' : `🌐 Navigating to destination: ${targetUrl}`);
 
     // Update active tab persistent state
     if (TAB_DATA[state.activeTabId]) {
@@ -1996,20 +2030,20 @@
       ];
     }
 
-    // 2. Search Goal -> Direct Google Search
+    // 2. Search Goal -> Native Braver Search SERP
     if (/^(search for|search|find|google|look up)\s+/i.test(goalLower) || goalLower.includes('search')) {
       const q = goalTrimmed.replace(/^(search for|search|find|google|look up)\s+/i, '').trim() || goalTrimmed;
-      const googleSearchUrl = `https://www.google.com/search?igu=1&q=${encodeURIComponent(q)}`;
+      const searchUrl = `search.html?q=${encodeURIComponent(q)}`;
       return [
         {
-          thought: `Routing search goal "${q}" directly to Google Search with embeddable frame parameters.`,
+          thought: `Routing search goal "${q}" to Braver Search Engine SERP.`,
           action: 'navigate',
           selector: null,
-          targetDesc: `Google Search: "${q}"`,
-          url: googleSearchUrl,
+          targetDesc: `Braver Search: "${q}"`,
+          url: searchUrl,
           risk_level: 'low',
           tokens: 48,
-          verifiedText: `Google Search loaded with verified embed token`
+          verifiedText: `Braver Search loaded verified results`
         },
         {
           thought: `Perceiving organic result items and top knowledge cards for "${q}".`,
@@ -2303,7 +2337,7 @@
       if (data.action.type === 'navigate' && data.action.target) {
         navigateLiveUrl(data.action.target);
       } else if (data.action.type === 'search' && data.action.target) {
-        navigateLiveUrl(`https://www.google.com/search?igu=1&q=${encodeURIComponent(data.action.target)}`);
+        navigateLiveUrl(`search.html?q=${encodeURIComponent(data.action.target)}`);
       } else {
         runAutonomousGoal(data.action.goal || query, data.action.scenario || 'live');
       }
