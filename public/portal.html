@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Brave Shielded Web Portal</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='20' font-size='20'>🦁</text></svg>" />
+  <style>
+    :root {
+      --bg-dark: #0f1115;
+      --bg-card: #181b20;
+      --bg-surface: #22262e;
+      --border-color: #2e3440;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent-orange: #fb542b;
+      --fb-blue: #1877f2;
+      --yt-red: #ff0000;
+      --gh-dark: #24292f;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Top Shield Action Banner */
+    .shield-banner {
+      background: linear-gradient(90deg, rgba(251, 84, 43, 0.15) 0%, rgba(30, 41, 59, 0.7) 100%);
+      border-bottom: 1px solid rgba(251, 84, 43, 0.3);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      z-index: 10;
+    }
+
+    .shield-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .shield-badge {
+      background: rgba(251, 84, 43, 0.25);
+      border: 1px solid var(--accent-orange);
+      color: #ff8a65;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .shield-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-action {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-action:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+    }
+
+    .btn-action.btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-action.btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: #64748b;
+    }
+
+    /* Main Container */
+    .portal-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 20px;
+      max-width: 1080px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Facebook View */
+    .fb-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 40px;
+      width: 100%;
+      max-width: 960px;
+    }
+
+    .fb-left-col {
+      flex: 1;
+    }
+
+    .fb-brand-heading {
+      color: var(--fb-blue);
+      font-size: 52px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      margin-bottom: 12px;
+    }
+
+    .fb-tagline {
+      font-size: 24px;
+      line-height: 1.35;
+      color: #e2e8f0;
+      max-width: 460px;
+    }
+
+    .fb-right-col {
+      width: 396px;
+      max-width: 100%;
+    }
+
+    .fb-login-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .fb-input {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 14px 16px;
+      border-radius: 8px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .fb-input:focus {
+      border-color: var(--fb-blue);
+      box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2);
+    }
+
+    .fb-btn-login {
+      background: var(--fb-blue);
+      color: #fff;
+      border: none;
+      font-size: 17px;
+      font-weight: 700;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .fb-btn-login:hover {
+      background: #166fe5;
+    }
+
+    .fb-forgot-link {
+      color: #60a5fa;
+      text-align: center;
+      font-size: 14px;
+      text-decoration: none;
+      margin: 4px 0;
+    }
+
+    .fb-forgot-link:hover {
+      text-decoration: underline;
+    }
+
+    .fb-divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 6px 0;
+    }
+
+    .fb-btn-create {
+      background: #42b72a;
+      color: #fff;
+      border: none;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      align-self: center;
+      transition: background-color 0.2s;
+    }
+
+    .fb-btn-create:hover {
+      background: #36a420;
+    }
+
+    /* Meta Sitelinks Grid */
+    .meta-ecosystem {
+      margin-top: 40px;
+      width: 100%;
+      border-top: 1px solid var(--border-color);
+      padding-top: 24px;
+    }
+
+    .meta-eco-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    .meta-eco-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .eco-chip {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .eco-chip:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #64748b;
+      transform: translateY(-1px);
+    }
+
+    /* Generic Portal Card */
+    .generic-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 36px 30px;
+      text-align: center;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .generic-icon {
+      font-size: 54px;
+      margin-bottom: 16px;
+    }
+
+    .generic-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .generic-desc {
+      color: var(--text-muted);
+      font-size: 14.5px;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    /* YouTube Embed Player View */
+    .yt-container {
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .yt-video-wrapper {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      background: #000;
+    }
+
+    .yt-video-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .shield-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 8px 12px;
+      }
+      .shield-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .fb-container {
+        flex-direction: column;
+        text-align: center;
+        gap: 24px;
+      }
+      .fb-brand-heading {
+        font-size: 40px;
+      }
+      .fb-tagline {
+        font-size: 18px;
+        margin: 0 auto;
+      }
+      .fb-right-col {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Brave Shield Protection Bar -->
+  <header class="shield-banner">
+    <div class="shield-info">
+      <span class="shield-badge">🛡️ Brave Shields</span>
+      <span id="target-domain-label">https://www.facebook.com</span>
+      <span style="color: #4ade80; font-size: 12px;">• 🔒 Isolated Sandboxed Mode</span>
+    </div>
+    <div class="shield-actions">
+      <a href="https://www.facebook.com" target="_blank" rel="noopener" class="btn-action" id="btn-open-real-tab">
+        <span>↗ Open Live in Independent Tab</span>
+      </a>
+      <button type="button" class="btn-action btn-secondary" id="btn-view-dossier">
+        <span>🔍 Search Dossier</span>
+      </button>
+      <button type="button" class="btn-action btn-secondary" id="btn-agent-automate">
+        <span>🤖 Run Agent</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="portal-main">
+    <!-- Facebook View -->
+    <div id="view-facebook" class="fb-container">
+      <div class="fb-left-col">
+        <h1 class="fb-brand-heading">facebook</h1>
+        <p class="fb-tagline">Connect with friends and the world around you on Facebook.</p>
+        <div style="margin-top: 20px; font-size: 13px; color: #94a3b8; display: flex; align-items: center; gap: 6px;">
+          <span>🛡️ Protected by Brave Shields</span>
+          <span>•</span>
+          <span>Zero third-party trackers</span>
+        </div>
+      </div>
+
+      <div class="fb-right-col">
+        <form class="fb-login-card" id="fb-mock-form" onsubmit="event.preventDefault(); handlePortalLogin();">
+          <input type="text" class="fb-input" id="fb-user" placeholder="Email address or phone number" autocomplete="username" required />
+          <input type="password" class="fb-input" id="fb-pass" placeholder="Password" autocomplete="current-password" required />
+          <button type="submit" class="fb-btn-login">Log In</button>
+          <a href="https://www.facebook.com/recover/initiate" target="_blank" rel="noopener" class="fb-forgot-link">Forgotten password?</a>
+          <div class="fb-divider"></div>
+          <button type="button" class="fb-btn-create" onclick="window.open('https://www.facebook.com/reg', '_blank')">Create new account</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- YouTube View -->
+    <div id="view-youtube" class="yt-container" style="display: none;">
+      <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+        <h2 style="font-size: 22px; color: #fff; display: flex; align-items: center; gap: 8px;">
+          <span style="color: #ff0000;">▶</span> YouTube Theater Stream
+        </h2>
+        <span style="font-size: 12px; color: #94a3b8;">Ad-Free Embed Mode</span>
+      </div>
+      <div class="yt-video-wrapper">
+        <iframe id="yt-player-frame" src="https://www.youtube-nocookie.com/embed/videoseries?list=PLrEnWoR732-BHrPp_AK4CDQt55gFKnWDJ" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+    </div>
+
+    <!-- Generic Framing Guard View -->
+    <div id="view-generic" class="generic-card" style="display: none;">
+      <div class="generic-icon" id="generic-icon">🌐</div>
+      <h2 class="generic-title" id="generic-title">External Website Portal</h2>
+      <p class="generic-desc" id="generic-desc">
+        This website restricts third-party iframe embedding. OpenBrowser allows you to launch it in an independent secure window or research it autonomously via AI Copilot.
+      </p>
+      <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+        <a href="#" target="_blank" rel="noopener" class="btn-action" id="generic-open-btn">
+          <span>↗ Open Live Website</span>
+        </a>
+        <button type="button" class="btn-action btn-secondary" id="generic-search-btn">
+          <span>🔍 View Search Dossier</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Meta Ecosystem Chips -->
+    <section class="meta-ecosystem" id="meta-ecosystem-section">
+      <div class="meta-eco-title">Meta Platforms Ecosystem</div>
+      <div class="meta-eco-chips">
+        <button type="button" class="eco-chip" onclick="window.open('https://www.messenger.com', '_blank')">💬 Messenger</button>
+        <button type="button" class="eco-chip" onclick="window.open('https://www.instagram.com', '_blank')">📸 Instagram</button>
+        <button type="button" class="eco-chip" onclick="window.open('https://www.whatsapp.com', '_blank')">🟢 WhatsApp</button>
+        <button type="button" class="eco-chip" onclick="window.open('https://about.meta.com', '_blank')">♾️ Meta Corporate</button>
+        <button type="button" class="eco-chip" onclick="navigateToSearch('facebook')">🔍 Search Facebook Topics</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const targetUrl = params.get('url') || 'https://www.facebook.com';
+    const siteKey = params.get('site') || (targetUrl.includes('facebook') ? 'facebook' : (targetUrl.includes('youtube') ? 'youtube' : 'generic'));
+
+    const domainLabel = document.getElementById('target-domain-label');
+    const btnOpenReal = document.getElementById('btn-open-real-tab');
+    domainLabel.textContent = targetUrl;
+    btnOpenReal.href = targetUrl;
+
+    const viewFacebook = document.getElementById('view-facebook');
+    const viewYoutube = document.getElementById('view-youtube');
+    const viewGeneric = document.getElementById('view-generic');
+    const metaEcoSection = document.getElementById('meta-ecosystem-section');
+
+    if (siteKey === 'facebook' || targetUrl.includes('facebook') || targetUrl.includes('fb.com')) {
+      viewFacebook.style.display = 'flex';
+      viewYoutube.style.display = 'none';
+      viewGeneric.style.display = 'none';
+      metaEcoSection.style.display = 'block';
+    } else if (siteKey === 'youtube' || targetUrl.includes('youtube') || targetUrl.includes('youtu.be')) {
+      viewFacebook.style.display = 'none';
+      viewYoutube.style.display = 'block';
+      viewGeneric.style.display = 'none';
+      metaEcoSection.style.display = 'none';
+    } else {
+      viewFacebook.style.display = 'none';
+      viewYoutube.style.display = 'none';
+      viewGeneric.style.display = 'block';
+      metaEcoSection.style.display = 'none';
+
+      try {
+        const u = new URL(targetUrl);
+        document.getElementById('generic-title').textContent = u.hostname;
+        document.getElementById('generic-open-btn').href = targetUrl;
+      } catch (_) {}
+    }
+
+    function navigateToSearch(query) {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: `search.html?q=${encodeURIComponent(query)}` }, '*');
+      } else {
+        window.location.href = `search.html?q=${encodeURIComponent(query)}`;
+      }
+    }
+
+    document.getElementById('btn-view-dossier').addEventListener('click', () => {
+      const q = siteKey === 'facebook' ? 'facebook' : targetUrl;
+      navigateToSearch(q);
+    });
+
+    document.getElementById('generic-search-btn')?.addEventListener('click', () => {
+      navigateToSearch(targetUrl);
+    });
+
+    document.getElementById('btn-agent-automate').addEventListener('click', () => {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'BRAVE_RUN_TASK',
+          goal: `Log in and inspect activity on ${targetUrl}`,
+          scenario: 'live'
+        }, '*');
+      }
+    });
+
+    function handlePortalLogin() {
+      const user = document.getElementById('fb-user').value.trim();
+      alert(`🛡️ Brave Autonomous Security:\nCredentials received for "${user}". To protect your session credentials, OpenBrowser can open live Facebook in a dedicated authenticated window.`);
+      window.open('https://www.facebook.com/login', '_blank');
+    }
+  </script>
+</body>
+</html>

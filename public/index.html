@@ -479,6 +479,7 @@
           <span class="status-indicator-dot online"></span>
           <span id="viewport-page-title">Brave | New Tab</span>
           <span class="viewport-url-badge" id="viewport-url-badge">brave://newtab</span>
+          <button type="button" class="btn-external-link" id="btn-open-external" title="Open active URL in an independent tab (bypasses any frame restrictions)">↗ Open Live</button>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
           <div class="viewport-view-modes">
@@ -486,10 +487,10 @@
             <button class="view-mode-btn" id="btn-mode-cdp" title="Real-Time Google Chrome Stream via CDP">⚡ Live Chrome</button>
             <button class="view-mode-btn login-window-btn" id="btn-open-login-window" title="Sign into Google, YouTube, Facebook, GitHub directly in Braver">🔑 Sign In</button>
           </div>
-          <div class="cdp-telemetry-badge">
-            <span>Chromium CDP Basement Connected</span>
+          <div class="cdp-telemetry-badge" id="viewport-telemetry-badge">
+            <span id="telemetry-cdp-text">Chromium CDP Basement Connected</span>
             <span>•</span>
-            <span>REA Observer Listening</span>
+            <span id="telemetry-rea-text">REA Observer Listening</span>
           </div>
         </div>
       </div>
