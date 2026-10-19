@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -1038,7 +1039,7 @@ const server = createServer(async (req, res) => {
         try {
           fetchRes = await fetch(finalUrl, {
             redirect: 'follow',
-            signal: AbortSignal.timeout(6000),
+            signal: AbortSignal.timeout(10000),
             headers: {
               'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Brave/124.0.0.0',
               'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',

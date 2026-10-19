@@ -82,7 +82,16 @@ self.addEventListener('fetch', (event) => {
 
   // Check if request is directed to any /api/* route
   if (url.pathname.includes('/api/')) {
-    event.respondWith(handleApiRequest(event.request, url));
+    event.respondWith((async () => {
+      try {
+        const netRes = await fetch(event.request);
+        if (netRes && (netRes.ok || netRes.status === 204 || netRes.status === 304)) {
+          return netRes;
+        }
+      } catch (_) {}
+
+      return handleApiRequest(event.request, url);
+    })());
   }
 });
 

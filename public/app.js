@@ -889,28 +889,11 @@
     }
 
     // Determine iframe source:
-    // 1. Google with igu=1 can ALWAYS be rendered directly without proxy errors or CORS/CSP blocks
-    // 2. YouTube videos route to ad-free responsive embed player (https://www.youtube-nocookie.com/embed/...)
-    // 3. YouTube home/catalog and Facebook route to authentic in-browser interactive portals
-    // 4. Other sites restricting framing route to Shielded Portal or direct webview
+    // 1. Google with igu=1 renders directly and cleanly in iframe
+    // 2. YouTube videos render directly in ad-free nocookie embed player
+    // 3. EVERY OTHER URL ON THE INTERNET routes through universal unblocker proxy (/api/proxy)
+    //    which strips X-Frame-Options and CSP frame-ancestors, eliminating "refused to connect" errors!
     const lower = targetUrl.toLowerCase();
-    const isFramingBlocked = (
-      lower.includes('facebook.com') ||
-      lower.includes('fb.com') ||
-      lower.includes('instagram.com') ||
-      lower.includes('threads.net') ||
-      lower.includes('twitter.com') ||
-      lower.includes('x.com') ||
-      lower.includes('github.com') ||
-      lower.includes('reddit.com') ||
-      lower.includes('linkedin.com') ||
-      lower.includes('tiktok.com') ||
-      lower.includes('netflix.com') ||
-      lower.includes('amazon.com') ||
-      (lower.includes('youtube.com') && !lower.includes('/embed')) ||
-      (lower.includes('youtu.be') && !lower.includes('/embed'))
-    );
-
     let effectiveSrc;
     if (isGoogle) {
       effectiveSrc = targetUrl;
@@ -924,13 +907,9 @@
       } catch (_) {}
       effectiveSrc = videoId
         ? `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`
-        : `portal.html?url=${encodeURIComponent(targetUrl)}&site=youtube`;
-    } else if (lower.includes('facebook.com') || lower.includes('fb.com')) {
-      effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=facebook`;
-    } else if (isFramingBlocked) {
-      effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=generic`;
+        : `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
     } else {
-      effectiveSrc = targetUrl;
+      effectiveSrc = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
     }
 
     dom.webview.src = effectiveSrc;
@@ -1417,16 +1396,6 @@
         const activeTabTitle = document.querySelector('.tab-item.active .tab-title');
         if (activeTabTitle) activeTabTitle.textContent = doc.title;
       }
-      if (doc) {
-        const bodyText = (doc.body?.innerText || '').trim();
-        const elementCount = doc.querySelectorAll('*').length;
-        if ((elementCount < 10 || bodyText.length < 5) && state.activeScenario === 'live' && state.viewportMode === 'web') {
-          if (!dom.webview.src.includes('portal.html') && !dom.webview.src.includes('google.com')) {
-            appendLog('system', '🛡️ Blank iframe detected. Seamlessly displaying Shielded Web Portal.');
-            dom.webview.src = `portal.html?url=${encodeURIComponent(state.activeUrl)}&site=generic`;
-          }
-        }
-      }
     } catch (_) {}
   });
 
@@ -1437,9 +1406,11 @@
       progressBar.classList.add('done');
       setTimeout(() => progressBar.classList.add('hidden'), 500);
     }
-    appendLog('system', `🛡️ Target restricts direct framing. Activating Shielded Web Portal.`);
-    const raw = state.activeUrl || dom.omnibox.value || 'https://www.google.com/webhp?igu=1';
-    dom.webview.src = `portal.html?url=${encodeURIComponent(raw)}&site=generic`;
+    const raw = state.activeUrl || dom.omnibox.value;
+    if (raw && !dom.webview.src.includes('/api/proxy')) {
+      appendLog('system', '🛡️ Direct connection failed. Automatically unblocking via /api/proxy...');
+      dom.webview.src = `/api/proxy?url=${encodeURIComponent(raw)}`;
+    }
   });
 
   // ==========================================================================

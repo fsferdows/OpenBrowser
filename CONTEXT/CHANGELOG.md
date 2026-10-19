@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Universal Web Unblocker Proxy Pipeline & Connection Refusal Elimination:
+  - `public/app.js`: Updated `navigateLiveUrl()` so that any external website not supporting direct framing routes automatically through the unblocking proxy (`/api/proxy?url=...`), completely eliminating Chromium cross-origin iframe embedding errors ("refused to connect"). Removed the premature blank iframe DOM inspector (`bodyText.length < 5`) that aborted SPA script hydration, and updated iframe error event handling to seamlessly fall back to `/api/proxy`.
+  - `public/sw.js`: Updated Service Worker `/api/*` fetch handler with Network-First resolution, ensuring that requests to the high-performance Node proxy server (`localhost:3000/api/proxy`) take precedence and strip framing headers before falling back to in-browser synthetic responses.
+  - `scripts/serve-localhost.mjs`: Added `process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'` and increased fetch timeout to 10 seconds to allow successful proxying of external sites with custom or incomplete certificate chains and international CDNs.
+  - `public/portal.html`: Added one-click "⚡ Unblock in Browser" action to the generic view card, enabling immediate live proxy rendering.
+
 - Ed25519 Skill Cryptographic Signing, Keyring Trust Profiles & Voice Input Integration (ADR-0013):
   - `packages/skill-engine/src/skill-crypto.js`: Implemented complete zero-dependency Ed25519 skill signing and verification engine using Node.js native `crypto`. Provides deterministic canonical JSON serialization (`canonicalizeSkill`) omitting signature fields, cryptographic signature generation (`signSkill`), signature verification (`verifySkillSignature`), and trust keyring management (`SkillKeyring`), definitively resolving `OQ-004`.
   - `packages/skill-engine/src/skill-library.js` & `packages/skill-engine/src/index.js`: Integrated `SkillCryptoEngine` directly into `SkillLibrary`, providing `importSignedSkill` and `exportSignedSkill`. Enforces mandatory human-in-the-loop interactive review (`onReviewRequired`) when skills are signed by untrusted keys or declare high/critical risk levels, preventing malicious or tampered skill execution.

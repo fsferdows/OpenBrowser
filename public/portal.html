@@ -1128,6 +1128,9 @@
           This website restricts standard iframe embedding (<code id="generic-url-display">target</code>). OpenBrowser protects your security and allows you to open it directly in a dedicated tab or execute autonomous AI research.
         </p>
         <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <button type="button" class="btn-action" style="background: #10b981;" id="generic-unblock-btn">
+            <span>⚡ Unblock in Browser</span>
+          </button>
           <a href="#" target="_blank" rel="noopener" class="btn-action" id="generic-open-btn">
             <span>↗ Open Live Website</span>
           </a>
@@ -1208,6 +1211,14 @@
 
     document.getElementById('generic-search-btn')?.addEventListener('click', () => {
       navigateToSearch(targetUrl);
+    });
+
+    document.getElementById('generic-unblock-btn')?.addEventListener('click', () => {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: targetUrl }, '*');
+      } else {
+        window.location.href = '/api/proxy?url=' + encodeURIComponent(targetUrl);
+      }
     });
 
     document.getElementById('btn-agent-automate').addEventListener('click', () => {
