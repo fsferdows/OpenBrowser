@@ -37,13 +37,15 @@
     }
 
     body {
-      background: #0f1410 url('/assets/brave_wallpaper.jpg') no-repeat center center fixed;
+      background: #0f1410 url('assets/brave_wallpaper.jpg') no-repeat center center fixed;
       background-size: cover;
       color: var(--text-white);
       position: relative;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      min-height: 100vh;
+      overflow-y: auto;
     }
 
     /* Ambient Subtle Vignette */
@@ -210,7 +212,9 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
-      min-width: 380px;
+      min-width: 0;
+      width: 100%;
+      max-width: 480px;
     }
 
     .stats-title {
@@ -509,13 +513,41 @@
         flex-direction: column;
         align-items: stretch;
         gap: 16px;
-        padding: 0 16px 16px 16px;
+        padding: 0 16px 20px 16px;
       }
       .stats-card-container, .vpn-widget-card {
         min-width: 100%;
+        max-width: 100%;
       }
       .photo-credit-text {
         text-align: center;
+      }
+    }
+    @media (max-width: 600px) {
+      .center-content-section {
+        margin: 24px auto;
+        padding: 0 12px;
+      }
+      .search-widget-pill {
+        height: 44px;
+        padding: 0 10px;
+        gap: 8px;
+      }
+      .search-widget-input {
+        font-size: 13.5px;
+      }
+      .stats-metrics-row {
+        gap: 12px;
+        justify-content: space-between;
+      }
+      .stat-value {
+        font-size: 20px;
+      }
+      .vpn-widget-card {
+        padding: 14px;
+      }
+      .vpn-features-list {
+        display: none;
       }
     }
   </style>
@@ -529,14 +561,15 @@
     <button class="btn-customize-gear" id="btn-settings-gear" title="Customize Dashboard">⚙️</button>
   </header>
 
-  <!-- Center Search Widget: Faithful to Screenshot -->
+  <!-- Center Search Widget: Connected with Google & Braver Search -->
   <main class="center-content-section">
-    <form class="search-widget-pill" id="search-form" action="/search.html" method="GET">
-      <div class="search-lion-icon" title="Brave Search Engine">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2L3 6V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V6L12 2Z" fill="#ff5500"/>
-          <path d="M12 5L6 8V12C6 15.5 8.5 18.8 12 20C15.5 18.8 18 15.5 18 12V8L12 5Z" fill="#ffffff" fill-opacity="0.3"/>
-          <circle cx="12" cy="12" r="3" fill="#ffffff"/>
+    <form class="search-widget-pill" id="search-form" action="search.html" method="GET">
+      <div class="search-lion-icon" id="newtab-engine-icon" title="Active Search Engine (Click to toggle Google / Braver)" style="cursor: pointer;">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
         </svg>
       </div>
 
@@ -547,11 +580,14 @@
         class="search-widget-input"
         autocomplete="off"
         autofocus
-        aria-label="Ask anything, find anything..."
-        placeholder="Ask anything, find anything..."
+        aria-label="Search with Google or enter web address..."
+        placeholder="Search with Google or enter address..."
       />
 
       <div class="search-actions-group">
+        <button type="button" class="btn-ask-ai-quick" id="btn-toggle-engine" title="Toggle Search Provider: Google / Braver" style="background: rgba(66, 133, 244, 0.18); border-color: rgba(66, 133, 244, 0.4); color: #93c5fd;">
+          <span id="engine-btn-text">🟢 Google</span>
+        </button>
         <button type="button" class="btn-ask-ai-quick" id="btn-open-ai-chat" title="Autonomous AI Copilot">
           <span>✨</span>
           <span>Ask AI</span>
@@ -639,17 +675,84 @@
     const drawerInput = document.getElementById('drawer-input');
     const btnDrawerSend = document.getElementById('btn-drawer-send');
 
+    const btnToggleEngine = document.getElementById('btn-toggle-engine');
+    const engineBtnText = document.getElementById('engine-btn-text');
+    const newtabEngineIcon = document.getElementById('newtab-engine-icon');
+    let currentEngine = 'google';
+
+    function setTabEngine(eng) {
+      currentEngine = eng;
+      if (eng === 'google') {
+        engineBtnText.textContent = '🟢 Google';
+        btnToggleEngine.style.background = 'rgba(66, 133, 244, 0.18)';
+        btnToggleEngine.style.borderColor = 'rgba(66, 133, 244, 0.4)';
+        btnToggleEngine.style.color = '#93c5fd';
+        searchInput.placeholder = 'Search with Google or enter address...';
+        newtabEngineIcon.innerHTML = `
+          <svg width="20" height="20" viewBox="0 0 24 24">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+          </svg>`;
+      } else {
+        engineBtnText.textContent = '🦁 Braver';
+        btnToggleEngine.style.background = 'rgba(255, 85, 0, 0.18)';
+        btnToggleEngine.style.borderColor = 'rgba(255, 85, 0, 0.4)';
+        btnToggleEngine.style.color = '#fdba74';
+        searchInput.placeholder = 'Search with Braver Search or enter address...';
+        newtabEngineIcon.innerHTML = `
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L3 6V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V6L12 2Z" fill="#ff5500"/>
+            <path d="M12 5L6 8V12C6 15.5 8.5 18.8 12 20C15.5 18.8 18 15.5 18 12V8L12 5Z" fill="#ffffff" fill-opacity="0.3"/>
+            <circle cx="12" cy="12" r="3" fill="#ffffff"/>
+          </svg>`;
+      }
+    }
+
+    btnToggleEngine?.addEventListener('click', () => {
+      setTabEngine(currentEngine === 'google' ? 'brave' : 'google');
+    });
+    newtabEngineIcon?.addEventListener('click', () => {
+      setTabEngine(currentEngine === 'google' ? 'brave' : 'google');
+    });
+
     // Navigation and Search Routing
     searchForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const query = (searchInput.value || '').trim();
       if (!query) return;
 
+      const lower = query.toLowerCase();
+      // Direct Google Navigation: Use embeddable igu=1 parameter
+      if (lower === 'google' || lower === 'google.com' || lower === 'www.google.com' ||
+          lower === 'https://google.com' || lower === 'https://www.google.com' ||
+          lower === 'http://google.com' || lower === 'http://www.google.com') {
+        const destUrl = 'https://www.google.com/webhp?igu=1';
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: destUrl }, '*');
+        } else {
+          window.location.href = destUrl;
+        }
+        return;
+      }
+
       // Direct URL check
       const isUrl = /^https?:\/\//i.test(query) || /^www\./i.test(query) || /^[\w-]+\.(com|org|net|io|dev|edu|gov|tv|ai|app)/i.test(query);
       if (isUrl) {
         let destUrl = query;
         if (!destUrl.startsWith('http://') && !destUrl.startsWith('https://')) destUrl = 'https://' + destUrl;
+        if (destUrl.includes('google.com')) {
+          try {
+            const u = new URL(destUrl);
+            if (u.pathname === '/' || u.pathname === '' || u.pathname === '/webhp') {
+              destUrl = 'https://www.google.com/webhp?igu=1';
+            } else {
+              u.searchParams.set('igu', '1');
+              destUrl = u.toString();
+            }
+          } catch (_) {}
+        }
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: destUrl }, '*');
         } else {
@@ -665,8 +768,11 @@
         return;
       }
 
-      // Default: Navigate to search results page
-      const searchUrl = `/search.html?q=${encodeURIComponent(query)}`;
+      // Default Search Destination: Google Live or Braver Search
+      const searchUrl = currentEngine === 'google'
+        ? `https://www.google.com/search?igu=1&q=${encodeURIComponent(query)}`
+        : `search.html?q=${encodeURIComponent(query)}`;
+
       if (window.parent && window.parent !== window) {
         window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: searchUrl }, '*');
       } else {

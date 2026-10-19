@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Brave Autonomous Browser</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -19,7 +19,7 @@
 
       <!-- Horizontal Brave Tabs -->
       <nav class="tabs-container" role="tablist" aria-label="Browser Tabs" id="brave-tabs">
-        <button class="tab-item active" role="tab" aria-selected="true" data-tab-id="newtab" data-url="/newtab.html">
+        <button class="tab-item active" role="tab" aria-selected="true" data-tab-id="newtab" data-url="newtab.html">
           <span class="tab-icon">🦁</span>
           <span class="tab-title">Brave | New Tab</span>
           <span class="tab-audio-icon hidden" title="Playing Audio">🔊</span>
@@ -45,7 +45,7 @@
       <!-- Brave Smart Omnibox (Matching Screenshot) -->
       <div class="omnibox-wrapper">
         <div class="omnibox-container" id="omnibox-box">
-          <div class="security-badge" id="ssl-badge" title="Search Engine: Google (Default)">
+          <div class="security-badge" id="ssl-badge" title="Search Engine: Google (Default) — Click to switch search engine" style="cursor: pointer;">
             <span class="search-provider-icon">
               <svg width="15" height="15" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -165,6 +165,13 @@
       <div class="ssl-info-row">
         <span>Cookies in use:</span>
         <strong>2 cookies (Strict Partitioning Active)</strong>
+      </div>
+      <div class="ssl-info-row" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+        <span>Default Search:</span>
+        <div style="display: flex; gap: 6px;">
+          <button id="btn-set-engine-google" class="btn-shields-secondary" style="font-size: 11px; padding: 4px 8px; background: rgba(66, 133, 244, 0.2); border-color: #4285F4; color: #93c5fd; cursor: pointer;">🟢 Google</button>
+          <button id="btn-set-engine-brave" class="btn-shields-secondary" style="font-size: 11px; padding: 4px 8px; cursor: pointer;">🦁 Braver</button>
+        </div>
       </div>
     </div>
     <div class="ssl-popover-footer">
@@ -489,7 +496,7 @@
 
       <div class="viewport-frame-wrapper" id="webview-container">
         <div id="webview-progress-bar" class="webview-progress-bar hidden"></div>
-        <iframe id="browser-webview" src="/newtab.html" title="Browser Tab Viewport"></iframe>
+        <iframe id="browser-webview" src="newtab.html" title="Browser Tab Viewport"></iframe>
         <!-- Live Google Chrome CDP Screen Stream -->
         <div id="cdp-live-stream-container" class="cdp-live-stream-container hidden" tabindex="0">
           <img id="cdp-live-stream-img" class="cdp-live-stream-img" src="/api/chrome/screenshot" alt="Live Google Chrome CDP Viewport" />
@@ -527,6 +534,9 @@
           <span>⚙️</span>
         </button>
         <div class="dock-spacer"></div>
+        <button class="dock-btn" id="sidebar-close-mobile" title="Close Sidebar Drawer" aria-label="Close Sidebar">
+          <span>✕</span>
+        </button>
         <button class="dock-btn kill-btn" id="sidebar-kill-btn" title="Emergency Stop Autonomous Agent" aria-label="Emergency Stop">
           <span>🛑</span>
         </button>

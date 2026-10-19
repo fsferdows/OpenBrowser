@@ -13,6 +13,7 @@
     activeUrl: 'brave://newtab',
     activeScenario: 'newtab',
     currentLanguage: 'en',
+    searchEngine: 'google',
     shieldsActive: true,
     agentRunning: false,
     killSwitchActivated: false,
@@ -25,12 +26,46 @@
     cdpStreamTimer: null
   };
 
+  /**
+   * Normalizes Google URLs to include the igu=1 iframe embed parameter.
+   * This prevents "www.google.com refused to connect" error by instructing Google
+   * not to emit X-Frame-Options: SAMEORIGIN.
+   * @param {string} rawUrl 
+   * @returns {string}
+   */
+  function normalizeGoogleUrl(rawUrl) {
+    if (!rawUrl) return rawUrl;
+    const str = rawUrl.trim();
+    const lower = str.toLowerCase();
+    if (lower === 'google' || lower === 'google.com' || lower === 'www.google.com' ||
+        lower === 'https://google.com' || lower === 'https://www.google.com' ||
+        lower === 'http://google.com' || lower === 'http://www.google.com' ||
+        lower === 'https://www.google.com/' || lower === 'https://google.com/') {
+      return 'https://www.google.com/webhp?igu=1';
+    }
+
+    try {
+      const parsed = new URL(str.startsWith('http://') || str.startsWith('https://') ? str : `https://${str}`);
+      if (parsed.hostname === 'google.com' || parsed.hostname === 'www.google.com' || parsed.hostname.endsWith('.google.com')) {
+        if (parsed.pathname === '/' || parsed.pathname === '' || parsed.pathname === '/webhp') {
+          return 'https://www.google.com/webhp?igu=1';
+        }
+        if (!parsed.searchParams.has('igu')) {
+          parsed.searchParams.set('igu', '1');
+        }
+        return parsed.toString();
+      }
+    } catch (_) {}
+
+    return str;
+  }
+
   const TOP_SITE_MAP = {
     facebook: 'https://www.facebook.com',
     fb: 'https://www.facebook.com',
     youtube: 'https://www.youtube.com',
     yt: 'https://www.youtube.com',
-    google: 'https://www.google.com',
+    google: 'https://www.google.com/webhp?igu=1',
     reddit: 'https://www.reddit.com',
     twitter: 'https://x.com',
     x: 'https://x.com',
@@ -65,7 +100,8 @@
       return { type: 'agent', goal: input };
     }
     if (input.startsWith('http://') || input.startsWith('https://')) {
-      return { type: 'url', url: input };
+      const normalized = normalizeGoogleUrl(input);
+      return { type: 'url', url: normalized };
     }
     if (/^localhost(:\d+)?(\/.*)?$/i.test(input)) {
       return { type: 'domain', url: `http://${input}` };
@@ -76,13 +112,30 @@
       return { type: 'direct_site', url: TOP_SITE_MAP[key], siteName: key };
     }
 
+    if (key.includes('google.') && (key.startsWith('google.') || key.startsWith('www.google.'))) {
+      return { type: 'direct_site', url: 'https://www.google.com/webhp?igu=1', siteName: 'google' };
+    }
+
     if (TLD_REGEX.test(input) && !input.includes(' ')) {
-      return { type: 'domain', url: `https://${input}` };
+      const rawDomain = `https://${input}`;
+      const normalized = normalizeGoogleUrl(rawDomain);
+      return { type: 'domain', url: normalized };
+    }
+
+    // Default Web Search: Respect active searchEngine
+    const encodedQuery = encodeURIComponent(input);
+    if (state.searchEngine === 'google') {
+      return {
+        type: 'search',
+        url: `https://www.google.com/search?igu=1&q=${encodedQuery}`,
+        searchEngine: 'google',
+        query: input
+      };
     }
 
     return {
       type: 'search',
-      url: `https://search.brave.com/search?q=${encodeURIComponent(input)}`,
+      url: `search.html?q=${encodedQuery}`,
       searchEngine: 'brave',
       query: input
     };
@@ -92,7 +145,7 @@
     newtab: {
       title: 'Brave | New Tab',
       url: 'brave://newtab',
-      iframeSrc: '/newtab.html',
+      iframeSrc: 'newtab.html',
       scenario: 'newtab',
       hostname: 'brave.internal',
       trackersCount: 0
@@ -369,7 +422,7 @@
   });
 
   let tabIdCounter = 1;
-  function createNewTab(title = 'Brave | New Tab', url = 'brave://newtab', iframeSrc = '/newtab.html') {
+  function createNewTab(title = 'Brave | New Tab', url = 'brave://newtab', iframeSrc = 'newtab.html') {
     tabIdCounter++;
     const tabId = `tab-${tabIdCounter}`;
     TAB_DATA[tabId] = {
@@ -483,7 +536,7 @@
 
     // Check if navigating to internal Braver Search SERP
     if (targetUrl.startsWith('/search.html') || targetUrl.startsWith('search.html')) {
-      const localUrl = targetUrl.startsWith('/') ? targetUrl : `/${targetUrl}`;
+      const localUrl = targetUrl.startsWith('/') ? targetUrl.slice(1) : targetUrl;
       state.activeUrl = localUrl;
       state.activeScenario = 'search';
       const qMatch = localUrl.match(/[?&]q=([^&]*)/);
@@ -504,10 +557,13 @@
 
     const dest = resolveOmniboxDestination(targetUrl);
     if (dest.type === 'search') {
-      navigateLiveUrl(`/search.html?q=${encodeURIComponent(dest.query || targetUrl)}`);
+      navigateLiveUrl(dest.url);
       return;
     }
     targetUrl = dest.url || targetUrl;
+
+    // Normalize any Google URLs to embeddable igu=1 format to prevent "refused to connect"
+    targetUrl = normalizeGoogleUrl(targetUrl);
 
     if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
       targetUrl = `https://${targetUrl}`;
@@ -516,9 +572,47 @@
     state.activeUrl = targetUrl;
     state.activeScenario = 'live';
 
-    dom.omnibox.value = targetUrl;
-    dom.viewportTitle.textContent = `Connecting to ${targetUrl}...`;
-    dom.viewportUrlBadge.textContent = targetUrl;
+    // Update Omnibox and title display
+    const isGoogle = targetUrl.includes('google.com');
+    if (isGoogle) {
+      let q = '';
+      try {
+        const u = new URL(targetUrl);
+        q = u.searchParams.get('q') || '';
+      } catch (_) {}
+
+      dom.omnibox.value = q ? q : 'https://www.google.com';
+      dom.viewportTitle.textContent = q ? `${q} - Google Search` : 'Google';
+      dom.viewportUrlBadge.textContent = 'https://www.google.com';
+      dom.shieldsHostname.textContent = 'google.com';
+      dom.sslPopoverHost.textContent = 'www.google.com';
+
+      const activeTabTitle = document.querySelector('.tab-item.active .tab-title');
+      if (activeTabTitle) {
+        activeTabTitle.textContent = dom.viewportTitle.textContent;
+      }
+      const activeTabIcon = document.querySelector('.tab-item.active .tab-icon');
+      if (activeTabIcon) {
+        activeTabIcon.textContent = '🟢';
+      }
+    } else {
+      dom.omnibox.value = targetUrl;
+      dom.viewportTitle.textContent = `Connecting to ${targetUrl}...`;
+      dom.viewportUrlBadge.textContent = targetUrl;
+
+      try {
+        const parsed = new URL(targetUrl);
+        dom.shieldsHostname.textContent = parsed.hostname;
+        dom.sslPopoverHost.textContent = parsed.hostname;
+
+        const activeTabTitle = document.querySelector('.tab-item.active .tab-title');
+        if (activeTabTitle) {
+          activeTabTitle.textContent = parsed.hostname;
+        }
+      } catch (_) {
+        dom.shieldsHostname.textContent = targetUrl;
+      }
+    }
 
     // Trigger visual progress bar
     const progressBar = document.getElementById('webview-progress-bar');
@@ -527,28 +621,22 @@
       progressBar.classList.add('loading');
     }
 
-    try {
-      const parsed = new URL(targetUrl);
-      dom.shieldsHostname.textContent = parsed.hostname;
-      dom.sslPopoverHost.textContent = parsed.hostname;
+    // Determine iframe source:
+    // 1. Google with igu=1 can ALWAYS be rendered directly without proxy errors or CORS/CSP blocks
+    // 2. On static hosting (like GitHub Pages or file:// where /api/proxy doesn't exist), render directly
+    // 3. On localhost with active proxy, load via /api/proxy
+    const isStaticDeployment = !window.location.port || window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+    const effectiveSrc = (isGoogle || isStaticDeployment)
+      ? targetUrl
+      : `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
 
-      const activeTabTitle = document.querySelector('.tab-item.active .tab-title');
-      if (activeTabTitle) {
-        activeTabTitle.textContent = parsed.hostname;
-      }
-    } catch (_) {
-      dom.shieldsHostname.textContent = targetUrl;
-    }
-
-    // Load via live web proxy inside native Web View
-    const proxySrc = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
-    dom.webview.src = proxySrc;
-    appendLog('system', `🌐 Navigating to live web destination: ${targetUrl}`);
+    dom.webview.src = effectiveSrc;
+    appendLog('system', isGoogle ? '🟢 Connected to Google Search Engine (Live IFrame)' : `🌐 Navigating to live web destination: ${targetUrl}`);
 
     // Update active tab persistent state
     if (TAB_DATA[state.activeTabId]) {
       TAB_DATA[state.activeTabId].url = targetUrl;
-      TAB_DATA[state.activeTabId].iframeSrc = proxySrc;
+      TAB_DATA[state.activeTabId].iframeSrc = effectiveSrc;
     }
 
     // Sync to live Google Chrome CDP session in real time
@@ -596,8 +684,8 @@
       appendLog('system', `🤖 Autonomous agent instruction via Omnibox: "${dest.goal}"`);
       runAutonomousGoal(dest.goal, state.activeScenario);
     } else if (dest.type === 'search') {
-      appendLog('system', `🔍 Search via Omnibox: "${dest.query}"`);
-      navigateLiveUrl(`/search.html?q=${encodeURIComponent(dest.query)}`);
+      appendLog('system', dest.searchEngine === 'google' ? `🔍 Google Search: "${dest.query}"` : `🔍 Braver Search: "${dest.query}"`);
+      navigateLiveUrl(dest.url);
     } else {
       appendLog('system', `🌐 Omnibox destination resolved: ${dest.type.toUpperCase()} -> ${dest.url}`);
       navigateLiveUrl(dest.url);
@@ -1213,6 +1301,61 @@
     dom.sidebar.classList.toggle('collapsed', !isCollapsed);
     btnToggleSidebar.classList.toggle('active', isCollapsed);
   });
+
+  const btnCloseSidebarMobile = document.getElementById('sidebar-close-mobile');
+  btnCloseSidebarMobile?.addEventListener('click', () => {
+    dom.sidebar.classList.add('collapsed');
+    btnToggleSidebar?.classList.remove('active');
+  });
+
+  // Search Engine Switcher Logic
+  function setSearchEngine(engine) {
+    state.searchEngine = engine;
+    const isGoogle = engine === 'google';
+    const badge = document.getElementById('ssl-badge');
+    if (badge) {
+      badge.title = isGoogle
+        ? 'Search Engine: Google (Default) — Click to switch search engine'
+        : 'Search Engine: Braver Search — Click to switch to Google';
+      const iconSpan = badge.querySelector('.search-provider-icon');
+      if (iconSpan) {
+        if (isGoogle) {
+          iconSpan.innerHTML = `
+            <svg width="15" height="15" viewBox="0 0 24 24">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+            </svg>`;
+        } else {
+          iconSpan.innerHTML = `<span style="font-size: 13px;">🦁</span>`;
+        }
+      }
+    }
+    const btnGoogle = document.getElementById('btn-set-engine-google');
+    const btnBrave = document.getElementById('btn-set-engine-brave');
+    if (btnGoogle && btnBrave) {
+      if (isGoogle) {
+        btnGoogle.style.background = 'rgba(66, 133, 244, 0.2)';
+        btnGoogle.style.borderColor = '#4285F4';
+        btnGoogle.style.color = '#93c5fd';
+        btnBrave.style.background = '';
+        btnBrave.style.borderColor = '';
+        btnBrave.style.color = '';
+      } else {
+        btnBrave.style.background = 'rgba(255, 85, 0, 0.2)';
+        btnBrave.style.borderColor = '#ff5500';
+        btnBrave.style.color = '#fdba74';
+        btnGoogle.style.background = '';
+        btnGoogle.style.borderColor = '';
+        btnGoogle.style.color = '';
+      }
+    }
+    appendLog('system', `⚙️ Default search engine set to: ${isGoogle ? 'Google (Live)' : 'Braver Search'}`);
+  }
+
+  document.getElementById('btn-set-engine-google')?.addEventListener('click', () => setSearchEngine('google'));
+  document.getElementById('btn-set-engine-brave')?.addEventListener('click', () => setSearchEngine('brave'));
 
   dom.btnToggleCopilot?.addEventListener('click', () => {
     switchDockPanel('copilot');
