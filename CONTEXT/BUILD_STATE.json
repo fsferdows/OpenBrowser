@@ -189,6 +189,6 @@
   "open_issues": [
     "OQ-001: Host filesystem capacity is constrained; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Commit and push ADR-0017 changes and verify live browsing without any mock templates on Vercel deployment.",
-  "last_commit": "2c33c64"
+  "next_action": "Verify live web navigation and zero mock appearances across browser modes.",
+  "last_commit": "4af390c"
 }
