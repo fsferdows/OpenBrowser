@@ -185,5 +185,5 @@
     "OQ-001: Host filesystem capacity is constrained; Phase A strategy avoids local C++ Chromium compilation."
   ],
   "next_action": "Commit and push ADR-0016 changes and verify live browsing on Vercel production deployment openbrowser-eosin.vercel.app.",
-  "last_commit": "c88cc60"
+  "last_commit": "38d007a"
 }
