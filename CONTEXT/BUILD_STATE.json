@@ -158,12 +158,17 @@
       "id": "phase8-task18",
       "description": "Viewport Refusal Elimination & Graceful CDP Fallback: Resolve CSS parse errors in public/style.css; eliminate 'refused to connect' dead screens on YouTube, GitHub, Facebook, and external sites on GitHub Pages via Shielded Web Portal (portal.html) and Service Worker v2 cache eviction; and replace black CDP offline viewport with graceful recovery card (btn-cdp-return-web, btn-cdp-launch-retry) and auto-return to Web View on omnibox navigation.",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task19",
+      "description": "Vercel CLI Deployment & Universal Live Web Proxy Pipeline (ADR-0014): Add vercel.json (outputDirectory: public, cleanUrls, Service-Worker-Allowed: /), .vercelignore (excluding >6GB of vendor sources and heavy media assets to comply with Vercel upload limits), and api/proxy.js (zero-dependency edge serverless proxy stripping X-Frame-Options/CSP frame-ancestors, injecting base href and link/form interceptors). Fix isStaticOnlyHosting in public/app.js to eliminate unwanted portal redirects on Vercel deployments, allowing users to visit and browse every URL live without issues.",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
-    "OQ-001: Host filesystem capacity is 475MB free; Phase A strategy avoids local C++ Chromium compilation."
+    "OQ-001: Host filesystem capacity is constrained; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Verify GitHub Pages deployment workflow run and monitor live static webview navigation.",
+  "next_action": "Deploy via Vercel CLI (`vercel` or `vercel --prod`) and verify live browsing on openbrowser-eosin.vercel.app.",
   "last_commit": "c34d0be"
 }

@@ -29,7 +29,7 @@
   // Service Worker Registration for In-Browser Standalone GitHub Execution
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js?v=2', { scope: './' })
+      navigator.serviceWorker.register('sw.js?v=3', { scope: './' })
         .then((reg) => {
           reg.update().catch(() => {});
           console.log('🦁 OpenBrowser In-Browser Backend Service Worker registered:', reg.scope);
@@ -934,10 +934,10 @@
 
     // Determine iframe source:
     // 1. YouTube videos render directly in ad-free nocookie embed player
-    // 2. On static hosting (GitHub Pages), framing-restricted sites (YouTube home, Facebook, GitHub, etc.)
-    //    route to Shielded Portal (portal.html) with zero tracking and full unblocking!
-    // 3. On localhost with Node server, routes through /api/proxy which strips frame-ancestors and X-Frame-Options!
-    const isStaticHosting = !window.location.port || window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+    // 2. On Vercel (*.vercel.app or serverless backend) and Localhost (localhost:3000):
+    //    Routes through /api/proxy which strips frame-ancestors and X-Frame-Options to visit EVERY URL live!
+    // 3. On static-only hosting (GitHub Pages), framing-restricted sites use Shielded Portal or direct load
+    const isStaticOnlyHosting = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
     const lower = targetUrl.toLowerCase();
     let effectiveSrc;
 
@@ -951,12 +951,12 @@
       } catch (_) {}
       if (videoId) {
         effectiveSrc = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
-      } else if (isStaticHosting) {
+      } else if (isStaticOnlyHosting) {
         effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=youtube`;
       } else {
         effectiveSrc = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
       }
-    } else if (isStaticHosting) {
+    } else if (isStaticOnlyHosting) {
       if (lower.includes('facebook.com') || lower.includes('fb.com')) {
         effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=facebook`;
       } else if (lower.includes('github.com')) {
@@ -964,9 +964,11 @@
       } else if (lower.includes('google.com') || lower.includes('search.html')) {
         effectiveSrc = targetUrl;
       } else {
-        effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}`;
+        // Attempt direct load on static hosting; if framing error occurs, onerror falls back to portal.html
+        effectiveSrc = targetUrl;
       }
     } else {
+      // Vercel and Localhost: unblocks EVERY site in the live web via /api/proxy!
       effectiveSrc = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
     }
 
@@ -1467,6 +1469,9 @@
       else if (targetUrl === 'brave://form' || targetUrl.includes('form.html')) switchTab('form');
       else if (targetUrl === 'brave://auth' || targetUrl.includes('auth-hand-off.html')) switchTab('handoff');
       else navigateLiveUrl(targetUrl);
+    } else if (event.data.type === 'BRAVE_NAVIGATE_PROXY') {
+      const targetUrl = event.data.url;
+      dom.webview.src = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
     } else if (event.data.type === 'BRAVE_USER_ACTION') {
       handleUserMoveAction(event.data);
     } else if (event.data.type === 'BRAVE_SEARCH_OR_NAVIGATE') {
@@ -3057,7 +3062,7 @@
   }
 
   // Initial Boot
-  const isStaticOnBoot = !window.location.port || window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+  const isStaticOnBoot = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
   if (isStaticOnBoot) {
     const cdpText = document.getElementById('telemetry-cdp-text');
     const reaText = document.getElementById('telemetry-rea-text');

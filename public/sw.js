@@ -11,7 +11,7 @@
  * - /api/status, /api/shields/*, /api/gateway/*, /api/skills, /api/settings
  */
 
-const CACHE_NAME = 'openbrowser-backend-v2';
+const CACHE_NAME = 'openbrowser-backend-v3';
 
 // In-Memory Brave Shields Statistics
 let shieldsStats = {

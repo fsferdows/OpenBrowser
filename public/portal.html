@@ -1264,9 +1264,9 @@
 
     document.getElementById('generic-unblock-btn')?.addEventListener('click', () => {
       if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: targetUrl }, '*');
+        window.parent.postMessage({ type: 'BRAVE_NAVIGATE_PROXY', url: targetUrl }, '*');
       } else {
-        window.location.href = 'portal.html?url=' + encodeURIComponent(targetUrl);
+        window.location.href = '/api/proxy?url=' + encodeURIComponent(targetUrl);
       }
     });
 

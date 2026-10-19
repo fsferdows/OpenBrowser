@@ -1,0 +1,19 @@
+# Vercel Deployment Ignore Rules
+# Exclude heavy vendor source trees (totaling >6 GB)
+chromium-main/
+OmniRoute-release-v3.8.52/
+freellmapi-main/
+rea-main/
+vendor/
+
+# User media and heavy binary assets
+1.mp4
+
+# Development, build, and version control
+node_modules/
+.git/
+.github/
+.system_generated/
+scratch/
+docs/
+*.log

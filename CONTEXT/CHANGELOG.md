@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Vercel CLI Deployment & Universal Live Web Proxy Pipeline (ADR-0014):
+  - `vercel.json`: Created Vercel configuration setting `outputDirectory: "public"`, enabling clean URLs, and setting `Service-Worker-Allowed: /` and security headers for `sw.js`.
+  - `.vercelignore`: Configured ignore rules to exclude heavy vendor source trees (`chromium-main/`, `OmniRoute-release-v3.8.52/`, `freellmapi-main/`, `rea-main/`, `vendor/`) and media assets (`1.mp4`), reducing deployment payload from >6.3 GB to ~3.5 MB to strictly comply with Vercel upload and serverless limits.
+  - `api/proxy.js`: Built zero-dependency Vercel Serverless Function cloud proxy. Fetches target web destinations directly at the edge, strips framing restrictions (`X-Frame-Options`, `Content-Security-Policy: frame-ancestors`), injects `<base href="...">` and anti-frame-busting shim, and automatically rewrites relative links and form submissions through the proxy so users can navigate any website live.
+  - `public/app.js`: Updated `navigateLiveUrl()` to distinguish true static-only hosting (GitHub Pages / `file:`) from serverless and server hosts (Vercel, localhost). External URLs now route through `/api/proxy?url=...` on Vercel deployments (such as `openbrowser-eosin.vercel.app`), completely eliminating premature Shielded Portal redirects and allowing users to visit and browse every URL live. Added `BRAVE_NAVIGATE_PROXY` postMessage handling. Bumped Service Worker registration to `sw.js?v=3`.
+  - `public/portal.html`: Updated generic unblock button (`[ ⚡ Unblock in Browser ]`) to dispatch `BRAVE_NAVIGATE_PROXY` to the parent window or navigate directly to `/api/proxy?url=...`.
+  - `public/sw.js`: Bumped cache name to `openbrowser-backend-v3` for instant cache invalidation.
+  - `public/index.html`: Bumped cache-busting query strings on `style.css` and `app.js` to `?v=1.0.4`.
+  - `packages/release/tests/vercel-deployment.test.js`: Added acceptance test suite verifying `vercel.json` structure, `.vercelignore` exclusion rules, and `api/proxy.js` serverless unblocker execution.
+
 - Viewport Refusal Elimination, Graceful CDP Fallback & CSS Syntax Fix:
   - `public/style.css`: Fixed syntax error on line 1638 by restoring the missing `.bookmark-chip` selector. Added comprehensive styling for `.cdp-fallback-card`, including glassmorphic badges, animated entry, responsive action buttons (`.btn-cdp-primary`, `.btn-cdp-secondary`), and terminal launch code blocks (`.cdp-terminal-hint`).
   - `public/index.html`: Replaced raw broken `<img>` inside `#cdp-live-stream-container` with `#cdp-fallback-card` containing `[ 🌐 Return to Web View ]`, `[ 🚀 Launch Chrome CDP ]`, and terminal instructions. Added cache-busting query params (`style.css?v=1.0.3`, `app.js?v=1.0.3`) and bumped Service Worker registration to `sw.js?v=2`.
