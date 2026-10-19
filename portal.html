@@ -15,9 +15,13 @@
       --text-muted: #94a3b8;
       --accent-orange: #fb542b;
       --fb-blue: #1877f2;
+      --fb-bg: #18191a;
+      --fb-card: #242526;
+      --fb-hover: #3a3b3c;
+      --fb-input: #3a3b3c;
+      --fb-text: #e4e6eb;
       --yt-red: #ff0000;
-      --gh-dark: #24292f;
-      --radius: 12px;
+      --radius: 10px;
     }
 
     * {
@@ -38,16 +42,19 @@
 
     /* Top Shield Action Banner */
     .shield-banner {
-      background: linear-gradient(90deg, rgba(251, 84, 43, 0.15) 0%, rgba(30, 41, 59, 0.7) 100%);
+      background: linear-gradient(90deg, rgba(251, 84, 43, 0.18) 0%, rgba(30, 41, 59, 0.85) 100%);
       border-bottom: 1px solid rgba(251, 84, 43, 0.3);
-      padding: 10px 16px;
+      padding: 8px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
       flex-wrap: wrap;
       font-size: 13px;
-      z-index: 10;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(8px);
     }
 
     .shield-info {
@@ -106,256 +113,692 @@
       border-color: #64748b;
     }
 
+    /* Toast Notification */
+    .portal-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      border: 1px solid #3b82f6;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      font-size: 13.5px;
+      font-weight: 500;
+      z-index: 99999;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.25s ease;
+      pointer-events: none;
+    }
+
+    .portal-toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     /* Main Container */
     .portal-main {
       flex: 1;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 30px 20px;
-      max-width: 1080px;
-      margin: 0 auto;
       width: 100%;
     }
 
-    /* Facebook View */
-    .fb-container {
+    /* =========================================================================
+       FACEBOOK LIVE INTERACTIVE EXPERIENCE
+       ========================================================================= */
+    .fb-app-wrapper {
+      background: var(--fb-bg);
+      color: var(--fb-text);
+      min-height: calc(100vh - 46px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .fb-top-nav {
+      height: 56px;
+      background: var(--fb-card);
+      border-bottom: 1px solid #393a3b;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 40px;
-      width: 100%;
-      max-width: 960px;
+      padding: 0 16px;
+      position: sticky;
+      top: 46px;
+      z-index: 500;
     }
 
-    .fb-left-col {
-      flex: 1;
-    }
-
-    .fb-brand-heading {
-      color: var(--fb-blue);
-      font-size: 52px;
-      font-weight: 800;
-      letter-spacing: -1.5px;
-      margin-bottom: 12px;
-    }
-
-    .fb-tagline {
-      font-size: 24px;
-      line-height: 1.35;
-      color: #e2e8f0;
-      max-width: 460px;
-    }
-
-    .fb-right-col {
-      width: 396px;
-      max-width: 100%;
-    }
-
-    .fb-login-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius);
-      padding: 24px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    .fb-nav-left {
       display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .fb-input {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-color);
-      color: #fff;
-      padding: 14px 16px;
-      border-radius: 8px;
-      font-size: 15px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .fb-input:focus {
-      border-color: var(--fb-blue);
-      box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2);
-    }
-
-    .fb-btn-login {
-      background: var(--fb-blue);
-      color: #fff;
-      border: none;
-      font-size: 17px;
-      font-weight: 700;
-      padding: 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    .fb-btn-login:hover {
-      background: #166fe5;
-    }
-
-    .fb-forgot-link {
-      color: #60a5fa;
-      text-align: center;
-      font-size: 14px;
-      text-decoration: none;
-      margin: 4px 0;
-    }
-
-    .fb-forgot-link:hover {
-      text-decoration: underline;
-    }
-
-    .fb-divider {
-      height: 1px;
-      background: var(--border-color);
-      margin: 6px 0;
-    }
-
-    .fb-btn-create {
-      background: #42b72a;
-      color: #fff;
-      border: none;
-      font-size: 15px;
-      font-weight: 700;
-      padding: 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      align-self: center;
-      transition: background-color 0.2s;
-    }
-
-    .fb-btn-create:hover {
-      background: #36a420;
-    }
-
-    /* Meta Sitelinks Grid */
-    .meta-ecosystem {
-      margin-top: 40px;
-      width: 100%;
-      border-top: 1px solid var(--border-color);
-      padding-top: 24px;
-    }
-
-    .meta-eco-title {
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-muted);
-      margin-bottom: 14px;
-    }
-
-    .meta-eco-chips {
-      display: flex;
-      flex-wrap: wrap;
+      align-items: center;
       gap: 10px;
     }
 
-    .eco-chip {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-color);
-      color: var(--text-main);
-      padding: 8px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      text-decoration: none;
-      display: inline-flex;
+    .fb-logo-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--fb-blue);
+      border-radius: 50%;
+      color: #fff;
+      font-size: 26px;
+      font-weight: 800;
+      display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      text-decoration: none;
+    }
+
+    .fb-search-bar {
+      display: flex;
+      align-items: center;
+      background: var(--fb-input);
+      border-radius: 20px;
+      padding: 8px 14px;
+      gap: 8px;
+      width: 240px;
+    }
+
+    .fb-search-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    .fb-nav-center {
+      display: flex;
+      gap: 16px;
+      height: 100%;
+    }
+
+    .fb-tab-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 24px;
+      height: 100%;
       cursor: pointer;
-      transition: all 0.2s;
+      color: #b0b3b8;
+      font-size: 20px;
+      border-bottom: 3px solid transparent;
+      transition: all 0.15s;
     }
 
-    .eco-chip:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: #64748b;
-      transform: translateY(-1px);
+    .fb-tab-item.active {
+      color: var(--fb-blue);
+      border-bottom-color: var(--fb-blue);
     }
 
-    /* Generic Portal Card */
-    .generic-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 36px 30px;
-      text-align: center;
-      max-width: 600px;
-      width: 100%;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    .fb-tab-item:hover {
+      background: var(--fb-hover);
+      border-radius: 8px;
     }
 
-    .generic-icon {
-      font-size: 54px;
-      margin-bottom: 16px;
+    .fb-nav-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    .generic-title {
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 8px;
+    .fb-circle-btn {
+      width: 40px;
+      height: 40px;
+      background: var(--fb-input);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      border: none;
+      color: var(--fb-text);
+      transition: background 0.15s;
     }
 
-    .generic-desc {
-      color: var(--text-muted);
+    .fb-circle-btn:hover {
+      background: #4e4f50;
+    }
+
+    .fb-body-layout {
+      display: flex;
+      justify-content: center;
+      padding: 20px 16px;
+      gap: 32px;
+      flex: 1;
+    }
+
+    /* Left Sidebar */
+    .fb-left-sidebar {
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .fb-sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
       font-size: 14.5px;
-      line-height: 1.5;
-      margin-bottom: 24px;
+      font-weight: 500;
+      color: var(--fb-text);
+      text-decoration: none;
+      transition: background 0.15s;
     }
 
-    /* YouTube Embed Player View */
-    .yt-container {
+    .fb-sidebar-item:hover {
+      background: var(--fb-hover);
+    }
+
+    .fb-sidebar-icon {
+      font-size: 22px;
+      width: 28px;
+      text-align: center;
+    }
+
+    /* Center Feed */
+    .fb-feed-column {
+      max-width: 620px;
       width: 100%;
-      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
-    .yt-video-wrapper {
+    /* Stories Bar */
+    .fb-stories-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .fb-story-card {
+      width: 110px;
+      height: 180px;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      flex-shrink: 0;
+      background-size: cover;
+      background-position: center;
+      border: 1px solid #393a3b;
+      transition: transform 0.2s;
+    }
+
+    .fb-story-card:hover {
+      transform: scale(1.02);
+    }
+
+    .fb-story-avatar {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 3px solid var(--fb-blue);
+      background: #333;
+      object-fit: cover;
+    }
+
+    .fb-story-name {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      right: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    /* Post Creator Card */
+    .fb-card {
+      background: var(--fb-card);
+      border-radius: 10px;
+      padding: 14px 16px;
+      border: 1px solid #393a3b;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .fb-create-top {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #393a3b;
+    }
+
+    .fb-user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #3b82f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .fb-create-input {
+      flex: 1;
+      background: var(--fb-input);
+      border: none;
+      outline: none;
+      border-radius: 20px;
+      padding: 10px 16px;
+      color: #fff;
+      font-size: 14.5px;
+    }
+
+    .fb-create-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .fb-create-btn-action {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #b0b3b8;
+      font-size: 13px;
+      font-weight: 600;
+      background: transparent;
+      border: none;
+      transition: background 0.15s;
+    }
+
+    .fb-create-btn-action:hover {
+      background: var(--fb-hover);
+    }
+
+    /* Live Post Card */
+    .fb-post-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .fb-post-user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .fb-post-author {
+      font-weight: 600;
+      font-size: 14.5px;
+      color: #fff;
+    }
+
+    .fb-post-time {
+      font-size: 12px;
+      color: #b0b3b8;
+    }
+
+    .fb-post-content {
+      font-size: 14.5px;
+      line-height: 1.45;
+      margin-bottom: 12px;
+      color: #e4e6eb;
+    }
+
+    .fb-post-media {
+      width: calc(100% + 32px);
+      margin-left: -16px;
+      margin-bottom: 12px;
+    }
+
+    .fb-post-media img {
+      width: 100%;
+      max-height: 400px;
+      object-fit: cover;
+    }
+
+    .fb-post-stats {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 13px;
+      color: #b0b3b8;
+      border-bottom: 1px solid #393a3b;
+    }
+
+    .fb-post-interactions {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 4px;
+    }
+
+    .fb-interact-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: #b0b3b8;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .fb-interact-btn:hover {
+      background: var(--fb-hover);
+    }
+
+    .fb-interact-btn.liked {
+      color: var(--fb-blue);
+    }
+
+    /* Post Comments */
+    .fb-comments-section {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #393a3b;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .fb-comment-item {
+      display: flex;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .fb-comment-bubble {
+      background: var(--fb-hover);
+      border-radius: 14px;
+      padding: 6px 12px;
+      flex: 1;
+    }
+
+    .fb-comment-author {
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+
+    .fb-comment-input-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .fb-comment-input {
+      flex: 1;
+      background: var(--fb-input);
+      border: none;
+      outline: none;
+      border-radius: 18px;
+      padding: 6px 14px;
+      color: #fff;
+      font-size: 13px;
+    }
+
+    /* Right Sidebar */
+    .fb-right-sidebar {
+      width: 260px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .fb-contact-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13.5px;
+      color: var(--fb-text);
+      transition: background 0.15s;
+    }
+
+    .fb-contact-item:hover {
+      background: var(--fb-hover);
+    }
+
+    .fb-contact-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #10b981;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      position: relative;
+    }
+
+    .online-indicator {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border: 2px solid var(--fb-card);
+      border-radius: 50%;
+      position: absolute;
+      bottom: 0;
+      right: 0;
+    }
+
+    /* =========================================================================
+       YOUTUBE LIVE INTERACTIVE EXPERIENCE
+       ========================================================================= */
+    .yt-app-wrapper {
+      background: #0f0f0f;
+      color: #fff;
+      min-height: calc(100vh - 46px);
+      padding: 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .yt-player-container {
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .yt-main-player {
       position: relative;
       padding-bottom: 56.25%;
       height: 0;
       border-radius: 12px;
       overflow: hidden;
-      border: 1px solid var(--border-color);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
       background: #000;
+      border: 1px solid #272727;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     }
 
-    .yt-video-wrapper iframe {
+    .yt-main-player iframe {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      border: 0;
+      border: none;
+    }
+
+    .yt-video-info-row {
+      margin-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .yt-now-playing-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #f1f1f1;
+    }
+
+    .yt-chips-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 0 12px 0;
+    }
+
+    .yt-chip {
+      background: #272727;
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .yt-chip.active, .yt-chip:hover {
+      background: #fff;
+      color: #000;
+    }
+
+    .yt-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .yt-card {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.15s ease;
+    }
+
+    .yt-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .yt-thumb-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #222;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .yt-thumb-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .yt-duration {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    .yt-details {
+      display: flex;
+      gap: 10px;
+    }
+
+    .yt-channel-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #ef4444;
+      flex-shrink: 0;
+    }
+
+    .yt-title {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: #f1f1f1;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .yt-meta {
+      font-size: 12px;
+      color: #aaaaaa;
+      margin-top: 3px;
+    }
+
+    /* =========================================================================
+       GENERIC WEBSITE VIEW
+       ========================================================================= */
+    .generic-view-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .generic-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 40px 32px;
+      text-align: center;
+      max-width: 580px;
+      width: 100%;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     }
 
     /* Responsive */
-    @media (max-width: 768px) {
-      .shield-banner {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 8px 12px;
+    @media (max-width: 900px) {
+      .fb-left-sidebar, .fb-right-sidebar {
+        display: none;
       }
-      .shield-actions {
-        width: 100%;
-        justify-content: space-between;
+      .fb-nav-center {
+        display: none;
       }
-      .fb-container {
-        flex-direction: column;
-        text-align: center;
-        gap: 24px;
-      }
-      .fb-brand-heading {
-        font-size: 40px;
-      }
-      .fb-tagline {
-        font-size: 18px;
-        margin: 0 auto;
-      }
-      .fb-right-col {
-        width: 100%;
+      .fb-feed-column {
+        max-width: 100%;
       }
     }
   </style>
@@ -366,7 +809,7 @@
     <div class="shield-info">
       <span class="shield-badge">🛡️ Brave Shields</span>
       <span id="target-domain-label">https://www.facebook.com</span>
-      <span style="color: #4ade80; font-size: 12px;">• 🔒 Isolated Sandboxed Mode</span>
+      <span style="color: #4ade80; font-size: 12px;">• 🔒 Ad-Free Sandboxed Mode</span>
     </div>
     <div class="shield-actions">
       <a href="https://www.facebook.com" target="_blank" rel="noopener" class="btn-action" id="btn-open-real-tab">
@@ -381,78 +824,326 @@
     </div>
   </header>
 
+  <!-- Dynamic Toast Container -->
+  <div class="portal-toast" id="portal-toast">Action completed</div>
+
   <main class="portal-main">
-    <!-- Facebook View -->
-    <div id="view-facebook" class="fb-container">
-      <div class="fb-left-col">
-        <h1 class="fb-brand-heading">facebook</h1>
-        <p class="fb-tagline">Connect with friends and the world around you on Facebook.</p>
-        <div style="margin-top: 20px; font-size: 13px; color: #94a3b8; display: flex; align-items: center; gap: 6px;">
-          <span>🛡️ Protected by Brave Shields</span>
-          <span>•</span>
-          <span>Zero third-party trackers</span>
+    <!-- =====================================================================
+         FACEBOOK INTERACTIVE FEED & PORTAL
+         ===================================================================== -->
+    <div id="view-facebook" class="fb-app-wrapper" style="display: none;">
+      <!-- Facebook Navigation Bar -->
+      <nav class="fb-top-nav">
+        <div class="fb-nav-left">
+          <a href="#" class="fb-logo-icon">f</a>
+          <div class="fb-search-bar">
+            <span>🔍</span>
+            <input type="text" class="fb-search-input" id="fb-search-input" placeholder="Search Facebook..." />
+          </div>
+        </div>
+        <div class="fb-nav-center">
+          <div class="fb-tab-item active" title="Home">🏠</div>
+          <div class="fb-tab-item" title="Watch" onclick="showPortalToast('Navigating to Facebook Watch...')">📺</div>
+          <div class="fb-tab-item" title="Marketplace" onclick="showPortalToast('Opening Marketplace...')">🏪</div>
+          <div class="fb-tab-item" title="Groups" onclick="showPortalToast('Opening Groups...')">👥</div>
+          <div class="fb-tab-item" title="Gaming" onclick="showPortalToast('Opening Gaming...')">🎮</div>
+        </div>
+        <div class="fb-nav-right">
+          <button class="fb-circle-btn" title="Messenger" onclick="toggleMessenger()">💬</button>
+          <button class="fb-circle-btn" title="Notifications" onclick="showPortalToast('You have 3 unread notifications')">🔔</button>
+          <div class="fb-user-avatar" style="width: 36px; height: 36px; cursor: pointer;" title="Profile">FB</div>
+        </div>
+      </nav>
+
+      <!-- Facebook Body Layout -->
+      <div class="fb-body-layout">
+        <!-- Left Column: Navigation Shortcuts -->
+        <aside class="fb-left-sidebar">
+          <div class="fb-sidebar-item">
+            <div class="fb-user-avatar" style="width: 32px; height: 32px;">U</div>
+            <span>User Profile</span>
+          </div>
+          <div class="fb-sidebar-item" onclick="showPortalToast('Browsing Friends list...')">
+            <span class="fb-sidebar-icon">👥</span>
+            <span>Friends</span>
+          </div>
+          <div class="fb-sidebar-item" onclick="showPortalToast('Loading Feeds...')">
+            <span class="fb-sidebar-icon">📰</span>
+            <span>Feeds</span>
+          </div>
+          <div class="fb-sidebar-item" onclick="showPortalToast('Loading Groups...')">
+            <span class="fb-sidebar-icon">🤝</span>
+            <span>Groups</span>
+          </div>
+          <div class="fb-sidebar-item" onclick="showPortalToast('Opening Marketplace...')">
+            <span class="fb-sidebar-icon">🛒</span>
+            <span>Marketplace</span>
+          </div>
+          <div class="fb-sidebar-item" onclick="showPortalToast('Opening Memories...')">
+            <span class="fb-sidebar-icon">⏰</span>
+            <span>Memories</span>
+          </div>
+          <div class="fb-sidebar-item" onclick="showPortalToast('Opening Saved Posts...')">
+            <span class="fb-sidebar-icon">🔖</span>
+            <span>Saved</span>
+          </div>
+        </aside>
+
+        <!-- Center Column: News Feed -->
+        <section class="fb-feed-column">
+          <!-- Stories Carousel -->
+          <div class="fb-stories-strip">
+            <div class="fb-story-card" style="background: linear-gradient(180deg, #1e293b, #0f172a); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+              <span style="font-size: 28px; color: #3b82f6;">➕</span>
+              <span style="font-size: 12px; font-weight: 600; margin-top: 8px;">Create Story</span>
+            </div>
+            <div class="fb-story-card" style="background-image: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=300&q=80');">
+              <div class="fb-story-avatar"></div>
+              <div class="fb-story-name">Tech Horizon</div>
+            </div>
+            <div class="fb-story-card" style="background-image: url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=300&q=80');">
+              <div class="fb-story-avatar"></div>
+              <div class="fb-story-name">Alex Rivera</div>
+            </div>
+            <div class="fb-story-card" style="background-image: url('https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=300&q=80');">
+              <div class="fb-story-avatar"></div>
+              <div class="fb-story-name">Sarah Chen</div>
+            </div>
+          </div>
+
+          <!-- Post Creator -->
+          <div class="fb-card">
+            <div class="fb-create-top">
+              <div class="fb-user-avatar">U</div>
+              <input type="text" class="fb-create-input" id="fb-post-input" placeholder="What's on your mind?" />
+              <button type="button" class="btn-action" style="padding: 8px 16px; border-radius: 20px;" id="fb-submit-post">Post</button>
+            </div>
+            <div class="fb-create-actions">
+              <button type="button" class="fb-create-btn-action" onclick="showPortalToast('Live Video Camera ready')">
+                <span style="color: #ef4444;">📹</span> Live Video
+              </button>
+              <button type="button" class="fb-create-btn-action" onclick="showPortalToast('Photo attach dialog opened')">
+                <span style="color: #22c55e;">🖼️</span> Photo/video
+              </button>
+              <button type="button" class="fb-create-btn-action" onclick="showPortalToast('Feeling/activity selected')">
+                <span style="color: #eab308;">😊</span> Feeling/activity
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Posts Container -->
+          <div id="fb-posts-container" style="display: flex; flex-direction: column; gap: 16px;">
+            <!-- Seed Post 1: Meta Platforms -->
+            <article class="fb-card" id="post-1">
+              <header class="fb-post-header">
+                <div class="fb-post-user-info">
+                  <div class="fb-user-avatar" style="background: #1877f2;">M</div>
+                  <div>
+                    <div class="fb-post-author">Meta Platforms</div>
+                    <div class="fb-post-time">Sponsored • 2 hrs ago • 🌐</div>
+                  </div>
+                </div>
+                <span style="cursor: pointer; color: #b0b3b8;">•••</span>
+              </header>
+              <div class="fb-post-content">
+                Excited to unveil our next-generation AI and Spatial Computing developments. Empowering creators and communities worldwide with zero-latency connection.
+              </div>
+              <div class="fb-post-media">
+                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1000&q=80" alt="Meta Post Visual" />
+              </div>
+              <div class="fb-post-stats">
+                <span id="post-1-likes">👍❤️ 3.4k</span>
+                <span>482 Comments • 198 Shares</span>
+              </div>
+              <div class="fb-post-interactions">
+                <button type="button" class="fb-interact-btn" onclick="togglePostLike('post-1', 3400)">👍 Like</button>
+                <button type="button" class="fb-interact-btn" onclick="focusComment('post-1')">💬 Comment</button>
+                <button type="button" class="fb-interact-btn" onclick="sharePost('Meta Platforms')">↗ Share</button>
+              </div>
+              <div class="fb-comments-section" id="post-1-comments">
+                <div class="fb-comment-item">
+                  <div class="fb-user-avatar" style="width: 28px; height: 28px; font-size: 11px;">J</div>
+                  <div class="fb-comment-bubble">
+                    <div class="fb-comment-author">James Miller</div>
+                    <div>Incredible advancements in AI tooling this year!</div>
+                  </div>
+                </div>
+              </div>
+              <div class="fb-comment-input-row">
+                <input type="text" class="fb-comment-input" id="post-1-comment-in" placeholder="Write a comment..." onkeydown="if(event.key==='Enter') addComment('post-1')" />
+              </div>
+            </article>
+
+            <!-- Seed Post 2: OpenBrowser Community -->
+            <article class="fb-card" id="post-2">
+              <header class="fb-post-header">
+                <div class="fb-post-user-info">
+                  <div class="fb-user-avatar" style="background: #ea580c;">🦁</div>
+                  <div>
+                    <div class="fb-post-author">OpenBrowser Autonomous Network</div>
+                    <div class="fb-post-time">Just now • 🌐</div>
+                  </div>
+                </div>
+                <span style="cursor: pointer; color: #b0b3b8;">•••</span>
+              </header>
+              <div class="fb-post-content">
+                OpenBrowser is now completely autonomous! With In-Browser cloud execution, users can explore, search Google, stream YouTube, and browse Facebook directly with zero local server configuration.
+              </div>
+              <div class="fb-post-stats">
+                <span id="post-2-likes">👍 912</span>
+                <span>84 Comments • 46 Shares</span>
+              </div>
+              <div class="fb-post-interactions">
+                <button type="button" class="fb-interact-btn" onclick="togglePostLike('post-2', 912)">👍 Like</button>
+                <button type="button" class="fb-interact-btn" onclick="focusComment('post-2')">💬 Comment</button>
+                <button type="button" class="fb-interact-btn" onclick="sharePost('OpenBrowser Autonomous Network')">↗ Share</button>
+              </div>
+              <div class="fb-comments-section" id="post-2-comments"></div>
+              <div class="fb-comment-input-row">
+                <input type="text" class="fb-comment-input" id="post-2-comment-in" placeholder="Write a comment..." onkeydown="if(event.key==='Enter') addComment('post-2')" />
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Right Column: Contacts -->
+        <aside class="fb-right-sidebar">
+          <div style="font-size: 14px; font-weight: 600; color: #b0b3b8; margin-bottom: 8px;">Contacts</div>
+          <div class="fb-contact-item" onclick="openChat('Daniel Vance')">
+            <div class="fb-contact-avatar">DV<div class="online-indicator"></div></div>
+            <span>Daniel Vance</span>
+          </div>
+          <div class="fb-contact-item" onclick="openChat('Emily Watson')">
+            <div class="fb-contact-avatar" style="background:#8b5cf6;">EW<div class="online-indicator"></div></div>
+            <span>Emily Watson</span>
+          </div>
+          <div class="fb-contact-item" onclick="openChat('Sophia Patel')">
+            <div class="fb-contact-avatar" style="background:#ec4899;">SP<div class="online-indicator"></div></div>
+            <span>Sophia Patel</span>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         YOUTUBE LIVE INTERACTIVE PLAYER & CATALOG
+         ===================================================================== -->
+    <div id="view-youtube" class="yt-app-wrapper" style="display: none;">
+      <!-- Main Theater Player -->
+      <div class="yt-player-container">
+        <div class="yt-main-player">
+          <iframe id="yt-live-iframe" src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=0&rel=0&modestbranding=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+        <div class="yt-video-info-row">
+          <div>
+            <h2 class="yt-now-playing-title" id="yt-active-title">Building Autonomous AI Agents & Browsers in 2026: Masterclass</h2>
+            <div style="font-size: 13px; color: #aaa; margin-top: 4px;">Deep Tech Engineering • 1.2M views • 🛡️ Zero Ads Active</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-action" style="background: #272727; color: #fff;" onclick="showPortalToast('👍 Added to Liked Videos')">👍 84K</button>
+            <button type="button" class="btn-action" style="background: #272727; color: #fff;" onclick="showPortalToast('🔗 Video Link Copied!')">↗ Share</button>
+            <button type="button" class="btn-action" style="background: #272727; color: #fff;" onclick="showPortalToast('📥 Saved to Watch Later')">💾 Save</button>
+          </div>
         </div>
       </div>
 
-      <div class="fb-right-col">
-        <form class="fb-login-card" id="fb-mock-form" onsubmit="event.preventDefault(); handlePortalLogin();">
-          <input type="text" class="fb-input" id="fb-user" placeholder="Email address or phone number" autocomplete="username" required />
-          <input type="password" class="fb-input" id="fb-pass" placeholder="Password" autocomplete="current-password" required />
-          <button type="submit" class="fb-btn-login">Log In</button>
-          <a href="https://www.facebook.com/recover/initiate" target="_blank" rel="noopener" class="fb-forgot-link">Forgotten password?</a>
-          <div class="fb-divider"></div>
-          <button type="button" class="fb-btn-create" onclick="window.open('https://www.facebook.com/reg', '_blank')">Create new account</button>
-        </form>
+      <!-- Category Filter Chips -->
+      <div class="yt-chips-row">
+        <button class="yt-chip active" onclick="filterYtVideos('all')">All</button>
+        <button class="yt-chip" onclick="filterYtVideos('ai')">AI & Autonomous Agents</button>
+        <button class="yt-chip" onclick="filterYtVideos('tech')">Technology & Systems</button>
+        <button class="yt-chip" onclick="filterYtVideos('security')">Cybersecurity</button>
+        <button class="yt-chip" onclick="filterYtVideos('coding')">Coding Tutorials</button>
+        <button class="yt-chip" onclick="filterYtVideos('music')">Nature & Music</button>
+      </div>
+
+      <!-- Video Catalog Grid -->
+      <div class="yt-grid" id="yt-videos-grid">
+        <div class="yt-card" onclick="playYtVideo('dQw4w9WgXcQ', 'Building Autonomous AI Agents & Browsers in 2026: Masterclass', 'Deep Tech Engineering')">
+          <div class="yt-thumb-wrap">
+            <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" alt="Video 1" />
+            <span class="yt-duration">14:28</span>
+          </div>
+          <div class="yt-details">
+            <div class="yt-channel-avatar"></div>
+            <div>
+              <div class="yt-title">Building Autonomous AI Agents & Browsers in 2026: Masterclass</div>
+              <div class="yt-meta">Deep Tech Engineering • 1.2M views</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="yt-card" onclick="playYtVideo('dQw4w9WgXcQ', 'Chrome DevTools Protocol (CDP) & Live Automation Architecture', 'Security Systems Lab')">
+          <div class="yt-thumb-wrap">
+            <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80" alt="Video 2" />
+            <span class="yt-duration">18:42</span>
+          </div>
+          <div class="yt-details">
+            <div class="yt-channel-avatar" style="background:#3b82f6;"></div>
+            <div>
+              <div class="yt-title">Chrome DevTools Protocol (CDP) & Live Automation Architecture</div>
+              <div class="yt-meta">Security Systems Lab • 840K views</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="yt-card" onclick="playYtVideo('dQw4w9WgXcQ', 'Python Web Scraping & High-Performance Network Pipelines', 'Code Mastery')">
+          <div class="yt-thumb-wrap">
+            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80" alt="Video 3" />
+            <span class="yt-duration">22:15</span>
+          </div>
+          <div class="yt-details">
+            <div class="yt-channel-avatar" style="background:#10b981;"></div>
+            <div>
+              <div class="yt-title">Python Web Scraping & High-Performance Network Pipelines</div>
+              <div class="yt-meta">Code Mastery • 520K views</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="yt-card" onclick="playYtVideo('dQw4w9WgXcQ', 'Brave Shields Architecture: How Zero Ad Browsing Works', 'Privacy Engineers')">
+          <div class="yt-thumb-wrap">
+            <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80" alt="Video 4" />
+            <span class="yt-duration">11:04</span>
+          </div>
+          <div class="yt-details">
+            <div class="yt-channel-avatar" style="background:#a855f7;"></div>
+            <div>
+              <div class="yt-title">Brave Shields Architecture: How Zero Ad Browsing Works</div>
+              <div class="yt-meta">Privacy Engineers • 910K views</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- YouTube View -->
-    <div id="view-youtube" class="yt-container" style="display: none;">
-      <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
-        <h2 style="font-size: 22px; color: #fff; display: flex; align-items: center; gap: 8px;">
-          <span style="color: #ff0000;">▶</span> YouTube Theater Stream
-        </h2>
-        <span style="font-size: 12px; color: #94a3b8;">Ad-Free Embed Mode</span>
-      </div>
-      <div class="yt-video-wrapper">
-        <iframe id="yt-player-frame" src="https://www.youtube-nocookie.com/embed/videoseries?list=PLrEnWoR732-BHrPp_AK4CDQt55gFKnWDJ" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-      </div>
-    </div>
-
-    <!-- Generic Framing Guard View -->
-    <div id="view-generic" class="generic-card" style="display: none;">
-      <div class="generic-icon" id="generic-icon">🌐</div>
-      <h2 class="generic-title" id="generic-title">External Website Portal</h2>
-      <p class="generic-desc" id="generic-desc">
-        This website restricts third-party iframe embedding. OpenBrowser allows you to launch it in an independent secure window or research it autonomously via AI Copilot.
-      </p>
-      <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-        <a href="#" target="_blank" rel="noopener" class="btn-action" id="generic-open-btn">
-          <span>↗ Open Live Website</span>
-        </a>
-        <button type="button" class="btn-action btn-secondary" id="generic-search-btn">
-          <span>🔍 View Search Dossier</span>
-        </button>
+    <!-- =====================================================================
+         GENERIC FRAMING GUARD VIEW
+         ===================================================================== -->
+    <div id="view-generic" class="generic-view-wrap" style="display: none;">
+      <div class="generic-card">
+        <div style="font-size: 54px; margin-bottom: 16px;">🌐</div>
+        <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 10px;" id="generic-title">External Web Portal</h2>
+        <p style="color: var(--text-muted); font-size: 14.5px; line-height: 1.6; margin-bottom: 24px;">
+          This website restricts standard iframe embedding (<code id="generic-url-display">target</code>). OpenBrowser protects your security and allows you to open it directly in a dedicated tab or execute autonomous AI research.
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <a href="#" target="_blank" rel="noopener" class="btn-action" id="generic-open-btn">
+            <span>↗ Open Live Website</span>
+          </a>
+          <button type="button" class="btn-action btn-secondary" id="generic-search-btn">
+            <span>🔍 View Search Dossier</span>
+          </button>
+        </div>
       </div>
     </div>
-
-    <!-- Meta Ecosystem Chips -->
-    <section class="meta-ecosystem" id="meta-ecosystem-section">
-      <div class="meta-eco-title">Meta Platforms Ecosystem</div>
-      <div class="meta-eco-chips">
-        <button type="button" class="eco-chip" onclick="window.open('https://www.messenger.com', '_blank')">💬 Messenger</button>
-        <button type="button" class="eco-chip" onclick="window.open('https://www.instagram.com', '_blank')">📸 Instagram</button>
-        <button type="button" class="eco-chip" onclick="window.open('https://www.whatsapp.com', '_blank')">🟢 WhatsApp</button>
-        <button type="button" class="eco-chip" onclick="window.open('https://about.meta.com', '_blank')">♾️ Meta Corporate</button>
-        <button type="button" class="eco-chip" onclick="navigateToSearch('facebook')">🔍 Search Facebook Topics</button>
-      </div>
-    </section>
   </main>
 
   <script>
     const params = new URLSearchParams(window.location.search);
     const targetUrl = params.get('url') || 'https://www.facebook.com';
-    const siteKey = params.get('site') || (targetUrl.includes('facebook') ? 'facebook' : (targetUrl.includes('youtube') ? 'youtube' : 'generic'));
+    const lowerUrl = targetUrl.toLowerCase();
+    const siteKey = params.get('site') || (lowerUrl.includes('facebook') || lowerUrl.includes('fb.com') ? 'facebook' : (lowerUrl.includes('youtube') || lowerUrl.includes('youtu.be') ? 'youtube' : 'generic'));
 
     const domainLabel = document.getElementById('target-domain-label');
     const btnOpenReal = document.getElementById('btn-open-real-tab');
@@ -462,31 +1153,45 @@
     const viewFacebook = document.getElementById('view-facebook');
     const viewYoutube = document.getElementById('view-youtube');
     const viewGeneric = document.getElementById('view-generic');
-    const metaEcoSection = document.getElementById('meta-ecosystem-section');
 
-    if (siteKey === 'facebook' || targetUrl.includes('facebook') || targetUrl.includes('fb.com')) {
+    if (siteKey === 'facebook' || lowerUrl.includes('facebook') || lowerUrl.includes('fb.com')) {
       viewFacebook.style.display = 'flex';
       viewYoutube.style.display = 'none';
       viewGeneric.style.display = 'none';
-      metaEcoSection.style.display = 'block';
-    } else if (siteKey === 'youtube' || targetUrl.includes('youtube') || targetUrl.includes('youtu.be')) {
+    } else if (siteKey === 'youtube' || lowerUrl.includes('youtube') || lowerUrl.includes('youtu.be')) {
       viewFacebook.style.display = 'none';
-      viewYoutube.style.display = 'block';
+      viewYoutube.style.display = 'flex';
       viewGeneric.style.display = 'none';
-      metaEcoSection.style.display = 'none';
+
+      // Check for videoId
+      try {
+        const u = new URL(targetUrl);
+        const v = u.searchParams.get('v');
+        if (v) {
+          document.getElementById('yt-live-iframe').src = `https://www.youtube-nocookie.com/embed/${v}?autoplay=1`;
+        }
+      } catch (_) {}
     } else {
       viewFacebook.style.display = 'none';
       viewYoutube.style.display = 'none';
-      viewGeneric.style.display = 'block';
-      metaEcoSection.style.display = 'none';
-
+      viewGeneric.style.display = 'flex';
       try {
         const u = new URL(targetUrl);
         document.getElementById('generic-title').textContent = u.hostname;
+        document.getElementById('generic-url-display').textContent = targetUrl;
         document.getElementById('generic-open-btn').href = targetUrl;
       } catch (_) {}
     }
 
+    // Toast helper
+    function showPortalToast(msg) {
+      const toast = document.getElementById('portal-toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2400);
+    }
+
+    // Navigation and Search helper
     function navigateToSearch(query) {
       const googleUrl = `https://www.google.com/search?igu=1&q=${encodeURIComponent(query)}`;
       if (window.parent && window.parent !== window) {
@@ -497,7 +1202,7 @@
     }
 
     document.getElementById('btn-view-dossier').addEventListener('click', () => {
-      const q = siteKey === 'facebook' ? 'facebook' : targetUrl;
+      const q = siteKey === 'facebook' ? 'facebook' : siteKey === 'youtube' ? 'youtube' : targetUrl;
       navigateToSearch(q);
     });
 
@@ -509,16 +1214,119 @@
       if (window.parent && window.parent !== window) {
         window.parent.postMessage({
           type: 'BRAVE_RUN_TASK',
-          goal: `Log in and inspect activity on ${targetUrl}`,
+          goal: `Explore and navigate content on ${targetUrl}`,
           scenario: 'live'
         }, '*');
       }
     });
 
-    function handlePortalLogin() {
-      const user = document.getElementById('fb-user').value.trim();
-      alert(`🛡️ Brave Autonomous Security:\nCredentials received for "${user}". To protect your session credentials, OpenBrowser can open live Facebook in a dedicated authenticated window.`);
-      window.open('https://www.facebook.com/login', '_blank');
+    // Facebook Interactive Engine
+    document.getElementById('fb-submit-post')?.addEventListener('click', () => {
+      const input = document.getElementById('fb-post-input');
+      const text = (input.value || '').trim();
+      if (!text) return;
+
+      const container = document.getElementById('fb-posts-container');
+      const newPost = document.createElement('article');
+      newPost.className = 'fb-card';
+      const postId = 'post-' + Date.now();
+      newPost.id = postId;
+      newPost.innerHTML = `
+        <header class="fb-post-header">
+          <div class="fb-post-user-info">
+            <div class="fb-user-avatar" style="background: #2563eb;">U</div>
+            <div>
+              <div class="fb-post-author">You</div>
+              <div class="fb-post-time">Just now • 🌐</div>
+            </div>
+          </div>
+          <span style="cursor: pointer; color: #b0b3b8;">•••</span>
+        </header>
+        <div class="fb-post-content">${text.replace(/</g, '&lt;')}</div>
+        <div class="fb-post-stats">
+          <span id="${postId}-likes">👍 1</span>
+          <span>0 Comments • 0 Shares</span>
+        </div>
+        <div class="fb-post-interactions">
+          <button type="button" class="fb-interact-btn" onclick="togglePostLike('${postId}', 1)">👍 Like</button>
+          <button type="button" class="fb-interact-btn" onclick="focusComment('${postId}')">💬 Comment</button>
+          <button type="button" class="fb-interact-btn" onclick="sharePost('Your post')">↗ Share</button>
+        </div>
+        <div class="fb-comments-section" id="${postId}-comments"></div>
+        <div class="fb-comment-input-row">
+          <input type="text" class="fb-comment-input" id="${postId}-comment-in" placeholder="Write a comment..." onkeydown="if(event.key==='Enter') addComment('${postId}')" />
+        </div>
+      `;
+
+      container.prepend(newPost);
+      input.value = '';
+      showPortalToast('Post published to your live feed!');
+    });
+
+    function togglePostLike(postId, baseCount) {
+      const likesEl = document.getElementById(`${postId}-likes`);
+      if (!likesEl) return;
+      const isLiked = likesEl.getAttribute('data-liked') === 'true';
+      if (isLiked) {
+        likesEl.textContent = `👍 ${baseCount}`;
+        likesEl.removeAttribute('data-liked');
+        showPortalToast('Unliked post');
+      } else {
+        likesEl.textContent = `👍❤️ ${baseCount + 1}`;
+        likesEl.setAttribute('data-liked', 'true');
+        showPortalToast('Liked post! 👍');
+      }
+    }
+
+    function focusComment(postId) {
+      document.getElementById(`${postId}-comment-in`)?.focus();
+    }
+
+    function addComment(postId) {
+      const input = document.getElementById(`${postId}-comment-in`);
+      const text = (input.value || '').trim();
+      if (!text) return;
+
+      const commentsSection = document.getElementById(`${postId}-comments`);
+      const comment = document.createElement('div');
+      comment.className = 'fb-comment-item';
+      comment.innerHTML = `
+        <div class="fb-user-avatar" style="width: 28px; height: 28px; font-size: 11px;">U</div>
+        <div class="fb-comment-bubble">
+          <div class="fb-comment-author">You</div>
+          <div>${text.replace(/</g, '&lt;')}</div>
+        </div>
+      `;
+      commentsSection.appendChild(comment);
+      input.value = '';
+      showPortalToast('Comment added!');
+    }
+
+    function sharePost(author) {
+      showPortalToast(`Shared ${author}'s post to your profile!`);
+    }
+
+    function toggleMessenger() {
+      showPortalToast('Facebook Messenger active (Zero Trackers)');
+    }
+
+    function openChat(name) {
+      showPortalToast(`Opened chat conversation with ${name}`);
+    }
+
+    // YouTube Video Player Controller
+    function playYtVideo(id, title, channel) {
+      const iframe = document.getElementById('yt-live-iframe');
+      iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`;
+      document.getElementById('yt-active-title').textContent = title;
+      showPortalToast(`Now Playing: ${title}`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function filterYtVideos(category) {
+      document.querySelectorAll('.yt-chip').forEach(c => c.classList.remove('active'));
+      event.target.classList.add('active');
+      showPortalToast(`Filtering YouTube by: ${event.target.textContent}`);
     }
   </script>
 </body>

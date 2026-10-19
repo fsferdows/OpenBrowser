@@ -738,6 +738,26 @@
         return;
       }
 
+      if (lower === 'youtube' || lower === 'yt') {
+        const destUrl = 'https://www.youtube.com';
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: destUrl }, '*');
+        } else {
+          window.location.href = destUrl;
+        }
+        return;
+      }
+
+      if (lower === 'facebook' || lower === 'fb') {
+        const destUrl = 'https://www.facebook.com';
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'BRAVE_NAVIGATE', url: destUrl }, '*');
+        } else {
+          window.location.href = destUrl;
+        }
+        return;
+      }
+
       // Direct URL check
       const isUrl = /^https?:\/\//i.test(query) || /^www\./i.test(query) || /^[\w-]+\.(com|org|net|io|dev|edu|gov|tv|ai|app)/i.test(query);
       if (isUrl) {
