@@ -85,32 +85,46 @@ export const BRAVE_SHIELDS_CDP_SCRIPT = `
   window.__tcfapi = function(c, v, cb) { if(cb) cb({ gdprApplies: false }, true); };
 
   // 3. YouTube Video Ad Fast-Forward & Auto-Skip Daemon
-  setInterval(() => {
-    // Auto-click YouTube skip button if visible
-    const skipBtns = document.querySelectorAll(
-      '.ytp-ad-skip-button, .ytp-skip-ad-button, .ytp-ad-skip-button-modern, ' +
-      '.ytp-ad-overlay-close-button, button.ytp-ad-skip-button-text'
-    );
-    for (const btn of skipBtns) {
-      try { btn.click(); } catch (_) {}
-    }
-
-    // Fast-forward video ads if active
-    const player = document.querySelector('#movie_player, .html5-video-player');
-    const isAd = player && (
-      player.classList.contains('ad-showing') ||
-      player.classList.contains('ad-interrupting') ||
-      document.querySelector('.ytp-ad-player-overlay')
-    );
-    if (isAd) {
-      const video = document.querySelector('video');
-      if (video && !isNaN(video.duration)) {
-        video.muted = true;
-        video.playbackRate = 16.0;
-        video.currentTime = video.duration - 0.1;
+  if (typeof location !== 'undefined' && location.hostname && location.hostname.includes('youtube.com')) {
+    setInterval(() => {
+      // Auto-click YouTube skip button if visible
+      const skipBtns = document.querySelectorAll(
+        '.ytp-ad-skip-button, .ytp-skip-ad-button, .ytp-ad-skip-button-modern, ' +
+        '.ytp-ad-overlay-close-button, button.ytp-ad-skip-button-text'
+      );
+      for (const btn of skipBtns) {
+        try { btn.click(); } catch (_) {}
       }
+
+      // Fast-forward video ads if active
+      const player = document.querySelector('#movie_player, .html5-video-player');
+      const isAd = player && (
+        player.classList.contains('ad-showing') ||
+        player.classList.contains('ad-interrupting') ||
+        document.querySelector('.ytp-ad-player-overlay')
+      );
+      if (isAd) {
+        const video = document.querySelector('video');
+        if (video && !isNaN(video.duration)) {
+          video.muted = true;
+          video.playbackRate = 16.0;
+          video.currentTime = video.duration - 0.1;
+        }
+      }
+    }, 150);
+  }
+
+  // 4. Safe Element Hit-Testing & Obscura Crash Defuser
+  try {
+    globalThis.__obscura_setHovered = function() {};
+    const safeElementFromPoint = function(x, y) {
+      return document.body || document.documentElement;
+    };
+    if (typeof Document !== 'undefined') {
+      Document.prototype.elementFromPoint = safeElementFromPoint;
+      if (document) document.elementFromPoint = safeElementFromPoint;
     }
-  }, 100);
+  } catch (_) {}
 })();
 `;
 
@@ -159,9 +173,22 @@ export class ChromiumCdpClient {
       clearTimeout(timer);
       if (res.ok) {
         const data = await res.json();
+        const browserStr = data.Browser || 'Chromium';
+        const isObscura = browserStr.includes('145') ||
+                          (typeof data['V8-Version'] === 'string' && data['V8-Version'].startsWith('14.5')) ||
+                          browserStr.toLowerCase().includes('obscura');
+        const isBrave = browserStr.toLowerCase().includes('brave');
+        const engine = isObscura ? 'obscura' : (isBrave ? 'brave' : 'chrome');
+        const versionMatch = browserStr.match(/[\d.]+/);
+        const version = isObscura ? (browserStr.match(/(\d+\.\d+\.\d+)/)?.[1] || '0.2.6') : (versionMatch ? versionMatch[0] : '1.0.0');
+
         return {
           connected: true,
-          browser: data.Browser || 'Chromium',
+          browser: isObscura ? `Obscura (Rust V8 Engine v${version})` : browserStr,
+          rawBrowser: browserStr,
+          engine,
+          version,
+          isObscura,
           protocolVersion: data['Protocol-Version'] || '1.3',
           userAgent: data['User-Agent'] || '',
           webSocketDebuggerUrl: data.webSocketDebuggerUrl || null
@@ -172,6 +199,9 @@ export class ChromiumCdpClient {
     return {
       connected: false,
       browser: 'Chromium (Simulated Basement)',
+      rawBrowser: 'Chromium',
+      engine: 'simulated',
+      isObscura: false,
       protocolVersion: '1.3',
       userAgent: 'Mozilla/5.0 Brave/124.0.0.0',
       webSocketDebuggerUrl: null
@@ -237,12 +267,13 @@ export class ChromiumCdpClient {
 
   /**
    * Resolves or establishes a real-time duplex WebSocket session to a CDP target.
-   * Adheres to rea-main CdpConnection protocol.
+   * Supports both direct target debugger URLs and flattened browser session multiplexing
+   * across Google Chrome, Brave, and Obscura (Rust V8).
    */
   async getOrCreateSession(targetId) {
     if (this.sessions.has(targetId)) {
       const session = this.sessions.get(targetId);
-      if (session.ws.readyState === 1) { // OPEN
+      if (session.ws && session.ws.readyState === 1) { // OPEN
         return session;
       }
       this.sessions.delete(targetId);
@@ -251,20 +282,35 @@ export class ChromiumCdpClient {
     if (!this.wsConstructor) return null;
 
     try {
+      const browserInfo = await this.getBrowserInfo();
       const targets = await this.listTargets();
       const target = targets.find(t => t.id === targetId || (targetId === 'target-active' && t.type === 'page')) || targets.find(t => t.type === 'page');
-      if (!target || !target.webSocketDebuggerUrl) return null;
 
-      const ws = new this.wsConstructor(target.webSocketDebuggerUrl);
+      // Prefer browser-level debugger URL for flattened session multiplexing (Obscura / Chrome),
+      // falling back to target-specific URL.
+      let wsUrl = null;
+      let isBrowserWs = false;
+
+      if (browserInfo?.webSocketDebuggerUrl) {
+        wsUrl = browserInfo.webSocketDebuggerUrl;
+        isBrowserWs = true;
+      } else if (target?.webSocketDebuggerUrl) {
+        wsUrl = target.webSocketDebuggerUrl;
+      } else {
+        return null;
+      }
+
+      const ws = new this.wsConstructor(wsUrl);
       const session = {
-        targetId: target.id,
+        targetId: target ? target.id : 'target-active',
         ws,
+        sessionId: null,
         nextId: 1,
         pending: new Map()
       };
 
       await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('WebSocket timeout')), 2000);
+        const timeout = setTimeout(() => reject(new Error('WebSocket timeout')), 2500);
         ws.onopen = () => {
           clearTimeout(timeout);
           resolve();
@@ -278,6 +324,12 @@ export class ChromiumCdpClient {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          if (data.method === 'Target.attachedToTarget' && data.params?.sessionId) {
+            session.sessionId = data.params.sessionId;
+            if (data.params.targetInfo?.targetId) {
+              session.targetId = data.params.targetInfo.targetId;
+            }
+          }
           if (data.id && session.pending.has(data.id)) {
             const { resolve, reject } = session.pending.get(data.id);
             session.pending.delete(data.id);
@@ -289,9 +341,68 @@ export class ChromiumCdpClient {
 
       ws.onclose = () => {
         this.sessions.delete(targetId);
+        if (session.targetId) this.sessions.delete(session.targetId);
       };
 
+      // If connected to browser WebSocket, ensure session attachment or page creation
+      if (isBrowserWs) {
+        let attached = false;
+        const effectiveTargetId = target?.id;
+        if (effectiveTargetId && effectiveTargetId !== 'browser') {
+          const attachCmdId = session.nextId++;
+          try {
+            const attachPromise = new Promise((resolve, reject) => {
+              const timer = setTimeout(() => reject(new Error('Attach timeout')), 1000);
+              session.pending.set(attachCmdId, {
+                resolve: (res) => { clearTimeout(timer); resolve(res); },
+                reject: (err) => { clearTimeout(timer); reject(err); }
+              });
+            });
+            ws.send(JSON.stringify({
+              id: attachCmdId,
+              method: 'Target.attachToTarget',
+              params: { targetId: effectiveTargetId, flatten: true }
+            }));
+            const attachRes = await attachPromise;
+            if (attachRes?.sessionId) {
+              session.sessionId = attachRes.sessionId;
+              attached = true;
+            }
+          } catch (_) {
+            attached = false;
+          }
+        }
+
+        if (!attached) {
+          const createCmdId = session.nextId++;
+          try {
+            const createPromise = new Promise((resolve, reject) => {
+              const timer = setTimeout(() => reject(new Error('Create timeout')), 1200);
+              session.pending.set(createCmdId, {
+                resolve: (res) => { clearTimeout(timer); resolve(res); },
+                reject: (err) => { clearTimeout(timer); reject(err); }
+              });
+            });
+            ws.send(JSON.stringify({
+              id: createCmdId,
+              method: 'Target.createTarget',
+              params: { url: 'about:blank' }
+            }));
+            const createRes = await createPromise;
+            if (createRes?.targetId) {
+              session.targetId = createRes.targetId;
+              if (!session.sessionId) {
+                session.sessionId = `${createRes.targetId}-session`;
+              }
+            }
+          } catch (_) {}
+        }
+      }
+
       this.sessions.set(targetId, session);
+      if (session.targetId && session.targetId !== targetId) {
+        this.sessions.set(session.targetId, session);
+      }
       return session;
     } catch (_) {
       return null;
@@ -304,18 +415,18 @@ export class ChromiumCdpClient {
    */
   async sendCommand(targetId, method, params = {}) {
     const session = await this.getOrCreateSession(targetId);
-    if (session && session.ws.readyState === 1) {
+    if (session && session.ws && session.ws.readyState === 1) {
       return new Promise((resolve, reject) => {
         const cmdId = session.nextId++;
         const timer = setTimeout(() => {
           session.pending.delete(cmdId);
           reject(new Error(`CDP command timeout: ${method}`));
-        }, 3000);
+        }, 5000);
 
         session.pending.set(cmdId, {
           resolve: (res) => {
             clearTimeout(timer);
-            resolve({ id: cmdId, targetId, method, result: res });
+            resolve({ id: cmdId, targetId: session.targetId || targetId, method, result: res });
           },
           reject: (err) => {
             clearTimeout(timer);
@@ -323,7 +434,11 @@ export class ChromiumCdpClient {
           }
         });
 
-        session.ws.send(JSON.stringify({ id: cmdId, method, params }));
+        const payload = { id: cmdId, method, params };
+        if (session.sessionId) {
+          payload.sessionId = session.sessionId;
+        }
+        session.ws.send(JSON.stringify(payload));
       });
     }
 
@@ -376,6 +491,19 @@ export class ChromiumCdpClient {
 
     try {
       const res = await this.sendCommand(targetId, 'Page.navigate', { url });
+      // Defuse elementFromPoint and reinforce shields on navigated target
+      await this.sendCommand(targetId, 'Runtime.evaluate', {
+        expression: `
+          try {
+            globalThis.__obscura_setHovered = function() {};
+            const safeEFP = function(x, y) {
+              return document.body || document.documentElement;
+            };
+            if (typeof Document !== 'undefined') Document.prototype.elementFromPoint = safeEFP;
+            if (document) document.elementFromPoint = safeEFP;
+          } catch (_) {}
+        `
+      }).catch(() => {});
       return { success: true, targetId, url, cdpResult: res.result };
     } catch (err) {
       return { success: true, targetId, url, simulated: true };
@@ -485,7 +613,8 @@ export class ChromiumCdpClient {
         unmodifiedText: keyText
       });
 
-      if (keyText) {
+      // Only dispatch 'char' event for printable text characters, not control keys (Enter, Tab, Escape, Backspace)
+      if (keyText && !isEnter && !isBackspace && !isTab && !isEscape) {
         await this.sendCommand(targetId, 'Input.dispatchKeyEvent', {
           type: 'char',
           windowsVirtualKeyCode: vk,
@@ -516,13 +645,26 @@ export class ChromiumCdpClient {
    */
   async captureScreenshot(targetId, options = {}) {
     const format = options.format || 'jpeg';
-    const quality = options.quality || 80;
+    const params = { format };
+    if (format === 'jpeg' && options.quality) {
+      params.quality = options.quality;
+    }
     try {
-      const res = await this.sendCommand(targetId, 'Page.captureScreenshot', { format, quality });
+      const res = await this.sendCommand(targetId, 'Page.captureScreenshot', params);
       if (res && res.result && res.result.data) {
         return { success: true, targetId, format, data: res.result.data };
       }
-    } catch (_) {}
+    } catch (_) {
+      // If requested format was rejected, fallback to png
+      if (format !== 'png') {
+        try {
+          const res = await this.sendCommand(targetId, 'Page.captureScreenshot', { format: 'png' });
+          if (res && res.result && res.result.data) {
+            return { success: true, targetId, format: 'png', data: res.result.data };
+          }
+        } catch (_) {}
+      }
+    }
 
     return {
       success: false,

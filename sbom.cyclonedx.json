@@ -4,7 +4,7 @@
   "serialNumber": "urn:uuid:81df6be2-bb97-4155-bf04-add233cfec90",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-10-18T14:19:45.739Z",
+    "timestamp": "2026-11-01T19:25:48.811Z",
     "component": {
       "type": "application",
       "name": "agentic-browser",
@@ -61,6 +61,19 @@
         {
           "license": {
             "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "framework",
+      "name": "obscura",
+      "version": "0.2.6",
+      "purl": "pkg:github/h4ckf0r0day/obscura@8534b401898ed17b62f69bdc3d5eb186bffb0d60",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
           }
         }
       ]

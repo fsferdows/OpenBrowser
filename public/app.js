@@ -537,6 +537,7 @@
     cdpPopoverStatus: document.getElementById('cdp-popover-status'),
     cdpPopoverTargetCount: document.getElementById('cdp-popover-target-count'),
     cdpTargetsList: document.getElementById('cdp-targets-list'),
+    btnLaunchObscura: document.getElementById('btn-launch-obscura'),
     btnLaunchChrome: document.getElementById('btn-launch-chrome'),
     btnLaunchBrave: document.getElementById('btn-launch-brave'),
 
@@ -1199,6 +1200,16 @@
 
   document.getElementById('btn-cdp-return-web')?.addEventListener('click', () => {
     setViewportMode('web');
+  });
+  document.getElementById('btn-cdp-launch-obscura')?.addEventListener('click', () => {
+    fetch('/api/chrome/launch?engine=obscura', { method: 'POST' })
+      .then(() => {
+        showToast('⚡ Launching Obscura Native Headless Engine on port 9222...');
+        setTimeout(refreshCdpStream, 800);
+      })
+      .catch(() => {
+        showToast('Terminal command: npm run browser:obscura');
+      });
   });
   document.getElementById('btn-cdp-launch-retry')?.addEventListener('click', () => {
     fetch('/api/chrome/launch', { method: 'POST' })
@@ -2786,6 +2797,20 @@
   // ==========================================================================
   // Real-Time Server-Sent Events (SSE) Stream & CDP Integration
   // ==========================================================================
+  if (dom.btnLaunchObscura) {
+    dom.btnLaunchObscura.addEventListener('click', async () => {
+      try {
+        appendLog('system', '⚡ Launching Obscura Native Headless Stealth Engine (Rust V8, 30MB) on port 9222...');
+        const res = await fetch('/api/chrome/launch?engine=obscura', { method: 'POST' });
+        const data = await res.json();
+        appendLog('system', data.message || 'Obscura launch requested.');
+        showToast('⚡ Obscura Native Engine connected on port 9222');
+      } catch (err) {
+        appendLog('system', `Obscura launch failed: ${err.message}`);
+      }
+    });
+  }
+
   if (dom.btnLaunchChrome) {
     dom.btnLaunchChrome.addEventListener('click', async () => {
       try {
@@ -2829,13 +2854,15 @@
           // 1. Update CDP Basement Status
           if (payload.cdp && dom.btnCdpStatus) {
             const isConnected = payload.cdp.connected;
+            const isObscura = !!payload.cdp.isObscura || payload.cdp.engine === 'obscura';
             const browserName = (payload.cdp.browser || 'Chromium').split('/')[0];
+            const engineBadge = isObscura ? 'Obscura Stealth' : browserName;
             dom.btnCdpStatus.className = `action-btn cdp-badge ${isConnected ? 'connected' : 'simulated'}`;
             dom.cdpStatusDot.textContent = isConnected ? '🟢' : '⚪';
-            dom.cdpStatusText.textContent = isConnected ? `${browserName} CDP: Live (9222)` : 'CDP: Simulated';
+            dom.cdpStatusText.textContent = isConnected ? `${engineBadge} CDP: Live (9222)` : 'CDP: Simulated';
 
             if (dom.cdpPopoverStatus) {
-              dom.cdpPopoverStatus.textContent = isConnected ? `Connected to ${payload.cdp.browser}` : 'Simulated Fallback (Port 9222 Closed)';
+              dom.cdpPopoverStatus.textContent = isConnected ? `Connected to ${payload.cdp.browser} (${isObscura ? 'Rust V8 Native' : 'Desktop Browser'})` : 'Simulated Fallback (Port 9222 Closed)';
               dom.cdpPopoverStatus.style.color = isConnected ? '#4ade80' : '#f59e0b';
             }
 

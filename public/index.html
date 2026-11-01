@@ -201,9 +201,12 @@
       <div class="cdp-targets-scroll" id="cdp-targets-list" style="margin-top: 8px; max-height: 120px; overflow-y: auto; font-family: monospace; font-size: 11px; background: rgba(0,0,0,0.25); padding: 6px; border-radius: 6px;">
         <!-- Targets injected dynamically -->
       </div>
-      <div style="margin-top: 10px; display: flex; gap: 8px;">
-        <button id="btn-launch-chrome" style="flex: 1; font-size: 11px; padding: 7px; background: #2563eb; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">🌐 Launch Chrome CDP</button>
-        <button id="btn-launch-brave" style="flex: 1; font-size: 11px; padding: 7px; background: #ea580c; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">🦁 Launch Brave CDP</button>
+      <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">
+        <button id="btn-launch-obscura" style="font-size: 11px; padding: 7px; background: #7c3aed; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;" title="Native Rust V8 Headless Engine (Sub-100ms startup, 30MB RAM)">⚡ Launch Obscura Stealth Engine</button>
+        <div style="display: flex; gap: 8px;">
+          <button id="btn-launch-chrome" style="flex: 1; font-size: 11px; padding: 7px; background: #2563eb; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">🌐 Launch Chrome CDP</button>
+          <button id="btn-launch-brave" style="flex: 1; font-size: 11px; padding: 7px; background: #ea580c; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">🦁 Launch Brave CDP</button>
+        </div>
       </div>
     </div>
     <div class="ssl-popover-footer">
@@ -508,13 +511,16 @@
               <button type="button" class="btn-cdp-primary" id="btn-cdp-return-web">
                 <span>🌐 Return to Web View</span>
               </button>
+              <button type="button" class="btn-cdp-secondary" id="btn-cdp-launch-obscura" style="background: rgba(124, 58, 237, 0.25); border-color: rgba(124, 58, 237, 0.5); color: #c4b5fd;">
+                <span>⚡ Launch Obscura (Native)</span>
+              </button>
               <button type="button" class="btn-cdp-secondary" id="btn-cdp-launch-retry">
                 <span>🚀 Launch Chrome CDP</span>
               </button>
             </div>
             <div class="cdp-terminal-hint">
-              <span>Start headless Chrome daemon in terminal:</span>
-              <code>npm run browser:chrome</code>
+              <span>Start headless engine daemon in terminal:</span>
+              <code>npm run browser:obscura</code>
             </div>
           </div>
           <div class="cdp-stream-overlay" id="cdp-stream-overlay" style="display: none;">

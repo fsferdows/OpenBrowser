@@ -17,6 +17,7 @@
     "dev": "node scripts/serve-localhost.mjs",
     "browser:brave": "bash scripts/launch-brave-cdp.sh",
     "browser:chrome": "bash scripts/launch-chrome-cdp.sh",
+    "browser:obscura": "bash scripts/launch-obscura-cdp.sh",
     "test": "node --test --test-force-exit packages/*/tests/*.test.js packages/*/tests/**/*.test.js",
     "lint": "node scripts/lint.mjs",
     "typecheck": "node scripts/typecheck-stub.mjs",

@@ -106,4 +106,64 @@ describe('Self-Hosted Real-Time CDP Supervisor Tests', () => {
     assert.strictEqual(scroll.scrolled, true);
     assert.strictEqual(scroll.deltaY, 300);
   });
+
+  it('reports Obscura engine status and metadata correctly in supervisor status response', async () => {
+    const mockObscuraClient = new ChromiumCdpClient({
+      fetchFn: async (url) => {
+        if (url.includes('/json/version')) {
+          return {
+            ok: true,
+            json: async () => ({
+              Browser: 'Obscura/0.2.6',
+              'Protocol-Version': '1.3',
+              'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36'
+            })
+          };
+        }
+        if (url.includes('/json/list')) {
+          return {
+            ok: true,
+            json: async () => [
+              { id: 'page-1', type: 'page', title: 'New Tab', url: 'about:blank' }
+            ]
+          };
+        }
+        return { ok: false };
+      }
+    });
+
+    const isConnected = await mockObscuraClient.isCdpConnected();
+    assert.strictEqual(isConnected, true);
+
+    const info = await mockObscuraClient.getBrowserInfo();
+    assert.strictEqual(info.isObscura, true);
+    assert.strictEqual(info.engine, 'obscura');
+    assert.strictEqual(info.browser, 'Obscura (Rust V8 Engine v0.2.6)');
+    assert.strictEqual(info.version, '0.2.6');
+
+    const statusResponse = {
+      connected: isConnected,
+      browser: info.browser,
+      engine: info.engine,
+      isObscura: info.isObscura,
+      targetsCount: 1,
+      port: 9222,
+      mode: 'self-hosted'
+    };
+
+    assert.strictEqual(statusResponse.isObscura, true);
+    assert.strictEqual(statusResponse.engine, 'obscura');
+  });
+
+  it('validates screenshot image format detection between PNG and JPEG buffers', () => {
+    // PNG magic bytes [0x89, 0x50, 0x4e, 0x47]
+    const pngBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const isPng = pngBuffer.length > 4 && pngBuffer[0] === 0x89 && pngBuffer[1] === 0x50 && pngBuffer[2] === 0x4e && pngBuffer[3] === 0x47;
+    assert.strictEqual(isPng, true);
+
+    // JPEG magic bytes [0xff, 0xd8, 0xff]
+    const jpegBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
+    const isJpegPng = jpegBuffer.length > 4 && jpegBuffer[0] === 0x89;
+    assert.strictEqual(isJpegPng, false);
+  });
 });

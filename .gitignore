@@ -9,6 +9,7 @@ chromium-*/
 node_modules/
 dist/
 build/
+bin/
 coverage/
 .turbo/
 .cache/

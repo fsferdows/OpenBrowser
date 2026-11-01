@@ -43,6 +43,14 @@ const VENDOR_REPOSITORIES = [
     url: 'https://github.com/morluto/rea',
     pinnedCommit: 'ceeff5a41788e47e5aee96a4baf191a6ce7fde4b',
     archive: 'rea-main.zip'
+  },
+  {
+    name: 'obscura',
+    license: 'Apache-2.0',
+    author: 'h4ckf0r0day',
+    url: 'https://github.com/h4ckf0r0day/obscura',
+    pinnedCommit: '8534b401898ed17b62f69bdc3d5eb186bffb0d60',
+    archive: 'vendor/obscura'
   }
 ];
 
@@ -81,7 +89,10 @@ function runAudit() {
   noticeDoc += `Copyright (c) 2026 diegosouzapw. Released under the terms of the MIT License.\n\n`;
 
   noticeDoc += `### REA (MIT)\n`;
-  noticeDoc += `Copyright (c) 2026 morluto. Released under the terms of the MIT License.\n`;
+  noticeDoc += `Copyright (c) 2026 morluto. Released under the terms of the MIT License.\n\n`;
+
+  noticeDoc += `### Obscura (Apache-2.0)\n`;
+  noticeDoc += `Copyright (c) 2026 h4ckf0r0day. Licensed under the Apache License, Version 2.0.\n`;
 
   writeFileSync(join(process.cwd(), 'THIRD_PARTY_NOTICES.md'), noticeDoc, 'utf8');
   console.log('[SUCCESS] THIRD_PARTY_NOTICES.md updated. License audit completed with 0 errors.');

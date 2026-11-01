@@ -203,13 +203,18 @@
       "id": "phase8-task27",
       "description": "Local Internal Page Isolation and Omnibox Search Scheme Protection (ADR-0021): Fix search.html DNS resolution error ('search.html IP address could not be found') on deployed environments (Vercel/GitHub Pages). Guard sanitizeAndRepairUrl to prevent prepending https:// to internal relative html pages (search.html, portal.html, newtab.html, etc.), strip accidental https:// prefixes, classify relative html inputs as internal type in resolveOmniboxDestination, add 302 redirects in api/proxy.js and serve-localhost.mjs, and bump cache busters to v=1.0.7.",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task28",
+      "description": "Obscura Native Headless Engine and Stealth CDP Pipeline (ADR-0022): Integrated h4ckf0r0day/obscura at pinned commit 8534b401898ed17b62f69bdc3d5eb186bffb0d60 under Apache-2.0. Verified and installed native macOS Apple Silicon release binaries in bin/obscura (~30MB RAM, sub-100ms startup). Created scripts/launch-obscura-cdp.sh and npm run browser:obscura. Updated packages/control/src/chromium-client.js to detect Obscura, route commands over flattened browser WebSocket sessions using sessionId, apply runtime defensive stubs for elementFromPoint and hovered state, and restrict key event dispatch to printable characters. Enhanced scripts/serve-localhost.mjs with multi-engine supervision, /api/chrome/status and /api/chrome/live-data engine exposure, POST /api/chrome/launch?engine=obscura, and dynamic PNG/JPEG screenshot streaming. Added Obscura launch controls and status indicators to public/app.js and public/index.html. Added license audit and SBOM entries and comprehensive acceptance test suite in packages/control/tests/obscura-integration.test.js.",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
     "OQ-001: Host filesystem capacity is constrained; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Verify Vercel production deployment and GitHub Pages sync.",
-  "last_commit": "1d83ba9"
+  "next_action": "Run full end-to-end regression validation and package production release.",
+  "last_commit": "e646335"
 }
 

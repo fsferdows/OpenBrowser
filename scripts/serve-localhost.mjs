@@ -43,9 +43,9 @@ const skillLibrary = new SkillLibrary();
 const reaAdapter = new ReaAnalysisAdapter();
 const chromiumClient = new ChromiumCdpClient({ port: 9222 });
 
-// Self-Hosted Autonomous Chrome CDP Supervisor
+// Self-Hosted Autonomous Browser CDP Supervisor (Obscura, Chrome, Brave)
 let isStartingChrome = false;
-async function ensureChromeCdpSupervised(forceRestart = false) {
+async function ensureChromeCdpSupervised(forceRestart = false, requestedEngine = null) {
   if (isStartingChrome) return false;
   try {
     const connected = await chromiumClient.isCdpConnected();
@@ -53,7 +53,9 @@ async function ensureChromeCdpSupervised(forceRestart = false) {
       return true;
     }
     isStartingChrome = true;
-    console.log('🤖 [Self-Hosted CDP Supervisor] Supervising Google Chrome CDP on port 9222...');
+
+    const enginePreference = (requestedEngine || process.env.CDP_ENGINE || 'auto').toLowerCase();
+    console.log(`🤖 [Self-Hosted CDP Supervisor] Supervising CDP on port 9222 (engine preference: ${enginePreference})...`);
 
     // Clean up stale lock files from user profile to prevent profile deadlock
     const userDataDir = '/tmp/chrome-real-user-profile';
@@ -68,20 +70,43 @@ async function ensureChromeCdpSupervised(forceRestart = false) {
       }
     } catch (_) {}
 
-    const scriptPath = join(__dirname, 'scripts', 'launch-chrome-cdp.sh');
-    if (existsSync(scriptPath)) {
-      const child = spawn('bash', [scriptPath], {
+    // Determine target script to launch
+    const obscuraBinary = join(__dirname, 'bin', 'obscura');
+    const obscuraScript = join(__dirname, 'scripts', 'launch-obscura-cdp.sh');
+    const chromeScript = join(__dirname, 'scripts', 'launch-chrome-cdp.sh');
+    const braveScript = join(__dirname, 'scripts', 'launch-brave-cdp.sh');
+
+    let selectedScript = chromeScript;
+    if (enginePreference === 'obscura') {
+      selectedScript = obscuraScript;
+    } else if (enginePreference === 'brave') {
+      selectedScript = braveScript;
+    } else if (enginePreference === 'chrome') {
+      selectedScript = chromeScript;
+    } else {
+      // 'auto' mode: prefer Obscura if binary and script are present
+      if (existsSync(obscuraBinary) && existsSync(obscuraScript)) {
+        selectedScript = obscuraScript;
+      } else if (existsSync(chromeScript)) {
+        selectedScript = chromeScript;
+      }
+    }
+
+    if (existsSync(selectedScript)) {
+      console.log(`🚀 [Self-Hosted CDP Supervisor] Executing launch script: ${selectedScript}`);
+      const child = spawn('bash', [selectedScript], {
         detached: true,
         stdio: 'ignore'
       });
       child.unref();
     }
 
-    // Wait up to 3 seconds for port 9222 to respond
-    for (let i = 0; i < 15; i++) {
+    // Wait up to 3.6 seconds for port 9222 to respond
+    for (let i = 0; i < 18; i++) {
       await new Promise(r => setTimeout(r, 200));
       if (await chromiumClient.isCdpConnected()) {
-        console.log('✅ [Self-Hosted CDP Supervisor] Google Chrome CDP connected on port 9222.');
+        const info = await chromiumClient.getBrowserInfo().catch(() => ({ browser: 'Unknown', engine: 'unknown' }));
+        console.log(`✅ [Self-Hosted CDP Supervisor] CDP connected on port 9222: ${info.browser} (engine: ${info.engine || 'unknown'}).`);
         return true;
       }
     }
@@ -1525,7 +1550,7 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // Google Chrome CDP Status & Supervisor Health API
+  // Google Chrome & Obscura CDP Status & Supervisor Health API
   if (req.method === 'GET' && (pathname === '/api/chrome/status' || pathname === '/api/chrome/health')) {
     try {
       let isConnected = await chromiumClient.isCdpConnected();
@@ -1533,7 +1558,7 @@ const server = createServer(async (req, res) => {
         await ensureChromeCdpSupervised();
         isConnected = await chromiumClient.isCdpConnected();
       }
-      let browserInfo = { browser: 'Chromium' };
+      let browserInfo = { browser: 'Chromium', engine: 'unknown', isObscura: false };
       let targetsCount = 0;
       if (isConnected) {
         try {
@@ -1550,6 +1575,8 @@ const server = createServer(async (req, res) => {
       res.end(JSON.stringify({
         connected: isConnected,
         browser: browserInfo.browser,
+        engine: browserInfo.engine || 'unknown',
+        isObscura: !!browserInfo.isObscura,
         targetsCount,
         port: 9222,
         mode: 'self-hosted'
@@ -1562,6 +1589,8 @@ const server = createServer(async (req, res) => {
       });
       res.end(JSON.stringify({
         connected: false,
+        engine: 'unknown',
+        isObscura: false,
         error: err.message,
         port: 9222,
         mode: 'self-hosted'
@@ -1570,7 +1599,7 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // Google Chrome Live Data API
+  // Google Chrome & Obscura Live Data API
   if (req.method === 'GET' && pathname === '/api/chrome/live-data') {
     try {
       const isConnected = await chromiumClient.isCdpConnected();
@@ -1586,6 +1615,8 @@ const server = createServer(async (req, res) => {
       res.end(JSON.stringify({
         connected: isConnected,
         browser: browserInfo.browser,
+        engine: browserInfo.engine || 'unknown',
+        isObscura: !!browserInfo.isObscura,
         protocolVersion: browserInfo.protocolVersion,
         targetsCount: targets.length,
         targets: targets.map(t => ({ id: t.id, title: t.title, url: t.url, type: t.type })),
@@ -1638,7 +1669,7 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // Google Chrome CDP Live Screenshot API
+  // Google Chrome & Obscura CDP Live Screenshot API
   if ((req.method === 'GET' || req.method === 'HEAD') && pathname === '/api/chrome/screenshot') {
     try {
       const targets = await chromiumClient.listTargets();
@@ -1649,11 +1680,13 @@ const server = createServer(async (req, res) => {
         } catch (_) {}
       }
       const targetId = parsedUrl.searchParams.get('targetId') || (pageTarget ? pageTarget.id : 'target-active');
-      const shot = await chromiumClient.captureScreenshot(targetId, { format: 'jpeg', quality: 80 });
+      const shot = await chromiumClient.captureScreenshot(targetId, { format: 'png' });
       if (shot && shot.data) {
         const buffer = Buffer.from(shot.data, 'base64');
+        const isPng = buffer.length > 4 && buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47;
+        const contentType = isPng ? 'image/png' : 'image/jpeg';
         res.writeHead(200, {
-          'Content-Type': 'image/jpeg',
+          'Content-Type': contentType,
           'Cache-Control': 'no-cache, no-store',
           'Access-Control-Allow-Origin': '*'
         });
@@ -1758,18 +1791,26 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // Google Chrome CDP Auto-Launch API
+  // Google Chrome & Obscura CDP Auto-Launch API
   if (req.method === 'POST' && pathname === '/api/chrome/launch') {
     try {
-      await ensureChromeCdpSupervised(true);
+      const requestedEngine = parsedUrl.searchParams.get('engine') || null;
+      await ensureChromeCdpSupervised(true, requestedEngine);
       const isConnected = await chromiumClient.isCdpConnected();
+      const browserInfo = isConnected ? await chromiumClient.getBrowserInfo().catch(() => ({})) : {};
+      const engineName = browserInfo.engine || requestedEngine || 'Browser';
       res.writeHead(200, {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
       });
       res.end(JSON.stringify({
         success: isConnected,
-        message: isConnected ? 'Google Chrome CDP is running on port 9222.' : 'Google Chrome launch initiated.'
+        engine: browserInfo.engine || requestedEngine || 'unknown',
+        browser: browserInfo.browser || engineName,
+        isObscura: !!browserInfo.isObscura,
+        message: isConnected
+          ? `${browserInfo.browser || engineName} CDP is running on port 9222.`
+          : `${engineName} launch initiated.`
       }));
     } catch (err) {
       res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
@@ -1803,6 +1844,8 @@ const server = createServer(async (req, res) => {
           cdp: {
             connected: isConnected,
             browser: browserInfo.browser,
+            engine: browserInfo.engine || 'unknown',
+            isObscura: !!browserInfo.isObscura,
             protocolVersion: browserInfo.protocolVersion,
             host: `${chromiumClient.host}:${chromiumClient.port}`,
             targetsCount: targets.length,

@@ -45,6 +45,13 @@ const sbom = {
       version: '6.5.0',
       purl: 'pkg:github/morluto/rea@ceeff5a41788e47e5aee96a4baf191a6ce7fde4b',
       licenses: [{ license: { id: 'MIT' } }]
+    },
+    {
+      type: 'framework',
+      name: 'obscura',
+      version: '0.2.6',
+      purl: 'pkg:github/h4ckf0r0day/obscura@8534b401898ed17b62f69bdc3d5eb186bffb0d60',
+      licenses: [{ license: { id: 'Apache-2.0' } }]
     }
   ]
 };
