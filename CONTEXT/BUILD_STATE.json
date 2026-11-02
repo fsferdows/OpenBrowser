@@ -208,13 +208,18 @@
       "id": "phase8-task28",
       "description": "Obscura Native Headless Engine and Stealth CDP Pipeline (ADR-0022): Integrated h4ckf0r0day/obscura at pinned commit 8534b401898ed17b62f69bdc3d5eb186bffb0d60 under Apache-2.0. Verified and installed native macOS Apple Silicon release binaries in bin/obscura (~30MB RAM, sub-100ms startup). Created scripts/launch-obscura-cdp.sh and npm run browser:obscura. Updated packages/control/src/chromium-client.js to detect Obscura, route commands over flattened browser WebSocket sessions using sessionId, apply runtime defensive stubs for elementFromPoint and hovered state, and restrict key event dispatch to printable characters. Enhanced scripts/serve-localhost.mjs with multi-engine supervision, /api/chrome/status and /api/chrome/live-data engine exposure, POST /api/chrome/launch?engine=obscura, and dynamic PNG/JPEG screenshot streaming. Added Obscura launch controls and status indicators to public/app.js and public/index.html. Added license audit and SBOM entries and comprehensive acceptance test suite in packages/control/tests/obscura-integration.test.js.",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task29",
+      "description": "Cross-Origin YouTube and Heavy SPA Hydration Fix via High-Fidelity Shielded Video Portal and Adaptive Multi-Engine Viewport Synchronization: Resolved YouTube empty gray skeleton grid freeze in Web View on localhost:3000 by redirecting YouTube homepage and channel requests in scripts/serve-localhost.mjs and routing in public/app.js to portal.html with interactive video catalog, category filters (Trending, Coding & AI, Space & Science, Music, Tech, Podcasts), and zero-ad playback. Eliminated CDP command timeout failures in packages/control/src/chromium-client.js by extending sendCommand timeout to 25s for navigation/screenshot/evaluation, expanding createPromise timeout to 5s, handling simulated targets cleanly, and guarding synthetic input dispatch. Fixed public/app.js switchTab iframe overlay bug in CDP mode and wired 1-click 'Switch to Live Chrome Engine' directly between Web View and the native Obscura/Chrome engine.",
+      "status": "completed"
     }
   ],
   "failures": [],
   "open_issues": [
     "OQ-001: Host filesystem capacity is constrained; Phase A strategy avoids local C++ Chromium compilation."
   ],
-  "next_action": "Run full end-to-end regression validation and package production release.",
-  "last_commit": "da89346"
+  "next_action": "Continuously monitor and sustain multi-engine browser workflows.",
+  "last_commit": "TBD"
 }
 

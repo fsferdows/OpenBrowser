@@ -663,7 +663,7 @@
     let found = false;
     allFrames.forEach(el => {
       if (el.id === `webview-${tabId}` || (tabId === 'newtab' && el.id === 'browser-webview')) {
-        el.style.display = 'block';
+        el.style.display = state.viewportMode === 'cdp' ? 'none' : 'block';
         found = true;
       } else {
         el.style.display = 'none';
@@ -677,6 +677,7 @@
       newFrame.className = 'tab-webview active';
       newFrame.src = tabInfo.iframeSrc;
       newFrame.title = tabInfo.title;
+      newFrame.style.display = state.viewportMode === 'cdp' ? 'none' : 'block';
       dom.webviewContainer.appendChild(newFrame);
       attachIframeListeners(newFrame, tabId);
     }
@@ -1010,16 +1011,16 @@
       if (videoId) {
         effectiveSrc = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
       } else {
-        effectiveSrc = isStaticOnlyHosting
-          ? `portal.html?url=${encodeURIComponent(targetUrl)}&site=youtube`
-          : `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+        effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=youtube`;
       }
+    } else if (lower.includes('facebook.com') || lower.includes('fb.com')) {
+      effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}&site=facebook`;
     } else if (lower.includes('search.html')) {
       effectiveSrc = targetUrl;
     } else if (isStaticOnlyHosting) {
       effectiveSrc = `portal.html?url=${encodeURIComponent(targetUrl)}`;
     } else {
-      // All external URLs (Google, Facebook, GitHub, Wikipedia, etc.) go through proxy
+      // All external URLs (Google, GitHub, Wikipedia, HackerNews, etc.) go through proxy
       effectiveSrc = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
     }
 

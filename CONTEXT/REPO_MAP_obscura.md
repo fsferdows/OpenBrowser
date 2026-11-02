@@ -28,3 +28,4 @@
    - Captures live screenshots (`Page.captureScreenshot`), dispatches mouse and keyboard events (`Input.dispatchMouseEvent`, `Input.dispatchKeyEvent`), evaluates scripts (`Runtime.evaluate`), and navigates targets (`Page.navigate`).
 3. **Frontend Live Viewport**:
    - `public/app.js` displays real-time screencast streams and engine badges (`⚡ Obscura Stealth Engine`), providing instant interactive browsing with ad/tracker blocking.
+

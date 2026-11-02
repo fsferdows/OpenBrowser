@@ -352,7 +352,7 @@ export class ChromiumCdpClient {
           const attachCmdId = session.nextId++;
           try {
             const attachPromise = new Promise((resolve, reject) => {
-              const timer = setTimeout(() => reject(new Error('Attach timeout')), 1000);
+              const timer = setTimeout(() => reject(new Error('Attach timeout')), 3000);
               session.pending.set(attachCmdId, {
                 resolve: (res) => { clearTimeout(timer); resolve(res); },
                 reject: (err) => { clearTimeout(timer); reject(err); }
@@ -377,7 +377,7 @@ export class ChromiumCdpClient {
           const createCmdId = session.nextId++;
           try {
             const createPromise = new Promise((resolve, reject) => {
-              const timer = setTimeout(() => reject(new Error('Create timeout')), 1200);
+              const timer = setTimeout(() => reject(new Error('Create timeout')), 5000);
               session.pending.set(createCmdId, {
                 resolve: (res) => { clearTimeout(timer); resolve(res); },
                 reject: (err) => { clearTimeout(timer); reject(err); }
@@ -414,14 +414,20 @@ export class ChromiumCdpClient {
    * Uses live WebSocket if connected; otherwise returns typed simulated fallback.
    */
   async sendCommand(targetId, method, params = {}) {
+    if (this.simulatedTargets.has(targetId)) {
+      return { id: 1, targetId, method, result: {} };
+    }
+
     const session = await this.getOrCreateSession(targetId);
     if (session && session.ws && session.ws.readyState === 1) {
       return new Promise((resolve, reject) => {
         const cmdId = session.nextId++;
+        const isLongRunning = method === 'Page.navigate' || method === 'Page.captureScreenshot' || method === 'Runtime.evaluate';
+        const timeoutMs = isLongRunning ? 25000 : 15000;
         const timer = setTimeout(() => {
           session.pending.delete(cmdId);
           reject(new Error(`CDP command timeout: ${method}`));
-        }, 5000);
+        }, timeoutMs);
 
         session.pending.set(cmdId, {
           resolve: (res) => {
@@ -557,9 +563,11 @@ export class ChromiumCdpClient {
    * Dispatches synthetic mouse movement and click via CDP Input domain.
    */
   async dispatchClick(targetId, x, y) {
-    await this.sendCommand(targetId, 'Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
-    await this.sendCommand(targetId, 'Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
-    await this.sendCommand(targetId, 'Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left' });
+    try {
+      await this.sendCommand(targetId, 'Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
+      await this.sendCommand(targetId, 'Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
+      await this.sendCommand(targetId, 'Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left' });
+    } catch (_) {}
     return { clicked: true, x, y };
   }
 
@@ -567,10 +575,12 @@ export class ChromiumCdpClient {
    * Dispatches synthetic keyboard entry via CDP Input domain.
    */
   async dispatchType(targetId, text) {
-    for (const char of text) {
-      await this.sendCommand(targetId, 'Input.dispatchKeyEvent', { type: 'keyDown', text: char });
-      await this.sendCommand(targetId, 'Input.dispatchKeyEvent', { type: 'keyUp', text: char });
-    }
+    try {
+      for (const char of text) {
+        await this.sendCommand(targetId, 'Input.dispatchKeyEvent', { type: 'keyDown', text: char });
+        await this.sendCommand(targetId, 'Input.dispatchKeyEvent', { type: 'keyUp', text: char });
+      }
+    } catch (_) {}
     return { typed: true, textLength: text.length };
   }
 

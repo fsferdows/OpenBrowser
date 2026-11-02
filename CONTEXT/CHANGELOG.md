@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Cross-Origin YouTube and Heavy SPA Hydration Fix via Shielded Video Portal and Multi-Engine Viewport Synchronization:
+  - `public/portal.html`: Built rich interactive YouTube Theater & Video Catalog view equipped with ad-free theater player, category filter chips (All, Trending, Coding & AI, Space & Science, Music, Tech, Podcasts), 10 curated playable video cards with real thumbnails and channels, real-time search filtering, instant URL player, and 1-click button to switch to Live Chrome / Obscura Engine. Added 1-click engine switch button to Facebook Gateway.
+  - `scripts/serve-localhost.mjs`: Updated `/api/proxy` for YouTube and Facebook to 302 redirect homepage and browse requests to `/portal.html?url=...&site=...`, preventing iframe hangs on unhydratable cross-origin Polymer skeletons. Increased `navigateAndRender` CDP timeout from 3s to 15s.
+  - `public/app.js`: Updated `navigateLiveUrl()` to route YouTube and Facebook visits to the responsive shielded portals in Web View. Fixed `switchTab()` to guard iframe visibility (`display: none` when in CDP mode), preventing the iframe from occluding the live CDP canvas stream.
+  - `packages/control/src/chromium-client.js`: Extended command timeouts in `sendCommand` to 25s for navigation, screenshot, and evaluation commands, and expanded session establishment timeouts to 5s. Added check for `simulatedTargets` in `sendCommand` and wrapped synthetic input dispatch in defensive error handling.
+
 - Obscura Native Headless Engine and Stealth CDP Pipeline (ADR-0022):
   - `vendor/obscura`: Integrated Obscura at pinned commit `8534b401898ed17b62f69bdc3d5eb186bffb0d60` under Apache-2.0. Verified and installed native macOS Apple Silicon binaries in `bin/obscura` and `bin/obscura-worker` (sub-100ms cold start, ~30MB memory footprint, zero external desktop browser dependencies). Added `bin/` to `.gitignore`.
   - `scripts/launch-obscura-cdp.sh`: Created standalone native launcher with architecture detection (macOS arm64/x86_64, Linux), local binary discovery, automatic release tarball download fallback, and stealth flags (`--port 9222 --stealth --allow-private-network`). Added `npm run browser:obscura` to `package.json`.

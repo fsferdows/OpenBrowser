@@ -1028,7 +1028,7 @@ const server = createServer(async (req, res) => {
           <style>
             * { box-sizing: border-box; margin: 0; padding: 0; }
             body { background: #0f0f0f; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-            .yt-topbar { height: 48px; background: #0f0f0f; border-bottom: 1px solid #272727; display: flex; align-items: center; padding: 0 16px; gap: 12px; }
+            .yt-topbar { height: 48px; background: #0f0f0f; border-bottom: 1px solid #27272a; display: flex; align-items: center; padding: 0 16px; gap: 12px; }
             .yt-logo { font-size: 16px; font-weight: 700; color: #ff0000; display: flex; align-items: center; gap: 6px; cursor: pointer; text-decoration: none; }
             .yt-logo span { color: #fff; }
             .yt-badge { font-size: 11px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; padding: 3px 8px; border-radius: 4px; font-weight: 600; }
@@ -1036,23 +1036,43 @@ const server = createServer(async (req, res) => {
             iframe { width: 100%; height: 100%; border: none; }
           </style></head><body>
           <div class="yt-topbar">
-            <a href="/api/proxy?url=https://www.youtube.com" class="yt-logo">▶ <span>YouTube</span></a>
+            <a href="/portal.html?url=https://www.youtube.com&site=youtube" class="yt-logo">▶ <span>YouTube</span></a>
             <span class="yt-badge">🛡️ Brave Shields: Zero Ads Active</span>
             <div style="margin-left: auto; display: flex; gap: 12px; align-items: center;">
-              <a href="/api/proxy?url=https://www.youtube.com" style="color: #38bdf8; text-decoration: none; font-size: 12px;">← Explore More Videos</a>
+              <a href="/portal.html?url=https://www.youtube.com&site=youtube" style="color: #38bdf8; text-decoration: none; font-size: 12px;">← Explore Video Catalog</a>
             </div>
           </div>
           <div class="yt-player-wrap">
             <iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
           </div></body></html>`;
+        } else {
+          // Redirect to high-fidelity shielded YouTube player & catalog in portal.html
+          // Avoids raw unhydrated Polymer skeleton freeze in cross-origin iframes
+          const portalDest = `/portal.html?url=${encodeURIComponent(finalUrl)}&site=youtube${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ''}`;
+          res.writeHead(302, {
+            'Location': portalDest,
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end();
+          return;
         }
+      }
+
+      if (finalUrl.includes('facebook.com') || finalUrl.includes('fb.com')) {
+        const portalDest = `/portal.html?url=${encodeURIComponent(finalUrl)}&site=facebook`;
+        res.writeHead(302, {
+          'Location': portalDest,
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end();
+        return;
       }
 
       // If CDP rendering was requested explicitly
       if (isCdp && isConnected && !html) {
         try {
-          const renderPromise = chromiumClient.navigateAndRender(finalUrl, 1800);
-          const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 3000));
+          const renderPromise = chromiumClient.navigateAndRender(finalUrl, 2500);
+          const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 15000));
           const renderResult = await Promise.race([renderPromise, timeoutPromise]);
           if (renderResult && renderResult.success && renderResult.html && renderResult.html.length > 500) {
             html = renderResult.html;

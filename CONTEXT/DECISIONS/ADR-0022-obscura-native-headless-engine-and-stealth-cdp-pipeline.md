@@ -43,3 +43,4 @@ We integrate `obscura` into OpenBrowser as the native headless browser engine an
   - All licenses remain fully compliant with project rules (Apache-2.0 permitted in `scripts/audit-licenses.mjs`).
 - **Negative / Neutral**:
   - Complex WebGL / hardware-accelerated 3D features and proprietary DRM (Widevine) are not supported by Obscura's native paint rasterizer; full desktop Chrome remains supported as an alternate engine when DRM or extensions are required.
+

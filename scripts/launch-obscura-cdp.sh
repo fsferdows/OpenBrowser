@@ -50,3 +50,4 @@ exec "$OBSCURA_BIN" serve \
   --host "${HOST}" \
   --stealth \
   --allow-private-network
+

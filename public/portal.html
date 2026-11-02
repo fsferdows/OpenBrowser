@@ -839,6 +839,9 @@
           Facebook requires user authentication and restricts direct frame embedding. You can browse directly via our live web proxy, open Facebook in a dedicated tab, or run autonomous agent reconnaissance.
         </p>
         <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <button type="button" class="btn-action" style="background: #fb542b;" id="fb-switch-cdp-btn">
+            <span>⚡ Switch to Live Chrome Engine</span>
+          </button>
           <button type="button" class="btn-action" style="background: #1877f2;" id="fb-unblock-proxy-btn">
             <span>⚡ Unblock in Browser</span>
           </button>
@@ -878,12 +881,27 @@
             <h2 class="yt-now-playing-title" id="yt-active-title">YouTube Video Player (Ad-Free)</h2>
             <div style="font-size: 13px; color: #aaa; margin-top: 4px;">🛡️ Brave Shields: Zero Tracking & Ads Active</div>
           </div>
-          <div style="display: flex; gap: 8px;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="btn-action" style="background: #fb542b;" id="yt-live-cdp-btn">⚡ Switch to Live Chrome Engine</button>
             <button type="button" class="btn-action" style="background: #10b981;" id="yt-unblock-proxy-btn">⚡ Unblock in Browser</button>
             <a href="https://www.youtube.com" target="_blank" rel="noopener" class="btn-action" style="background: #272727; color: #fff;" id="yt-open-live-btn">↗ Open Live YouTube</a>
           </div>
         </div>
       </div>
+
+      <!-- YouTube Category Filter Pills -->
+      <div class="yt-chips-row" style="max-width: 1400px; margin: 12px auto 0 auto; width: 100%;">
+        <button type="button" class="yt-chip active" data-category="all">All</button>
+        <button type="button" class="yt-chip" data-category="trending">🔥 Trending</button>
+        <button type="button" class="yt-chip" data-category="coding">💻 Coding & AI</button>
+        <button type="button" class="yt-chip" data-category="science">🚀 Science & Space</button>
+        <button type="button" class="yt-chip" data-category="music">🎵 Music</button>
+        <button type="button" class="yt-chip" data-category="tech">📱 Tech</button>
+        <button type="button" class="yt-chip" data-category="podcasts">🎙️ Podcasts</button>
+      </div>
+
+      <!-- YouTube Interactive Video Catalog Grid -->
+      <div class="yt-grid" id="yt-catalog-grid" style="margin-top: 14px;"></div>
     </div>
 
     <!-- =====================================================================
@@ -951,6 +969,166 @@
     const viewGithub = document.getElementById('view-github');
     const viewGeneric = document.getElementById('view-generic');
 
+    const YOUTUBE_VIDEOS = [
+      {
+        id: 'wbWrV9oO4Y8',
+        title: 'SpaceX Starship Orbital Flight Test - Booster Catch & Re-entry',
+        channel: 'SpaceX',
+        duration: '18:42',
+        views: '8.4M views',
+        category: 'science'
+      },
+      {
+        id: 'jfKfPfyJRdk',
+        title: 'Lofi Girl - beats to relax/study to (24/7 Stream)',
+        channel: 'Lofi Girl',
+        duration: 'LIVE',
+        views: '14.2M subs',
+        category: 'music'
+      },
+      {
+        id: 'Xm2ry8k3Y_4',
+        title: 'How Modern Browsers Work: V8, Blink, and DOM Internals',
+        channel: 'Computerphile',
+        duration: '14:15',
+        views: '1.2M views',
+        category: 'coding'
+      },
+      {
+        id: 'q1xN1uH2j_M',
+        title: 'Building Autonomous AI Coding Agents in 2026',
+        channel: 'AI Engineering',
+        duration: '22:08',
+        views: '480K views',
+        category: 'coding'
+      },
+      {
+        id: 'V_V8H99XGf8',
+        title: 'The Infinite Hotel Paradox - Veritasium',
+        channel: 'Veritasium',
+        duration: '11:29',
+        views: '18M views',
+        category: 'science'
+      },
+      {
+        id: 'L_LUpnjgPso',
+        title: 'MKBHD - The Future of Computing & AI Devices 2026',
+        channel: 'Marques Brownlee',
+        duration: '16:50',
+        views: '3.4M views',
+        category: 'tech'
+      },
+      {
+        id: 'dQw4w9WgXcQ',
+        title: 'Rick Astley - Never Gonna Give You Up (Official Music Video)',
+        channel: 'Rick Astley',
+        duration: '3:33',
+        views: '1.5B views',
+        category: 'music'
+      },
+      {
+        id: 'fJ9rUzIMcZQ',
+        title: 'Queen - Bohemian Rhapsody (Official Video Remastered)',
+        channel: 'Queen Official',
+        duration: '5:59',
+        views: '1.7B views',
+        category: 'music'
+      },
+      {
+        id: 'tgbNymZ7vqY',
+        title: 'BBC Earth - Planet Earth II: Deserts and Wildlife',
+        channel: 'BBC Studios',
+        duration: '10:04',
+        views: '9.3M views',
+        category: 'science'
+      },
+      {
+        id: 'l9nh1l8ZIJQ',
+        title: 'Lex Fridman Podcast: Autonomous AI & Engineering Systems',
+        channel: 'Lex Fridman',
+        duration: '2:45:10',
+        views: '2.1M views',
+        category: 'podcasts'
+      }
+    ];
+
+    function playYtVideo(vId, title = 'YouTube Video', channel = 'YouTube Channel', autoplay = true) {
+      const iframe = document.getElementById('yt-live-iframe');
+      const titleEl = document.getElementById('yt-active-title');
+      if (iframe) {
+        iframe.src = `https://www.youtube-nocookie.com/embed/${vId}?autoplay=${autoplay ? '1' : '0'}&rel=0&modestbranding=1`;
+      }
+      if (titleEl) {
+        titleEl.textContent = title;
+      }
+      if (autoplay) {
+        showPortalToast(`▶ Playing: ${title}`);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'BRAVE_USER_ACTION',
+          action: 'play_video',
+          selector: `.yt-card[data-video-id="${vId}"]`,
+          details: { videoId: vId, title, channel }
+        }, '*');
+      }
+    }
+
+    function renderYoutubeCatalog(filterCategory = 'all', searchQuery = '') {
+      const grid = document.getElementById('yt-catalog-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const searchLower = (searchQuery || '').toLowerCase().trim();
+      const filtered = YOUTUBE_VIDEOS.filter(v => {
+        const matchesCategory = filterCategory === 'all' || filterCategory === 'trending' || v.category === filterCategory;
+        const matchesSearch = !searchLower || v.title.toLowerCase().includes(searchLower) || v.channel.toLowerCase().includes(searchLower);
+        return matchesCategory && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: #aaa;">
+            <p style="font-size: 16px; margin-bottom: 12px;">No local videos matched "${searchQuery}".</p>
+            <button type="button" class="btn-action" style="background: #dc2626;" onclick="navigateToSearch('site:youtube.com ${searchQuery}')">
+              🔍 Search "${searchQuery}" on YouTube
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+      filtered.forEach((v, idx) => {
+        const card = document.createElement('div');
+        card.className = 'yt-card';
+        card.setAttribute('data-video-id', v.id);
+        card.setAttribute('data-category', v.category);
+        const avatarColor = colors[idx % colors.length];
+
+        card.innerHTML = `
+          <div class="yt-thumb-wrap">
+            <img src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg" alt="${v.title}" loading="lazy" />
+            <span class="yt-duration">${v.duration}</span>
+          </div>
+          <div class="yt-details">
+            <div class="yt-channel-avatar" style="background: ${avatarColor}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: #fff;">▶</div>
+            <div style="flex: 1; min-width: 0;">
+              <div class="yt-title">${v.title}</div>
+              <div class="yt-meta">${v.channel} • ${v.views}</div>
+            </div>
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          playYtVideo(v.id, v.title, v.channel, true);
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
     if (siteKey === 'facebook' || lowerUrl.includes('facebook') || lowerUrl.includes('fb.com')) {
       viewFacebook.style.display = 'flex';
       viewYoutube.style.display = 'none';
@@ -962,14 +1140,28 @@
       if (viewGithub) viewGithub.style.display = 'none';
       viewGeneric.style.display = 'none';
 
-      // Check for videoId
+      // Check for videoId or search query in URL
+      let initialVideo = null;
+      let initialQuery = params.get('q') || '';
       try {
         const u = new URL(targetUrl);
         const v = u.searchParams.get('v');
-        if (v) {
-          document.getElementById('yt-live-iframe').src = `https://www.youtube-nocookie.com/embed/${v}?autoplay=1`;
-        }
+        if (v) initialVideo = v;
+        const q = u.searchParams.get('search_query');
+        if (q) initialQuery = q;
       } catch (_) {}
+
+      // Render the full YouTube video grid
+      renderYoutubeCatalog('all', initialQuery);
+
+      if (initialVideo) {
+        const found = YOUTUBE_VIDEOS.find(x => x.id === initialVideo);
+        playYtVideo(initialVideo, found ? found.title : 'YouTube Video', found ? found.channel : 'YouTube', true);
+      } else {
+        // Default to SpaceX Starship featured presentation
+        const featured = YOUTUBE_VIDEOS[0];
+        playYtVideo(featured.id, featured.title, featured.channel, false);
+      }
     } else if (siteKey === 'github' || lowerUrl.includes('github.com')) {
       viewFacebook.style.display = 'none';
       viewYoutube.style.display = 'none';
@@ -988,9 +1180,21 @@
       } catch (_) {}
     }
 
+    // Category Filter Chips handler
+    document.querySelectorAll('.yt-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.yt-chip').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const cat = btn.getAttribute('data-category') || 'all';
+        const searchInput = document.getElementById('yt-search-input');
+        renderYoutubeCatalog(cat, searchInput?.value || '');
+      });
+    });
+
     // Toast helper
     function showPortalToast(msg) {
       const toast = document.getElementById('portal-toast');
+      if (!toast) return;
       toast.textContent = msg;
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 2400);
@@ -1050,6 +1254,14 @@
     });
 
     // Facebook Gateway Handlers
+    document.getElementById('fb-switch-cdp-btn')?.addEventListener('click', () => {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'BRAVE_SWITCH_MODE', mode: 'cdp' }, '*');
+      } else {
+        showPortalToast('⚡ Switched to Live Chrome / Obscura Engine View');
+      }
+    });
+
     document.getElementById('fb-unblock-proxy-btn')?.addEventListener('click', () => {
       const fbUrl = 'https://www.facebook.com';
       if (window.parent && window.parent !== window) {
@@ -1064,6 +1276,14 @@
     });
 
     // YouTube Gateway Handlers
+    document.getElementById('yt-switch-cdp-btn')?.addEventListener('click', () => {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'BRAVE_SWITCH_MODE', mode: 'cdp' }, '*');
+      } else {
+        showPortalToast('⚡ Switched to Live Chrome / Obscura Engine View');
+      }
+    });
+
     document.getElementById('yt-unblock-proxy-btn')?.addEventListener('click', () => {
       const ytUrl = targetUrl.includes('youtube.com') ? targetUrl : 'https://www.youtube.com';
       if (window.parent && window.parent !== window) {
@@ -1074,6 +1294,11 @@
     });
 
     document.getElementById('btn-yt-search-go')?.addEventListener('click', handleYtSearch);
+    document.getElementById('yt-search-input')?.addEventListener('input', (e) => {
+      const activeChip = document.querySelector('.yt-chip.active');
+      const cat = activeChip?.getAttribute('data-category') || 'all';
+      renderYoutubeCatalog(cat, e.target.value);
+    });
     document.getElementById('yt-search-input')?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') handleYtSearch();
     });
@@ -1092,12 +1317,13 @@
       } catch (_) {}
 
       if (vId) {
-        playYtVideo(vId, 'Playing YouTube Video', 'YouTube Stream');
+        playYtVideo(vId, 'Playing YouTube Video', 'YouTube Stream', true);
         return;
       }
 
-      showPortalToast(`Searching YouTube for: ${val}`);
-      navigateToSearch(`site:youtube.com ${val}`);
+      const activeChip = document.querySelector('.yt-chip.active');
+      const cat = activeChip?.getAttribute('data-category') || 'all';
+      renderYoutubeCatalog(cat, val);
     }
   </script>
 </body>
