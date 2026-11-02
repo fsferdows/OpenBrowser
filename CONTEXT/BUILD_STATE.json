@@ -213,6 +213,11 @@
       "id": "phase8-task29",
       "description": "Cross-Origin YouTube and Heavy SPA Hydration Fix via High-Fidelity Shielded Video Portal and Adaptive Multi-Engine Viewport Synchronization: Resolved YouTube empty gray skeleton grid freeze in Web View on localhost:3000 by redirecting YouTube homepage and channel requests in scripts/serve-localhost.mjs and routing in public/app.js to portal.html with interactive video catalog, category filters (Trending, Coding & AI, Space & Science, Music, Tech, Podcasts), and zero-ad playback. Eliminated CDP command timeout failures in packages/control/src/chromium-client.js by extending sendCommand timeout to 25s for navigation/screenshot/evaluation, expanding createPromise timeout to 5s, handling simulated targets cleanly, and guarding synthetic input dispatch. Fixed public/app.js switchTab iframe overlay bug in CDP mode and wired 1-click 'Switch to Live Chrome Engine' directly between Web View and the native Obscura/Chrome engine.",
       "status": "completed"
+    },
+    {
+      "id": "phase8-task30",
+      "description": "Eliminate Demo Gateway Fallbacks and Enforce Native Live Engine Stream as Default Viewport: Removed all portal.html redirects for YouTube and Facebook in scripts/serve-localhost.mjs and public/app.js. Configured Live Chrome / Obscura (CDP mode) as primary active default viewport on localhost, ensuring the real website interface (V8 execution, live screencast, click/type/scroll relay) renders directly without mock cards or gateway placeholders. For Web View mode, routed requests through live CDP engine hydration or direct proxy.",
+      "status": "completed"
     }
   ],
   "failures": [],
@@ -220,6 +225,6 @@
     "OQ-001: Host filesystem capacity is constrained; Phase A strategy avoids local C++ Chromium compilation."
   ],
   "next_action": "Continuously monitor and sustain multi-engine browser workflows.",
-  "last_commit": "2f90f0e"
+  "last_commit": "TBD"
 }
 

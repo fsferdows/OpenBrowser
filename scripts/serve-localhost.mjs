@@ -1036,40 +1036,20 @@ const server = createServer(async (req, res) => {
             iframe { width: 100%; height: 100%; border: none; }
           </style></head><body>
           <div class="yt-topbar">
-            <a href="/portal.html?url=https://www.youtube.com&site=youtube" class="yt-logo">▶ <span>YouTube</span></a>
+            <a href="/api/proxy?url=https://www.youtube.com" class="yt-logo">▶ <span>YouTube</span></a>
             <span class="yt-badge">🛡️ Brave Shields: Zero Ads Active</span>
             <div style="margin-left: auto; display: flex; gap: 12px; align-items: center;">
-              <a href="/portal.html?url=https://www.youtube.com&site=youtube" style="color: #38bdf8; text-decoration: none; font-size: 12px;">← Explore Video Catalog</a>
+              <a href="/api/proxy?url=https://www.youtube.com" style="color: #38bdf8; text-decoration: none; font-size: 12px;">← Explore More Videos</a>
             </div>
           </div>
           <div class="yt-player-wrap">
             <iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
           </div></body></html>`;
-        } else {
-          // Redirect to high-fidelity shielded YouTube player & catalog in portal.html
-          // Avoids raw unhydrated Polymer skeleton freeze in cross-origin iframes
-          const portalDest = `/portal.html?url=${encodeURIComponent(finalUrl)}&site=youtube${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ''}`;
-          res.writeHead(302, {
-            'Location': portalDest,
-            'Access-Control-Allow-Origin': '*'
-          });
-          res.end();
-          return;
         }
       }
 
-      if (finalUrl.includes('facebook.com') || finalUrl.includes('fb.com')) {
-        const portalDest = `/portal.html?url=${encodeURIComponent(finalUrl)}&site=facebook`;
-        res.writeHead(302, {
-          'Location': portalDest,
-          'Access-Control-Allow-Origin': '*'
-        });
-        res.end();
-        return;
-      }
-
-      // If CDP rendering was requested explicitly
-      if (isCdp && isConnected && !html) {
+      // If CDP engine is connected, render dynamic client-side SPAs (YouTube, Facebook, etc.) with real JS hydration
+      if (isConnected && !html && (isCdp || finalUrl.includes('youtube.com') || finalUrl.includes('facebook.com'))) {
         try {
           const renderPromise = chromiumClient.navigateAndRender(finalUrl, 2500);
           const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 15000));

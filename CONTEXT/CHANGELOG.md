@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Eliminate Demo Gateway Fallbacks and Enforce Native Live Engine Stream as Default Viewport:
+  - `public/index.html`: Set `⚡ Live Chrome` (CDP mode) as default active mode button. Revealed `cdp-live-stream-container` by default and hid `browser-webview`, ensuring real engine stream appears immediately on launch.
+  - `public/app.js`: Removed forced `portal.html` routing for YouTube and Facebook; all external URLs route to `/api/proxy?url=...` with full CDP synchronization.
+  - `scripts/serve-localhost.mjs`: Removed 302 redirects to `portal.html` for YouTube and Facebook. Connected live CDP engine (`chromiumClient.navigateAndRender`) for dynamic SPA DOM hydration when Web View proxy requests arrive.
+
 - Cross-Origin YouTube and Heavy SPA Hydration Fix via Shielded Video Portal and Multi-Engine Viewport Synchronization:
   - `public/portal.html`: Built rich interactive YouTube Theater & Video Catalog view equipped with ad-free theater player, category filter chips (All, Trending, Coding & AI, Space & Science, Music, Tech, Podcasts), 10 curated playable video cards with real thumbnails and channels, real-time search filtering, instant URL player, and 1-click button to switch to Live Chrome / Obscura Engine. Added 1-click engine switch button to Facebook Gateway.
   - `scripts/serve-localhost.mjs`: Updated `/api/proxy` for YouTube and Facebook to 302 redirect homepage and browse requests to `/portal.html?url=...&site=...`, preventing iframe hangs on unhydratable cross-origin Polymer skeletons. Increased `navigateAndRender` CDP timeout from 3s to 15s.

@@ -481,8 +481,8 @@
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
           <div class="viewport-view-modes">
-            <button class="view-mode-btn active" id="btn-mode-web" title="Interactive DOM View with Shields & REA">🌐 Web View</button>
-            <button class="view-mode-btn" id="btn-mode-cdp" title="Real-Time Google Chrome Stream via CDP">⚡ Live Chrome</button>
+            <button class="view-mode-btn active" id="btn-mode-cdp" title="Real-Time Engine Stream via CDP (Obscura / Chrome)">⚡ Live Chrome</button>
+            <button class="view-mode-btn" id="btn-mode-web" title="Interactive DOM View with Shields & REA">🌐 Web View</button>
             <button class="view-mode-btn login-window-btn" id="btn-open-login-window" title="Sign into Google, YouTube, Facebook, GitHub directly in Braver">🔑 Sign In</button>
           </div>
           <div class="cdp-telemetry-badge" id="viewport-telemetry-badge">
@@ -495,9 +495,9 @@
 
       <div class="viewport-frame-wrapper" id="webview-container">
         <div id="webview-progress-bar" class="webview-progress-bar hidden"></div>
-        <iframe id="browser-webview" src="newtab.html" title="Browser Tab Viewport"></iframe>
+        <iframe id="browser-webview" src="newtab.html" title="Browser Tab Viewport" style="display: none;"></iframe>
         <!-- Live Google Chrome CDP Screen Stream -->
-        <div id="cdp-live-stream-container" class="cdp-live-stream-container hidden" tabindex="0">
+        <div id="cdp-live-stream-container" class="cdp-live-stream-container" tabindex="0">
           <img id="cdp-live-stream-img" class="cdp-live-stream-img hidden" alt="Live Google Chrome CDP Viewport" />
           <!-- Graceful CDP Offline & Recovery UI -->
           <div id="cdp-fallback-card" class="cdp-fallback-card">
